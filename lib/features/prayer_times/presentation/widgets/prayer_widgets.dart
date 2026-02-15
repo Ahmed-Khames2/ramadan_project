@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
@@ -24,46 +25,29 @@ class PrayerHeader extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: AppTheme.spacing2),
-        Stack(
-          alignment: Alignment.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacing2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentGold.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.mosque_rounded,
-                    color: AppTheme.accentGold,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacing3),
-                Text(
-                  'نور الإيمان',
-                  style: TextStyle(
-                    fontFamily: 'UthmanTaha',
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacing2),
+              decoration: BoxDecoration(
+                color: AppTheme.accentGold.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mosque_rounded,
+                color: AppTheme.accentGold,
+                size: 24,
+              ),
             ),
-            Positioned(
-              right: AppTheme.spacing4,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.settings_outlined,
-                  color: AppTheme.textGrey,
-                ),
-                onPressed: () {
-                  _showSettings(context);
-                },
+            const SizedBox(width: AppTheme.spacing3),
+            Text(
+              'نور الإيمان',
+              style: TextStyle(
+                fontFamily: 'UthmanTaha',
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryEmerald,
               ),
             ),
           ],
@@ -81,17 +65,103 @@ class PrayerHeader extends StatelessWidget {
           gregorianDate,
           style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textGrey),
         ),
+        const SizedBox(height: AppTheme.spacing3),
+        const CompactGovernorateSelector(),
         const SizedBox(height: AppTheme.spacing4),
         const OrnamentalDivider(width: 100),
       ],
     );
   }
+}
 
-  void _showSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const PrayerSettingsSheet(),
+class CompactGovernorateSelector extends StatefulWidget {
+  const CompactGovernorateSelector({super.key});
+
+  @override
+  State<CompactGovernorateSelector> createState() => _CompactGovernorateSelectorState();
+}
+
+class _CompactGovernorateSelectorState extends State<CompactGovernorateSelector> {
+  Governorate? _selectedGovernorate;
+  List<Governorate> _governorates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGovernorateSelection();
+  }
+
+  Future<void> _loadGovernorateSelection() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedGovernorateName = prefs.getString('selected_governorate_name');
+
+    // Get governorates from bloc
+    if (mounted) {
+      final state = context.read<PrayerBloc>().state;
+      if (state is PrayerLoaded) {
+        setState(() {
+          _governorates = state.governorates;
+          if (savedGovernorateName != null) {
+            _selectedGovernorate = _governorates.firstWhere(
+              (gov) => gov.nameArabic == savedGovernorateName,
+              orElse: () => state.selectedGovernorate,
+            );
+          } else {
+            _selectedGovernorate = state.selectedGovernorate;
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _saveGovernorateSelection(Governorate governorate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_governorate_name', governorate.nameArabic);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_governorates.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.accentGold.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Governorate>(
+          value: _selectedGovernorate,
+          isDense: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppTheme.accentGold,
+            size: 18,
+          ),
+          style: GoogleFonts.cairo(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textDark,
+          ),
+          items: _governorates.map((gov) {
+            return DropdownMenuItem(
+              value: gov,
+              child: Text(gov.nameArabic),
+            );
+          }).toList(),
+          onChanged: (gov) {
+            if (gov != null) {
+              setState(() => _selectedGovernorate = gov);
+              _saveGovernorateSelection(gov);
+              context.read<PrayerBloc>().add(SelectGovernorate(gov));
+            }
+          },
+        ),
+      ),
     );
   }
 }

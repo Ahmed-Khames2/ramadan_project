@@ -6,7 +6,7 @@ import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_b
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/widgets/prayer_widgets.dart';
-import 'package:ramadan_project/features/quran/presentation/widgets/quran_progress_widget.dart';
+
 import 'package:ramadan_project/features/quran/presentation/pages/surah_index_page.dart';
 
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
@@ -48,17 +48,6 @@ class HomeDashboardPage extends StatelessWidget {
                         children: [
                           const PrayerHeader(),
                           const SizedBox(height: AppTheme.spacing4),
-                          GovernorateSelector(
-                            governorates: prayerState.governorates,
-                            selected: prayerState.selectedGovernorate,
-                            onSelected: (gov) {
-                              if (gov != null) {
-                                context.read<PrayerBloc>().add(
-                                  SelectGovernorate(gov),
-                                );
-                              }
-                            },
-                          ),
 
                           if (isWide)
                             _buildWideLayout(context, prayerState)
@@ -131,8 +120,6 @@ class HomeDashboardPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const QuranProgressWidget(),
-          const SizedBox(height: AppTheme.spacing6),
           Text(
             'الوصول السريع',
             style: GoogleFonts.cairo(

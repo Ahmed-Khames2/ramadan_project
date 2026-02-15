@@ -47,7 +47,6 @@ import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_b
 // Shared Models/Services still in legacy path for now
 import 'package:ramadan_project/data/models/user_progress_model.dart';
 // import 'package:ramadan_project/data/models/favorite_ayah.dart';
-import 'package:ramadan_project/data/services/notification_service.dart';
 
 // Search Bloc
 import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
@@ -56,9 +55,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ar', null);
 
-  final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.requestPermissions();
+
 
   // Initialize Hive
   await Hive.initFlutter();

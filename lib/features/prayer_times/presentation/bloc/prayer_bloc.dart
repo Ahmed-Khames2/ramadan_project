@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/prayer_time.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/governorate.dart';
 import 'package:ramadan_project/features/prayer_times/domain/repositories/prayer_repository.dart';
-import 'package:ramadan_project/data/services/notification_service.dart';
+
 
 // Events
 abstract class PrayerEvent extends Equatable {
@@ -107,14 +107,11 @@ class PrayerError extends PrayerState {
 // Bloc
 class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   final PrayerRepository repository;
-  final NotificationService _notificationService = NotificationService();
   Timer? _refreshTimer;
 
   PrayerBloc({required this.repository}) : super(PrayerInitial()) {
     on<LoadPrayerData>(_onLoadPrayerData);
     on<SelectGovernorate>(_onSelectGovernorate);
-    on<ToggleNotifications>(_onToggleNotifications);
-    on<UpdateLeadTime>(_onUpdateLeadTime);
     on<RefreshPrayers>(_onRefreshPrayers);
 
     // Refresh every minute to update "current prayer" highlighting
@@ -140,7 +137,6 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
         lastUpdated: DateTime.now(),
       );
 
-      await _scheduleIfNeeded(newState);
       emit(newState);
     } catch (e) {
       emit(PrayerError(e.toString()));
@@ -163,41 +159,10 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           prayerTimes: prayerTimes,
           lastUpdated: DateTime.now(),
         );
-        await _scheduleIfNeeded(newState);
         emit(newState);
       } catch (e) {
         emit(PrayerError(e.toString()));
       }
-    }
-  }
-
-  Future<void> _onToggleNotifications(
-    ToggleNotifications event,
-    Emitter<PrayerState> emit,
-  ) async {
-    if (state is PrayerLoaded) {
-      final currentState = state as PrayerLoaded;
-      final newState = currentState.copyWith(
-        notificationsEnabled: event.enabled,
-      );
-      if (!event.enabled) {
-        await _notificationService.cancelAllNotifications();
-      } else {
-        await _scheduleIfNeeded(newState);
-      }
-      emit(newState);
-    }
-  }
-
-  Future<void> _onUpdateLeadTime(
-    UpdateLeadTime event,
-    Emitter<PrayerState> emit,
-  ) async {
-    if (state is PrayerLoaded) {
-      final currentState = state as PrayerLoaded;
-      final newState = currentState.copyWith(leadTimeMinutes: event.minutes);
-      await _scheduleIfNeeded(newState);
-      emit(newState);
     }
   }
 
@@ -213,15 +178,6 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           prayerTimes: prayerTimes,
           lastUpdated: DateTime.now(),
         ),
-      );
-    }
-  }
-
-  Future<void> _scheduleIfNeeded(PrayerLoaded state) async {
-    if (state.notificationsEnabled) {
-      await _notificationService.schedulePrayerNotifications(
-        state.prayerTimes,
-        state.leadTimeMinutes,
       );
     }
   }

@@ -4,11 +4,9 @@ import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/audio/presentation/widgets/ayah_audio_control.dart';
 import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
-import 'package:ramadan_project/features/quran/presentation/widgets/quran_index_drawer.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/continuous_mushaf_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quran/quran.dart' as quran;
-import 'package:ramadan_project/features/settings/presentation/pages/settings_page.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class MushafPageView extends StatefulWidget {
@@ -65,144 +63,122 @@ class _MushafPageViewState extends State<MushafPageView> {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      tag: 'quran_reader_hero_${widget.initialPage}',
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDFBF7),
+      appBar: AppBar(
         backgroundColor: const Color(0xFFFDFBF7),
-        appBar: AppBar(
-          title: const Text(
-            "القرآن الكريم",
-            style: TextStyle(fontFamily: 'UthmanTaha', color: Colors.black),
-          ),
-          centerTitle: true,
-          backgroundColor: const Color(0xFFFDFBF7),
-          elevation: 0,
-          foregroundColor: Colors.black,
-          iconTheme: const IconThemeData(color: Colors.black),
-          leading: IconButton(
-            icon: const Icon(Icons.home_rounded),
-            onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            tooltip: 'العودة للرئيسية',
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings_rounded),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-              tooltip: 'الإعدادات',
-            ),
-          ],
+        elevation: 0,
+        foregroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'العودة للفهرس',
         ),
-        body: FutureBuilder(
-          future: _initFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text("Error: ${snapshot.error}"));
-            }
+      ),
+      body: FutureBuilder(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
 
-            return OrientationBuilder(
-              builder: (context, orientation) {
-                final isLandscape = orientation == Orientation.landscape;
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              final isLandscape = orientation == Orientation.landscape;
 
-                if (isLandscape) {
-                  final int initialIndex = (_currentPage / 2).floor();
-                  return PageView.builder(
-                    key: ValueKey('landscape_$_currentPage$isLandscape'),
-                    controller: PageController(initialPage: initialIndex),
-                    itemCount: 303,
-                    reverse: true,
-                    onPageChanged: (index) {
-                      if (index == 0) {
-                        _currentPage = 1;
-                      } else {
-                        _currentPage = index * 2 + 1;
-                      }
-                    },
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return Row(
-                          children: [
-                            const Expanded(
-                              child: ContinuousMushafPageWidget(pageNumber: 1),
-                            ),
-                            Expanded(
-                              child: Container(color: const Color(0xFFFDFBF7)),
-                            ),
-                          ],
-                        );
-                      }
-                      final rightPageNum = index * 2 + 1;
-                      final leftPageNum = index * 2;
-
-                      if (leftPageNum > 604) {
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Container(color: const Color(0xFFFDFBF7)),
-                            ),
-                            if (rightPageNum <= 604)
-                              const VerticalDivider(
-                                width: 1,
-                                color: Color(0xFFD4AF37),
-                              ),
-                            if (rightPageNum <= 604)
-                              Expanded(
-                                child: MushafPageWidget(
-                                  pageNumber: rightPageNum,
-                                ),
-                              ),
-                          ],
-                        );
-                      }
-
+              if (isLandscape) {
+                final int initialIndex = (_currentPage / 2).floor();
+                return PageView.builder(
+                  key: ValueKey('landscape_$_currentPage$isLandscape'),
+                  controller: PageController(initialPage: initialIndex),
+                  itemCount: 303,
+                  reverse: true,
+                  onPageChanged: (index) {
+                    if (index == 0) {
+                      _currentPage = 1;
+                    } else {
+                      _currentPage = index * 2 + 1;
+                    }
+                  },
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
                       return Row(
                         children: [
-                          Expanded(
-                            child: ContinuousMushafPageWidget(
-                              pageNumber: rightPageNum,
-                            ),
-                          ),
-                          const VerticalDivider(
-                            width: 1,
-                            color: Color(0xFFD4AF37),
+                          const Expanded(
+                            child: ContinuousMushafPageWidget(pageNumber: 1),
                           ),
                           Expanded(
-                            child: ContinuousMushafPageWidget(
-                              pageNumber: leftPageNum,
-                            ),
+                            child: Container(color: const Color(0xFFFDFBF7)),
                           ),
                         ],
                       );
-                    },
-                  );
-                } else {
-                  return PageView.builder(
-                    key: ValueKey('portrait_$_currentPage$isLandscape'),
-                    controller: PageController(initialPage: _currentPage - 1),
-                    itemCount: 604,
-                    reverse: true,
-                    onPageChanged: (index) {
-                      _currentPage = index + 1;
-                      _saveBookmark(_currentPage);
-                    },
-                    itemBuilder: (context, index) {
-                      return ContinuousMushafPageWidget(pageNumber: index + 1);
-                    },
-                  );
-                }
-              },
-            );
-          },
-        ),
+                    }
+                    final rightPageNum = index * 2 + 1;
+                    final leftPageNum = index * 2;
+
+                    if (leftPageNum > 604) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Container(color: const Color(0xFFFDFBF7)),
+                          ),
+                          if (rightPageNum <= 604)
+                            const VerticalDivider(
+                              width: 1,
+                              color: Color(0xFFD4AF37),
+                            ),
+                          if (rightPageNum <= 604)
+                            Expanded(
+                              child: MushafPageWidget(
+                                pageNumber: rightPageNum,
+                              ),
+                            ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: ContinuousMushafPageWidget(
+                            pageNumber: rightPageNum,
+                          ),
+                        ),
+                        const VerticalDivider(
+                          width: 1,
+                          color: Color(0xFFD4AF37),
+                        ),
+                        Expanded(
+                          child: ContinuousMushafPageWidget(
+                            pageNumber: leftPageNum,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                return PageView.builder(
+                  key: ValueKey('portrait_$_currentPage$isLandscape'),
+                  controller: PageController(initialPage: _currentPage - 1),
+                  itemCount: 604,
+                  reverse: true,
+                  onPageChanged: (index) {
+                    _currentPage = index + 1;
+                    _saveBookmark(_currentPage);
+                  },
+                  itemBuilder: (context, index) {
+                    return ContinuousMushafPageWidget(pageNumber: index + 1);
+                  },
+                );
+              }
+            },
+          );
+        },
       ),
     );
   }
