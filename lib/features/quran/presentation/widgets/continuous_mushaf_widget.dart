@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'mushaf/mushaf_verse_body.dart';
-import 'mushaf/surah_header_widget.dart';
-import 'mushaf/basmala_widget.dart';
 import 'mushaf/page_footer_widget.dart';
 
 class ContinuousMushafPageWidget extends StatefulWidget {
@@ -76,15 +74,6 @@ class _ContinuousMushafPageWidgetState
         final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
         final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
 
-        // Determine if we need to show Surah Header and Basmala
-        // Only on the first page of a Surah
-        final firstAyah = page.ayahs.first;
-        final isFirstPageOfSurah = firstAyah.ayahNumber == 1;
-        final showBasmala =
-            isFirstPageOfSurah &&
-            firstAyah.surahNumber != 1 &&
-            firstAyah.surahNumber != 9;
-
         return LayoutBuilder(
           builder: (context, constraints) {
             return Column(
@@ -104,18 +93,9 @@ class _ContinuousMushafPageWidgetState
                               60, // Subtract footer height approx
                         ),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment
-                              .center, // Vertically center for short surahs
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if (isFirstPageOfSurah) ...[
-                              SurahHeaderWidget(
-                                surahNumber: firstAyah.surahNumber,
-                                scale: contentScale,
-                              ),
-                              if (showBasmala)
-                                BasmalaWidget(scale: contentScale),
-                            ],
                             MushafVerseBody(page: page, scale: contentScale),
                           ],
                         ),
