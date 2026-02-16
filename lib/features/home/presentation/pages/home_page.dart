@@ -135,7 +135,7 @@ class HomeDashboardPage extends StatelessWidget {
             crossAxisCount: 3,
             mainAxisSpacing: AppTheme.spacing4,
             crossAxisSpacing: AppTheme.spacing4,
-            childAspectRatio: 0.9,
+            childAspectRatio: 0.82,
             children: [
               _buildActionCard(
                 context,
@@ -261,18 +261,29 @@ class _ScaleActionCardState extends State<_ScaleActionCard> {
         child: IslamicCard(
           padding: EdgeInsets.zero,
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing6),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppTheme.spacing4,
+              horizontal: AppTheme.spacing2,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(widget.icon, size: 32, color: widget.color),
                 const SizedBox(height: AppTheme.spacing3),
-                Text(
-                  widget.title,
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.cairo(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                      height: 1.2,
+                    ),
                   ),
                 ),
               ],

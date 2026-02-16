@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-label="Ayah marker frame">
+  <g transform="translate(256 256)">
+    <!-- Subtle 8-point motif -->
+    <g>
+      <path fill="#d4af37" d="M0-200 L18-168 L0-154 L-18-168 Z"/>
+      <path fill="#d4af37" d="M200 0 L168 18 L154 0 L168 -18 Z"/>
+      <path fill="#d4af37" d="M0 200 L-18 168 L0 154 L18 168 Z"/>
+      <path fill="#d4af37" d="M-200 0 L-168 -18 L-154 0 L-168 18 Z"/>
+      <path fill="#d4af37" d="M140-140 L124-110 L96-96 L110-124 Z"/>
+      <path fill="#d4af37" d="M140 140 L110 124 L96 96 L124 110 Z"/>
+      <path fill="#d4af37" d="M-140 140 L-124 110 L-96 96 L-110 124 Z"/>
+      <path fill="#d4af37" d="M-140 -140 L-110 -124 L-96 -96 L-124 -110 Z"/>
+    </g>
+
+    <!-- Outer ring -->
+    <circle r="160" fill="none" stroke="#d4af37" stroke-width="10"/>
+
+    <!-- Inner ring -->
+    <circle r="118" fill="none" stroke="#d4af37" stroke-width="8"/>
+  </g>
+</svg>

@@ -1,55 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-
-// Core
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
+import 'package:ramadan_project/data/models/user_progress_model.dart';
 import 'package:ramadan_project/core/navigation/navigation_routes.dart';
+import 'package:ramadan_project/features/azkar/presentation/bloc/azkar_bloc.dart';
+import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
+import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/features/favorites/domain/entities/favorite_ayah.dart';
+import 'package:ramadan_project/features/azkar/data/repositories/azkar_repository.dart';
 import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.g.dart';
-
-// Features - Quran
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
+import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
+import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:ramadan_project/features/home/presentation/pages/main_navigation_page.dart';
 import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:ramadan_project/features/quran/data/datasources/quran_local_datasource.dart';
-
-// Features - Khatmah
+import 'package:ramadan_project/features/audio/data/repositories/audio_repository_impl.dart';
 import 'package:ramadan_project/features/khatmah/domain/repositories/khatmah_repository.dart';
+import 'package:ramadan_project/features/khatmah/domain/usecases/calculate_khatam_target.dart';
+import 'package:ramadan_project/features/audio/data/repositories/reciter_repository_impl.dart';
+import 'package:ramadan_project/features/favorites/data/repositories/favorites_repository.dart';
 import 'package:ramadan_project/features/khatmah/data/repositories/khatmah_repository_impl.dart';
 import 'package:ramadan_project/features/khatmah/data/datasources/khatmah_local_datasource.dart';
-import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
-import 'package:ramadan_project/features/khatmah/domain/usecases/calculate_khatam_target.dart';
+import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_repository_impl.dart'
+
+// Core
+
+// Features - Quran
+
+// Features - Khatmah
 // import 'package:ramadan_project/features/khatmah/data/models/khatmah_models.dart';
 
 // Features - Azkar
-import 'package:ramadan_project/features/azkar/data/repositories/azkar_repository.dart';
-import 'package:ramadan_project/features/azkar/presentation/bloc/azkar_bloc.dart';
 
 // Features - Audio
-import 'package:ramadan_project/features/audio/data/repositories/audio_repository_impl.dart';
-import 'package:ramadan_project/features/audio/data/repositories/reciter_repository_impl.dart';
-import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
 
 // Features - Prayer Times
-import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_repository_impl.dart'
     as prayer_repo;
-import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 
 // Features - Home
-import 'package:ramadan_project/features/home/presentation/pages/main_navigation_page.dart';
 
 // Features - Favorites
-import 'package:ramadan_project/features/favorites/data/repositories/favorites_repository.dart';
-import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
 
 // Shared Models/Services still in legacy path for now
-import 'package:ramadan_project/data/models/user_progress_model.dart';
 // import 'package:ramadan_project/data/models/favorite_ayah.dart';
 
 // Search Bloc
-import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,10 +59,15 @@ void main() async {
 
   // Initialize Hive
   await Hive.initFlutter();
-  if (!Hive.isAdapterRegistered(0))
+  if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(UserProgressModelAdapter());
-  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(FavoriteAyahAdapter());
-  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(KhatmahPlanAdapter());
+  }
+  if (!Hive.isAdapterRegistered(1)) {
+    Hive.registerAdapter(FavoriteAyahAdapter());
+  }
+  if (!Hive.isAdapterRegistered(2)) {
+    Hive.registerAdapter(KhatmahPlanAdapter());
+  }
   if (!Hive.isAdapterRegistered(3)) {
     Hive.registerAdapter(KhatmahHistoryEntryAdapter());
   }
