@@ -15,10 +15,10 @@ class PageFooterWidget extends StatelessWidget {
       child: Text(
         '$pageNumber',
         style: theme.textTheme.bodySmall?.copyWith(
-          fontFamily: 'UthmanTaha',
-          fontSize: 14,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
-          letterSpacing: 1.2,
+          fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
+          fontSize: 16, // Slightly larger for clarity
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

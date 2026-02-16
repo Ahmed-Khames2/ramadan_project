@@ -29,13 +29,13 @@ class MushafPageFrame extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // 1. Inner Double Border
+          // Inner Double Border
           Positioned.fill(
             child: Container(
               margin: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: const Color(0xFFD4AF37).withOpacity(0.5), // Gold
+                  color: const Color(0xFFD4AF37).withOpacity(0.5),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -47,7 +47,7 @@ class MushafPageFrame extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3), // Primary
+                  color: theme.colorScheme.primary.withOpacity(0.3),
                   width: 1.0,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -55,35 +55,30 @@ class MushafPageFrame extends StatelessWidget {
             ),
           ),
 
-          // 2. Corner Ornaments (SVG)
+          // Corner Ornaments
           _buildCorner(Alignment.topLeft, 0),
           _buildCorner(Alignment.topRight, 90),
           _buildCorner(Alignment.bottomRight, 180),
           _buildCorner(Alignment.bottomLeft, 270),
 
-          // 3. Main Content Layout
+          // Main Content
           Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.only(top: 20, left: 24, right: 24),
                 child: PageHeaderWidget(page: page),
               ),
-
-              // Content
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: 16,
+                    vertical: 6,
                   ),
                   child: child,
                 ),
               ),
-
-              // Footer
               Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: PageFooterWidget(pageNumber: page.pageNumber),
               ),
             ],
@@ -97,7 +92,7 @@ class MushafPageFrame extends StatelessWidget {
     return Align(
       alignment: alignment,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(6),
         child: RotationTransition(
           turns: AlwaysStoppedAnimation(angle / 360),
           child: SvgPicture.asset(
@@ -105,7 +100,7 @@ class MushafPageFrame extends StatelessWidget {
             width: 40,
             height: 40,
             colorFilter: const ColorFilter.mode(
-              Color(0xFFD4AF37), // Gold tint
+              Color(0xFFD4AF37),
               BlendMode.srcIn,
             ),
           ),

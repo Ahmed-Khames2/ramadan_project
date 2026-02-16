@@ -26,53 +26,58 @@ class MushafVerseBody extends StatelessWidget {
       surahGroups[ayah.surahNumber]!.add(ayah);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: surahNumbers.map((surahNum) {
-        final ayahs = surahGroups[surahNum]!;
-        final firstAyah = ayahs.first;
-        final isNewSurah = firstAyah.ayahNumber == 1;
-        final showBasmala = isNewSurah && surahNum != 1 && surahNum != 9;
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: surahNumbers.map((surahNum) {
+          final ayahs = surahGroups[surahNum]!;
+          final firstAyah = ayahs.first;
+          final isNewSurah = firstAyah.ayahNumber == 1;
+          final showBasmala = isNewSurah && surahNum != 1 && surahNum != 9;
 
-        final spans = <InlineSpan>[];
-        final baseTextStyle =
-            theme.textTheme.bodyLarge?.copyWith(
-              fontFamily: 'UthmanTaha',
-              fontSize: (20 * scale).clamp(16, 40),
-              height: 2.0,
-              color: theme.colorScheme.onSurface.withOpacity(0.85),
-            ) ??
-            const TextStyle();
+          final spans = <InlineSpan>[];
+          final baseTextStyle =
+              theme.textTheme.bodyLarge?.copyWith(
+                fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
+                fontSize: (24 * scale).clamp(20, 56),
+                height: 1.9,
+                color: const Color(0xFF000000),
+                fontWeight: FontWeight.w500,
+                fontFamilyFallback: const ['UthmanTaha', 'Arial'],
+              ) ??
+              const TextStyle();
 
-        for (final ayah in ayahs) {
-          spans.add(TextSpan(text: ayah.text, style: baseTextStyle));
+          for (final ayah in ayahs) {
+            spans.add(TextSpan(text: ayah.text, style: baseTextStyle));
 
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: AyahSymbol(ayahNumber: ayah.ayahNumber, scale: scale),
-            ),
-          );
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: AyahSymbol(ayahNumber: ayah.ayahNumber, scale: scale),
+              ),
+            );
 
-          spans.add(const TextSpan(text: ' '));
-        }
+            spans.add(const TextSpan(text: ' '));
+          }
 
-        return Column(
-          children: [
-            if (isNewSurah) ...[
-              SurahHeaderWidget(surahNumber: surahNum, scale: scale),
-              if (showBasmala) BasmalaWidget(scale: scale),
+          return Column(
+            children: [
+              if (isNewSurah) ...[
+                SurahHeaderWidget(surahNumber: surahNum, scale: scale),
+                if (showBasmala) BasmalaWidget(scale: scale),
+              ],
+              RichText(
+                text: TextSpan(children: spans),
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.justify,
+                softWrap: true,
+              ),
+              const SizedBox(height: 16),
             ],
-            RichText(
-              text: TextSpan(children: spans),
-              textDirection: TextDirection.rtl,
-              textAlign: TextAlign.justify,
-              softWrap: true,
-            ),
-            const SizedBox(height: 16),
-          ],
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

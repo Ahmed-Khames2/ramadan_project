@@ -23,10 +23,6 @@ class ContinuousMushafPageWidget extends StatefulWidget {
 
 class _ContinuousMushafPageWidgetState
     extends State<ContinuousMushafPageWidget> {
-  static const EdgeInsets _pagePadding = EdgeInsets.symmetric(
-    horizontal: 24,
-    vertical: 20,
-  );
   late Future<QuranPage> _pageData;
   QuranPage? _cachedPage;
 
@@ -116,15 +112,21 @@ class _ContinuousMushafPageWidgetState
       builder: (context, constraints) {
         return MushafPageFrame(
           page: page,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth - _pagePadding.horizontal,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    // استخدام العرض الكامل المتاح (إزالة الطرح الزائد)
+                    width: constraints.maxWidth,
+                    child: MushafVerseBody(page: page, scale: contentScale),
+                  ),
+                ),
               ),
-              child: MushafVerseBody(page: page, scale: contentScale),
-            ),
+            ],
           ),
         );
       },
