@@ -108,28 +108,15 @@ class _ContinuousMushafPageWidgetState
     final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
     final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return MushafPageFrame(
-          page: page,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    // استخدام العرض الكامل المتاح (إزالة الطرح الزائد)
-                    width: constraints.maxWidth,
-                    child: MushafVerseBody(page: page, scale: contentScale),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return MushafPageFrame(
+      page: page,
+      child: SingleChildScrollView(
+        // السماح بالسكرول العمودي
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: MushafVerseBody(page: page, scale: contentScale),
+        ),
+      ),
     );
   }
 }
