@@ -7,19 +7,26 @@ class BasmalaWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24, top: 8),
+      padding: const EdgeInsets.only(top: 16, bottom: 28),
       child: Text(
         'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-        style: theme.textTheme.headlineMedium?.copyWith(
-          fontFamily: 'UthmanTaha',
-          fontSize: (26 * scale).clamp(20, 36),
-          color: theme.colorScheme.onSurface.withOpacity(0.9),
-          height: 1.5,
-        ),
+        textDirection: TextDirection.rtl,
         textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: 'AThuluthRegular',
+          fontSize: (38 * scale).clamp(28, 52),
+          height: 1.8,
+          color: const Color(0xFF111111),
+          fontWeight: FontWeight.w500,
+          shadows: [
+            Shadow(
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+              color: Colors.black.withOpacity(0.1),
+            ),
+          ],
+        ),
       ),
     );
   }

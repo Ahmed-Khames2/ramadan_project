@@ -109,3 +109,11 @@ flutter:
     - family: UthmanTaha
       fonts:
         - asset: assets/fonts/UthmanTN1-Ver10.otf
+
+    - family: KFGQPCUthmanTahaNaskhRegular
+      fonts:
+        - asset: assets/fonts/KFGQPC-Uthman-Taha-Naskh-Regular.ttf   
+
+    - family: AThuluthRegular
+      fonts:
+        - asset: assets/fonts/A Thuluth Regular.ttf

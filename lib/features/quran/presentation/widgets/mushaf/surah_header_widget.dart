@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quran/quran.dart' as quran;
 
 class SurahHeaderWidget extends StatelessWidget {
@@ -13,35 +14,41 @@ class SurahHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // The Islamic SVG Banner
+          SvgPicture.asset(
+            'assets/images/surah_name_banner.svg',
+            width: MediaQuery.of(context).size.width * 0.85 * scale,
+            fit: BoxFit.contain,
+          ),
+          // The Surah Name overlay
+          Padding(
+            padding: const EdgeInsets.only(
+              bottom: 4,
+            ), // Slight adjustment for optical centering
+            child: Text(
+              quran.getSurahNameArabic(surahNumber),
+              style: TextStyle(
+                fontFamily: 'UthmanTaha',
+                fontSize: (28 * scale).clamp(22, 42),
+                color: const Color(0xFF111111),
+                fontWeight: FontWeight.w600,
+                shadows: [
+                  Shadow(
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                    color: Colors.black.withOpacity(0.05),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
-      ),
-      child: Text(
-        'سورة ${quran.getSurahNameArabic(surahNumber)}',
-        style: theme.textTheme.headlineSmall?.copyWith(
-          fontFamily: 'UthmanTaha',
-          fontWeight: FontWeight.bold,
-          fontSize: (22 * scale).clamp(18, 30),
-          color: theme.colorScheme.onSurface,
-        ),
-        textAlign: TextAlign.center,
       ),
     );
   }
