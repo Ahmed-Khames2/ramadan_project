@@ -16,8 +16,11 @@ class QuranRepositoryImpl implements QuranRepository {
   final Map<int, List<_AyahRef>> _pageMap = {};
 
   // Cache for loaded Surah JSONs and Tafsir
-  final Map<int, Map<String, dynamic>> _surahCache = {};
-  final Map<int, Map<String, dynamic>> _tafsirCache = {};
+  static final Map<int, Map<String, dynamic>> _surahCache = {};
+  static final Map<int, Map<String, dynamic>> _tafsirCache = {};
+
+  // Cache for inflight Surah load requests to prevent duplicate loading
+  static final Map<int, Future<void>> _surahLoadingFutures = {};
 
   // Cache for Juz Start Pages: Map<JuzNumber, PageNumber>
   final Map<int, int> _juzStartPages = {};
@@ -43,6 +46,38 @@ class QuranRepositoryImpl implements QuranRepository {
 
     // Start search cache initialization in background
     _initializeSearchCache();
+
+    // Start background preloading of Surahs to allow instant navigation
+    _startBackgroundPreloading();
+  }
+
+  void _startBackgroundPreloading() async {
+    // 1. Preload popular Surahs and Juz 30 (Surahs 78-114) first
+    final prioritySurahs = [
+      1,
+      36,
+      18,
+      67,
+      55,
+      56,
+      2,
+      3,
+      ...List.generate(37, (i) => 78 + i),
+    ];
+
+    for (final surah in prioritySurahs) {
+      if (_surahCache.containsKey(surah)) continue;
+      await _loadSurahJson(surah);
+      // Small yield to prevent UI jank
+      await Future.delayed(const Duration(milliseconds: 20));
+    }
+
+    // 2. Preload the rest sequentially
+    for (int i = 1; i <= 114; i++) {
+      if (_surahCache.containsKey(i)) continue;
+      await _loadSurahJson(i);
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
   }
 
   static _PageMappingResult _buildPageMappings(_) {
@@ -204,14 +239,93 @@ class QuranRepositoryImpl implements QuranRepository {
   Future<void> saveScrollOffset(double offset) =>
       localDataSource.saveScrollOffset(offset);
 
+  // Synchronous accessor for UI to avoid flicker
+  QuranPage? getPageSync(int pageNumber) {
+    if (!_pageMap.containsKey(pageNumber)) return null;
+
+    final refs = _pageMap[pageNumber]!;
+    // Check if all surahs for this page are cached
+    final surahsOnPage = refs.map((e) => e.surah).toSet();
+    for (final surahNum in surahsOnPage) {
+      if (!_surahCache.containsKey(surahNum)) return null;
+    }
+
+    // Determine layout data synchronously
+    try {
+      final List<Ayah> pageAyahs = [];
+      for (final ref in refs) {
+        final surahJson = _surahCache[ref.surah]!;
+        final verses = surahJson['verse'] as Map<String, dynamic>;
+        final text = verses['verse_${ref.ayah}'] as String? ?? '';
+
+        pageAyahs.add(
+          Ayah(
+            surahNumber: ref.surah,
+            ayahNumber: ref.ayah,
+            globalAyahNumber: _getGlobalAyahNumber(ref.surah, ref.ayah),
+            text: text,
+            pageNumber: pageNumber,
+            surahName: quran.getSurahNameArabic(ref.surah),
+            isSajda: quran.isSajdahVerse(ref.surah, ref.ayah),
+          ),
+        );
+      }
+
+      final firstRef = refs.first;
+      return QuranPage(
+        pageNumber: pageNumber,
+        ayahs: pageAyahs,
+        surahName: quran.getSurahNameArabic(firstRef.surah),
+        juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  QuranPage? getPagePlaceholder(int pageNumber) {
+    if (!_pageMap.containsKey(pageNumber)) return null;
+    final refs = _pageMap[pageNumber]!;
+    final firstRef = refs.first;
+
+    // Return page with metadata but empty contents for skeleton loading
+    return QuranPage(
+      pageNumber: pageNumber,
+      ayahs: [],
+      surahName: quran.getSurahNameArabic(firstRef.surah),
+      juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
+    );
+  }
+
   // Helper Methods
+
   Future<void> _loadSurahJson(int surahNum) async {
+    // If already loading, wait for that future
+    if (_surahLoadingFutures.containsKey(surahNum)) {
+      return _surahLoadingFutures[surahNum];
+    }
+
+    // Create a new loading future
+    final future = _loadSurahJsonInternal(surahNum);
+    _surahLoadingFutures[surahNum] = future;
+
+    try {
+      await future;
+    } finally {
+      // Remove from inflight cache when done (success or error)
+      _surahLoadingFutures.remove(surahNum);
+    }
+  }
+
+  Future<void> _loadSurahJsonInternal(int surahNum) async {
     try {
       final String jsonString = await rootBundle.loadString(
         'assets/json/quranjson/surah/surah_$surahNum.json',
       );
-      // Decode JSON in a separate isolate to avoid blocking the UI thread
-      _surahCache[surahNum] = await compute(_parseJson, jsonString);
+      // Decode directly on main thread - files are small enough (<150KB)
+      // and Isolate overhead causes perceptible delay
+      _surahCache[surahNum] = json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
       debugPrint('Error loading surah $surahNum: $e');
       _surahCache[surahNum] = {'verse': {}};
@@ -223,7 +337,7 @@ class QuranRepositoryImpl implements QuranRepository {
       final String jsonString = await rootBundle.loadString(
         'assets/json/quranjson/translation/ar/ar_translation_$surahNum.json',
       );
-      _tafsirCache[surahNum] = await compute(_parseJson, jsonString);
+      _tafsirCache[surahNum] = json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
       _tafsirCache[surahNum] = {};
     }
@@ -311,10 +425,6 @@ class QuranRepositoryImpl implements QuranRepository {
       if (results.length > 50) break;
     }
     return results;
-  }
-
-  static Map<String, dynamic> _parseJson(String jsonString) {
-    return json.decode(jsonString) as Map<String, dynamic>;
   }
 }
 

@@ -2,6 +2,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
+import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'mushaf/mushaf_verse_body.dart';
 import 'mushaf/mushaf_page_frame.dart';
 
@@ -27,6 +28,7 @@ class _ContinuousMushafPageWidgetState
     vertical: 20,
   );
   late Future<QuranPage> _pageData;
+  QuranPage? _cachedPage;
 
   @override
   void initState() {
@@ -37,21 +39,49 @@ class _ContinuousMushafPageWidgetState
   @override
   void didUpdateWidget(ContinuousMushafPageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.pageNumber != widget.pageNumber) _loadData();
+    if (oldWidget.pageNumber != widget.pageNumber) {
+      _cachedPage = null; // Reset cache on page change
+      _loadData();
+    }
   }
 
   void _loadData() {
-    _pageData = context.read<QuranRepository>().getPage(widget.pageNumber);
+    // Check if data is already available synchronously to avoid flicker
+    final repo = context.read<QuranRepository>();
+    if (repo is QuranRepositoryImpl) {
+      final cached = repo.getPageSync(widget.pageNumber);
+      if (cached != null) {
+        setState(() {
+          _cachedPage = cached;
+        });
+        return;
+      }
+    }
+    _pageData = repo.getPage(widget.pageNumber);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // If we have cached data, render immediately without FutureBuilder
+    if (_cachedPage != null) {
+      return _buildPageContent(_cachedPage!, context);
+    }
 
     return FutureBuilder<QuranPage>(
       future: _pageData,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          // Try to show placeholder (frame with loader) instead of just loader
+          final repo = context.read<QuranRepository>();
+          if (repo is QuranRepositoryImpl) {
+            final placeholder = repo.getPagePlaceholder(widget.pageNumber);
+            if (placeholder != null) {
+              return MushafPageFrame(
+                page: placeholder,
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            }
+          }
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -62,7 +92,10 @@ class _ContinuousMushafPageWidgetState
               children: [
                 const Icon(Icons.error_outline, color: Colors.red, size: 48),
                 const SizedBox(height: 16),
-                Text("Error loading ayahs", style: theme.textTheme.titleMedium),
+                Text(
+                  "Error loading ayahs",
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ],
             ),
           );
@@ -70,26 +103,29 @@ class _ContinuousMushafPageWidgetState
 
         if (!snapshot.hasData) return const SizedBox.shrink();
 
-        final page = snapshot.data!;
-        final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
-        final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
+        return _buildPageContent(snapshot.data!, context);
+      },
+    );
+  }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return MushafPageFrame(
-              page: page,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: constraints.maxWidth - _pagePadding.horizontal,
-                  ),
-                  child: MushafVerseBody(page: page, scale: contentScale),
-                ),
+  Widget _buildPageContent(QuranPage page, BuildContext context) {
+    final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
+    final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return MushafPageFrame(
+          page: page,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: constraints.maxWidth - _pagePadding.horizontal,
               ),
-            );
-          },
+              child: MushafVerseBody(page: page, scale: contentScale),
+            ),
+          ),
         );
       },
     );

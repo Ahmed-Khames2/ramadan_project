@@ -7,7 +7,11 @@ abstract class QuranRepository {
   Future<void> init();
 
   /// Get the data for a specific Mushaf Page (1-604)
+  /// Get the data for a specific Mushaf Page (1-604)
   Future<QuranPage> getPage(int pageNumber);
+
+  /// Get simplified page data (metadata only) synchronously for instant loading
+  QuranPage? getPagePlaceholder(int pageNumber);
 
   /// Get Ayahs for a specific page (legacy support)
   Future<List<Ayah>> getAyahsForPage(int pageNumber);
