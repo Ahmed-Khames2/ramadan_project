@@ -1,0 +1,23 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Corner Background Accent (Subtle) -->
+  <path d="M0 0 L100 0 L100 5 L5 5 L5 100 L0 100 Z" fill="#D4AF37" fill-opacity="0.2"/>
+  
+  <!-- Main Outer Geometric Lines -->
+  <path d="M10 10 L90 10" stroke="#D4AF37" stroke-width="2" stroke-linecap="square"/>
+  <path d="M10 10 L10 90" stroke="#D4AF37" stroke-width="2" stroke-linecap="square"/>
+  
+  <!-- Inner Decorative Pattern -->
+  <path d="M15 15 L75 15 L75 18 L18 18 L18 75 L15 75 Z" fill="#3A6E8F"/>
+  
+  <!-- Corner Square/Diamond Motif -->
+  <rect x="0" y="0" width="20" height="20" transform="translate(10 10) rotate(45)" fill="white" stroke="#B88A2F" stroke-width="1.5"/>
+  <rect x="0" y="0" width="12" height="12" transform="translate(14 14) rotate(45)" fill="#D4AF37"/>
+  
+  <!-- Connecting Lines to Frame -->
+  <path d="M25 25 L80 25" stroke="#B88A2F" stroke-width="1" stroke-dasharray="2 2"/>
+  <path d="M25 25 L25 80" stroke="#B88A2F" stroke-width="1" stroke-dasharray="2 2"/>
+  
+  <!-- Small Dot Accents -->
+  <circle cx="85" cy="10" r="2" fill="#3A6E8F"/>
+  <circle cx="10" cy="85" r="2" fill="#3A6E8F"/>
+</svg>

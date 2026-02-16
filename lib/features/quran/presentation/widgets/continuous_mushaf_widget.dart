@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'mushaf/mushaf_verse_body.dart';
-import 'mushaf/page_footer_widget.dart';
+import 'mushaf/mushaf_page_frame.dart';
 
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
@@ -76,31 +76,18 @@ class _ContinuousMushafPageWidgetState
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            return Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: _pagePadding,
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            // Maintain a reasonable width while allowing height to be flexible for scaling
-                            maxWidth:
-                                constraints.maxWidth - _pagePadding.horizontal,
-                          ),
-                          child: MushafVerseBody(
-                            page: page,
-                            scale: contentScale,
-                          ),
-                        ),
-                      ),
-                    ),
+            return MushafPageFrame(
+              page: page,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: constraints.maxWidth - _pagePadding.horizontal,
                   ),
+                  child: MushafVerseBody(page: page, scale: contentScale),
                 ),
-                PageFooterWidget(pageNumber: widget.pageNumber),
-              ],
+              ),
             );
           },
         );

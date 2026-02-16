@@ -16,7 +16,7 @@ class BasmalaWidget extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'AThuluthRegular',
           fontSize: (38 * scale).clamp(28, 52),
-          height: 1.8,
+          height: 1.4,
           color: const Color(0xFF111111),
           fontWeight: FontWeight.w500,
           shadows: [
