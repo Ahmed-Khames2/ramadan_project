@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class MainScaffold extends StatelessWidget {
@@ -27,11 +27,28 @@ class MainScaffold extends StatelessWidget {
       backgroundColor: AppTheme.warmBeige,
       drawer: drawer,
       appBar: AppBar(
-        title: Text(title),
+        backgroundColor: AppTheme.primaryEmerald,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'UthmanTaha',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         leading: showBackButton
             ? BackButton(onPressed: () => Navigator.pop(context))
             : null,
         actions: actions,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.accentGold),
+        ),
       ),
       body: body,
       bottomNavigationBar: onTabSelected != null

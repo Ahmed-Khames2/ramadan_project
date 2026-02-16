@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/widgets/main_scaffold.dart';
 import 'package:ramadan_project/features/home/presentation/pages/home_page.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';

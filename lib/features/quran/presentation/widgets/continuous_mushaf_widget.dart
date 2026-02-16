@@ -1,16 +1,22 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:quran/quran.dart' as quran;
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
-import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
-import 'package:ramadan_project/core/theme/app_theme.dart';
-import 'package:quran/quran.dart' as quran;
 
-/// Modern Mushaf-style page widget with clean design
+/// Mushaf-style page widget with a classic printed look.
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
+  final double fontScale;
 
-  const ContinuousMushafPageWidget({super.key, required this.pageNumber});
+  const ContinuousMushafPageWidget({
+    super.key,
+    required this.pageNumber,
+    this.fontScale = 1.0,
+  });
 
   @override
   State<ContinuousMushafPageWidget> createState() =>
@@ -19,7 +25,36 @@ class ContinuousMushafPageWidget extends StatefulWidget {
 
 class _ContinuousMushafPageWidgetState
     extends State<ContinuousMushafPageWidget> {
+  static const double _basePageWidth = 360;
+  static const double _basePageHeight = 640;
+  static const EdgeInsets _frameInset =
+      EdgeInsets.symmetric(horizontal: 18, vertical: 16);
   late Future<QuranPage> _pageData;
+  static const List<String> _arabicDigits = [
+    '٠',
+    '١',
+    '٢',
+    '٣',
+    '٤',
+    '٥',
+    '٦',
+    '٧',
+    '٨',
+    '٩',
+  ];
+
+  String _toArabicDigits(String input) {
+    final buffer = StringBuffer();
+    for (final codeUnit in input.codeUnits) {
+      final digit = codeUnit - 48;
+      if (digit >= 0 && digit <= 9) {
+        buffer.write(_arabicDigits[digit]);
+      } else {
+        buffer.writeCharCode(codeUnit);
+      }
+    }
+    return buffer.toString();
+  }
 
   @override
   void initState() {
@@ -49,193 +84,244 @@ class _ContinuousMushafPageWidgetState
         }
 
         final page = snapshot.data!;
-        final isFirstPageOfSurah = _isFirstPageOfSurah(page);
-        final surahsInPage = _getSurahsInPage(page);
+        final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
+        final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
+
+        Widget buildContent() {
+          final body = _buildPageBody(
+            page,
+            contentScale,
+            useExpanded: isDefaultScale,
+          );
+
+          if (isDefaultScale) {
+            return Align(
+              alignment: Alignment.topCenter,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: _basePageWidth,
+                  height: _basePageHeight,
+                  child: body,
+                ),
+              ),
+            );
+          }
+
+          return SingleChildScrollView(child: body);
+        }
 
         return Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            children: [
-              // Header: Surah name and Juz number
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "سورة ${page.surahName}",
-                    style: const TextStyle(
-                      fontFamily: 'UthmanTaha',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryEmerald,
-                    ),
-                  ),
-                  Text(
-                    "الجزء ${page.juzNumber}",
-                    style: const TextStyle(
-                      fontFamily: 'UthmanTaha',
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // Basmala if first page of surah (and not Al-Fatiha)
-              if (isFirstPageOfSurah && _getSurahNumber(page) != 1) ...[
-                Text(
-                  "سورة ${page.surahName}",
-                  style: const TextStyle(
-                    fontFamily: 'UthmanTaha',
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                  style: TextStyle(
-                    fontFamily: 'UthmanTaha',
-                    fontSize: 20,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.rtl,
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Quran text content
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: _buildQuranContent(page, surahsInPage),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Footer: Page number only
-              Center(
-                child: Text(
-                  "${page.pageNumber}",
-                  style: const TextStyle(
-                    fontFamily: 'UthmanTaha',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
-                  ),
-                ),
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDFBF7),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
             ],
+            image: const DecorationImage(
+              image: AssetImage('assets/images/paper_texture.png'),
+              fit: BoxFit.cover,
+              opacity: 0.35,
+            ),
+          ),
+          child: Padding(
+            padding: _frameInset,
+            child: buildContent(),
           ),
         );
       },
     );
   }
 
-  bool _isFirstPageOfSurah(QuranPage page) {
-    // Check if this is the first page of the surah
-    return page.ayahs.isNotEmpty && page.ayahs.first.ayahNumber == 1;
-  }
-
-  int _getSurahNumber(QuranPage page) {
-    return page.ayahs.isNotEmpty ? page.ayahs.first.surahNumber : 1;
-  }
-
-  List<int> _getSurahsInPage(QuranPage page) {
-    final surahs = <int>[];
-    for (final ayah in page.ayahs) {
-      if (!surahs.contains(ayah.surahNumber)) {
-        surahs.add(ayah.surahNumber);
-      }
-    }
-    return surahs;
-  }
-
-  Widget _buildQuranContent(QuranPage page, List<int> surahsInPage) {
-    final spans = <InlineSpan>[];
-    int currentSurah = -1;
-
-    for (final ayah in page.ayahs) {
-      // If this is a new surah in the page, add surah header
-      if (surahsInPage.length > 1 && ayah.surahNumber != currentSurah) {
-        if (currentSurah != -1) {
-          spans.add(const TextSpan(text: '\n\n')); // Space between surahs
-        }
-
-        spans.add(
-          TextSpan(
-            text: 'سورة ${quran.getSurahNameArabic(ayah.surahNumber)}\n',
-            style: const TextStyle(
+  Widget _buildPageBody(
+    QuranPage page,
+    double scale, {
+    required bool useExpanded,
+  }) {
+    final quranContent = _buildQuranContent(page, scale);
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildHeaderChip(
+              'الجزء ${_toArabicDigits(page.juzNumber.toString())}',
+              scale,
+            ),
+            _buildHeaderChip(
+              'الصفحة ${_toArabicDigits(page.pageNumber.toString())}',
+              scale,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (useExpanded)
+          Expanded(child: quranContent)
+        else
+          quranContent,
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFD4AF37)),
+          ),
+          child: Text(
+            _toArabicDigits(page.pageNumber.toString()),
+            style: TextStyle(
               fontFamily: 'UthmanTaha',
-              fontSize: 20,
+              fontSize: 14 * scale,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
             ),
           ),
-        );
+        ),
+      ],
+    );
+  }
 
-        // Add Basmala for surahs other than Al-Fatiha
+  Widget _buildHeaderChip(String text, double scale) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFD4AF37)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: 'UthmanTaha',
+          fontSize: 12 * scale,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.primaryEmerald,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuranContent(
+    QuranPage page,
+    double scale,
+  ) {
+    final spans = <InlineSpan>[];
+    int currentSurah = -1;
+    final baseTextStyle = TextStyle(
+      fontFamily: 'UthmanTaha',
+      fontSize: 18 * scale,
+      height: 1.9,
+      color: Colors.black87,
+    );
+    final centeredLineWidth = _basePageWidth - _frameInset.horizontal;
+
+    for (final ayah in page.ayahs) {
+      if (ayah.surahNumber != currentSurah) {
+        if (currentSurah != -1) {
+          spans.add(const TextSpan(text: '\n'));
+        }
+
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: SizedBox(
+              width: centeredLineWidth,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Text(
+                    'سورة ${quran.getSurahNameArabic(ayah.surahNumber)}',
+                    style: baseTextStyle.copyWith(fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        spans.add(const TextSpan(text: '\n'));
+
         if (ayah.surahNumber != 1) {
           spans.add(
-            const TextSpan(
-              text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\n',
-              style: TextStyle(
-                fontFamily: 'UthmanTaha',
-                fontSize: 18,
-                color: Colors.black87,
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: SizedBox(
+                width: centeredLineWidth,
+                child: Center(
+                  child: Text(
+                    'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+                    style: baseTextStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ),
           );
+          spans.add(const TextSpan(text: '\n'));
         }
 
         currentSurah = ayah.surahNumber;
       }
 
-      // Add ayah text
       spans.add(
         TextSpan(
           text: ayah.text,
-          style: const TextStyle(
-            fontFamily: 'UthmanTaha',
-            fontSize: 16, // Smaller font to fit all content
-            height: 1.8,
-            color: Colors.black87,
-          ),
+          style: baseTextStyle,
         ),
       );
 
-      // Add ayah number
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: 20,
-            height: 20,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFD4AF37),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              "${ayah.ayahNumber}",
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: SizedBox(
+              width: 32 * scale,
+              height: 32 * scale,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/images/ayah_frame.svg',
+                    width: 32 * scale,
+                    height: 32 * scale,
+                    colorFilter: const ColorFilter.mode(
+                      Color(0xFFD4AF37),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  Text(
+                    _toArabicDigits(ayah.ayahNumber.toString()),
+                    style: TextStyle(
+                      fontFamily: 'UthmanTaha',
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       );
 
-      // Add space between ayahs
       spans.add(const TextSpan(text: ' '));
     }
 
