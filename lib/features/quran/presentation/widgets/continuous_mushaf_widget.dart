@@ -79,25 +79,21 @@ class _ContinuousMushafPageWidgetState
             return Column(
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: isDefaultScale
-                        ? const NeverScrollableScrollPhysics()
-                        : const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: _pagePadding,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight:
-                              constraints.maxHeight -
-                              _pagePadding.vertical -
-                              60, // Subtract footer height approx
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            MushafVerseBody(page: page, scale: contentScale),
-                          ],
+                  child: Padding(
+                    padding: _pagePadding,
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            // Maintain a reasonable width while allowing height to be flexible for scaling
+                            maxWidth:
+                                constraints.maxWidth - _pagePadding.horizontal,
+                          ),
+                          child: MushafVerseBody(
+                            page: page,
+                            scale: contentScale,
+                          ),
                         ),
                       ),
                     ),
