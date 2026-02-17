@@ -23,33 +23,38 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Hide AppBar for home page (currentIndex = 0)
+    final showAppBar = currentIndex != 0;
+
     return Scaffold(
       backgroundColor: AppTheme.warmBeige,
       drawer: drawer,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryEmerald,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontFamily: 'UthmanTaha',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        leading: showBackButton
-            ? BackButton(onPressed: () => Navigator.pop(context))
-            : null,
-        actions: actions,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppTheme.accentGold),
-        ),
-      ),
+      appBar: showAppBar
+          ? AppBar(
+              backgroundColor: AppTheme.primaryEmerald,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'UthmanTaha',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              iconTheme: const IconThemeData(color: Colors.white),
+              leading: showBackButton
+                  ? BackButton(onPressed: () => Navigator.pop(context))
+                  : null,
+              actions: actions,
+              bottom: const PreferredSize(
+                preferredSize: Size.fromHeight(1),
+                child: Divider(height: 1, color: AppTheme.accentGold),
+              ),
+            )
+          : null,
       body: body,
       bottomNavigationBar: onTabSelected != null
           ? BottomNavigationBar(

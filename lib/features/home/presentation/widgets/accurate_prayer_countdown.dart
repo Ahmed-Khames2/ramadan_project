@@ -94,7 +94,6 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
 
     final hours = _timeLeft.inHours;
     final minutes = _timeLeft.inMinutes % 60;
-    final seconds = _timeLeft.inSeconds % 60;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacing4),
@@ -155,19 +154,11 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '$hours:$minutes:$seconds', // Simple rendering
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
+                          'متبقي $hours ساعة و $minutes دقيقة',
+                          style: GoogleFonts.cairo(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'متبقي',
-                          style: GoogleFonts.cairo(
-                            fontSize: 14,
-                            color: Colors.white70,
                           ),
                         ),
                       ],

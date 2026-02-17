@@ -19,13 +19,46 @@ class AllWorshipsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'جميع العبادات',
-            style: GoogleFonts.cairo(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDark,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryEmerald.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  FontAwesomeIcons.kaaba,
+                  size: 16,
+                  color: AppTheme.primaryEmerald,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'جميع العبادات',
+                style: GoogleFonts.cairo(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                height: 1,
+                width: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryEmerald.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppTheme.spacing4),
           GridView.count(

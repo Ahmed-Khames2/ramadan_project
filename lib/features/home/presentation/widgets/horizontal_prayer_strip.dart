@@ -15,7 +15,7 @@ class HorizontalPrayerStrip extends StatelessWidget {
       builder: (context, state) {
         if (state is PrayerLoaded) {
           return SizedBox(
-            height: 100, // Fixed height for the strip
+            height: 125, // Increased height to fix overflow
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppTheme.spacing4,
@@ -54,45 +54,99 @@ class _PrayerItem extends StatelessWidget {
         ? Colors.transparent
         : AppTheme.primaryEmerald.withOpacity(0.2);
 
-    return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      width: 90,
+      padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        gradient: isCurrent
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryEmerald,
+                  AppTheme.primaryEmerald.withOpacity(0.8),
+                ],
+              )
+            : null,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: isCurrent
             ? [
                 BoxShadow(
-                  color: AppTheme.primaryEmerald.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  color: AppTheme.primaryEmerald.withOpacity(0.35),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -2,
                 ),
               ]
-            : null,
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            prayer.nameArabic,
-            style: GoogleFonts.cairo(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          // Prayer Icon with subtle glow if current
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isCurrent
+                  ? Colors.white.withOpacity(0.15)
+                  : AppTheme.primaryEmerald.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getPrayerIcon(prayer.nameEnglish),
+              size: 22,
               color: textColor,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+          // Prayer Name
           Text(
-            DateFormat('h:mm a').format(prayer.time),
+            prayer.nameArabic,
+            style: GoogleFonts.cairo(
+              fontSize: 13,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Prayer Time
+          Text(
+            DateFormat('h:mm a', 'ar').format(prayer.time),
             style: GoogleFonts.outfit(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
               color: timeColor,
             ),
           ),
         ],
       ),
     );
+  }
+
+  IconData _getPrayerIcon(String prayerName) {
+    switch (prayerName.toLowerCase()) {
+      case 'fajr':
+        return Icons.wb_twilight_rounded;
+      case 'dhuhr':
+        return Icons.wb_sunny_rounded;
+      case 'asr':
+        return Icons.wb_cloudy_rounded;
+      case 'maghrib':
+        return Icons.nights_stay_rounded;
+      case 'isha':
+        return Icons.bedtime_rounded;
+      default:
+        return Icons.access_time_rounded;
+    }
   }
 }
