@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart'; // For IslamicCard
-import 'package:ramadan_project/features/quran/presentation/pages/surah_index_page.dart';
+import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 import 'package:ramadan_project/features/azkar/presentation/pages/azkar_categories_page.dart';
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
 import 'package:ramadan_project/features/azkar/presentation/pages/tasbih_page.dart';
@@ -77,7 +77,7 @@ class AllWorshipsSection extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const SurahIndexPage(),
+                    builder: (context) => const EnhancedSurahIndexPage(),
                   ),
                 ),
               ),

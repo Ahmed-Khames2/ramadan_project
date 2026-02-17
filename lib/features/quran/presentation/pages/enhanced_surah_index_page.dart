@@ -9,10 +9,10 @@ import 'package:ramadan_project/features/favorites/presentation/pages/favorites_
 import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
 import 'package:ramadan_project/presentation/widgets/custom_search_bar.dart';
 import '../widgets/index/surah_tile.dart';
-import '../widgets/index/juz_tile.dart';
 import '../widgets/index/search_result_tile.dart';
 import '../widgets/index/surah_filter_chip.dart';
 import '../widgets/index/juz_picker.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class EnhancedSurahIndexPage extends StatefulWidget {
   const EnhancedSurahIndexPage({super.key});
@@ -21,11 +21,19 @@ class EnhancedSurahIndexPage extends StatefulWidget {
   State<EnhancedSurahIndexPage> createState() => _EnhancedSurahIndexPageState();
 }
 
-class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
-    with SingleTickerProviderStateMixin {
+class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   final TextEditingController _searchController = TextEditingController();
-  late final List<SurahInfo> _surahList;
-  late TabController _tabController;
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
+  late final List<SurahInfo> _allSurahs;
+
+  // Mixed list of SurahInfo and Integer (for Juz headers)
+  List<dynamic> _displayList = [];
+
+  // Maps Juz number (1-30) to index in _displayList
+  final Map<int, int> _juzIndexMap = {};
 
   String? _selectedRevelationType; // null, 'Makkah', 'Madinah'
   int? _selectedJuz; // 1-30
@@ -33,8 +41,70 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _surahList = _getSurahList();
+    _allSurahs = _getSurahList();
+    _updateDisplayList();
+  }
+
+  void _updateDisplayList() {
+    _displayList.clear();
+    _juzIndexMap.clear();
+
+    // 1. Filter Surahs first based on type (Makki/Madani)
+    List<SurahInfo> filteredSurahs = _allSurahs;
+    if (_selectedRevelationType != null) {
+      filteredSurahs = filteredSurahs
+          .where((s) => s.revelationType == _selectedRevelationType)
+          .toList();
+    }
+
+    // 2. Build the display list with Dividers
+    int currentJuzTracker = 0;
+
+    for (var surah in filteredSurahs) {
+      final startJuz = quran.getJuzNumber(surah.number, 1);
+
+      if (startJuz > currentJuzTracker) {
+        _displayList.add(startJuz); // Integer indicates a Header
+        currentJuzTracker = startJuz;
+      }
+      _displayList.add(surah);
+    }
+
+    // 3. Build the Scrolling Map (Juz -> Index)
+    for (int j = 1; j <= 30; j++) {
+      try {
+        final Map<int, List<int>> juzData = quran.getSurahAndVersesFromJuz(j);
+        final int firstSurahInJuz = juzData.keys.first;
+
+        int foundIndex = -1;
+        for (int i = 0; i < _displayList.length; i++) {
+          if (_displayList[i] is SurahInfo) {
+            if ((_displayList[i] as SurahInfo).number == firstSurahInJuz) {
+              foundIndex = i;
+              break;
+            }
+          }
+        }
+
+        if (foundIndex != -1) {
+          if (foundIndex > 0 && _displayList[foundIndex - 1] is int) {
+            if (_displayList[foundIndex - 1] == j) {
+              foundIndex--;
+            }
+          }
+          _juzIndexMap[j] = foundIndex;
+        }
+      } catch (e) {
+        // Handle edge case
+      }
+    }
+  }
+
+  Future<void> _scrollToJuz(int juz) async {
+    final index = _juzIndexMap[juz];
+    if (index != null) {
+      _itemScrollController.jumpTo(index: index);
+    }
   }
 
   @override
@@ -60,26 +130,9 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
     });
   }
 
-  List<SurahInfo> get _filteredSurahs {
-    var filtered = _surahList;
-    if (_selectedRevelationType != null) {
-      filtered = filtered
-          .where((s) => s.revelationType == _selectedRevelationType)
-          .toList();
-    }
-    if (_selectedJuz != null) {
-      filtered = filtered.where((s) {
-        final juz = quran.getJuzNumber(s.number, 1);
-        return juz == _selectedJuz;
-      }).toList();
-    }
-    return filtered;
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -109,20 +162,6 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
             tooltip: 'المفضلة',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.accentGold,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: GoogleFonts.cairo(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-          tabs: const [
-            Tab(text: 'السور'),
-            Tab(text: 'الأجزاء'),
-          ],
-        ),
       ),
       body: DecorativeBackground(
         child: Column(
@@ -154,10 +193,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
                     );
                   }
 
-                  return TabBarView(
-                    controller: _tabController,
-                    children: [_buildSurahList(), _buildJuzList()],
-                  );
+                  return _buildSurahList();
                 },
               ),
             ),
@@ -212,24 +248,44 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
             SurahFilterChip(
               label: 'الكل',
               isSelected: _selectedRevelationType == null,
-              onTap: () => setState(() => _selectedRevelationType = null),
+              onTap: () {
+                setState(() {
+                  _selectedRevelationType = null;
+                  _updateDisplayList();
+                });
+              },
             ),
             const SizedBox(width: 8),
             SurahFilterChip(
               label: 'مكية',
               isSelected: _selectedRevelationType == 'Makkah',
-              onTap: () => setState(() => _selectedRevelationType = 'Makkah'),
+              onTap: () {
+                setState(() {
+                  _selectedRevelationType = 'Makkah';
+                  _updateDisplayList();
+                });
+              },
             ),
             const SizedBox(width: 8),
             SurahFilterChip(
               label: 'مدنية',
               isSelected: _selectedRevelationType == 'Madinah',
-              onTap: () => setState(() => _selectedRevelationType = 'Madinah'),
+              onTap: () {
+                setState(() {
+                  _selectedRevelationType = 'Madinah';
+                  _updateDisplayList();
+                });
+              },
             ),
             const SizedBox(width: 16),
             JuzPicker(
               selectedJuz: _selectedJuz,
-              onChanged: (val) => setState(() => _selectedJuz = val),
+              onChanged: (val) {
+                setState(() => _selectedJuz = val);
+                if (val != null) {
+                  _scrollToJuz(val);
+                }
+              },
             ),
           ],
         ),
@@ -238,27 +294,56 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage>
   }
 
   Widget _buildSurahList() {
-    final surahs = _filteredSurahs;
-    return ListView.builder(
+    return ScrollablePositionedList.builder(
       padding: const EdgeInsets.all(AppTheme.spacing4),
-      itemCount: surahs.length,
-      itemBuilder: (context, index) => SurahTile(surah: surahs[index]),
-    );
-  }
-
-  Widget _buildJuzList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppTheme.spacing4),
-      itemCount: 30,
+      itemCount: _displayList.length,
+      itemScrollController: _itemScrollController,
+      itemPositionsListener: _itemPositionsListener,
       itemBuilder: (context, index) {
-        final juzNumber = index + 1;
-        final firstSurahName = _surahList
-            .firstWhere(
-              (s) => quran.getJuzNumber(s.number, 1) == juzNumber,
-              orElse: () => _surahList[0],
-            )
-            .nameArabic;
-        return JuzTile(juzNumber: juzNumber, firstSurahName: firstSurahName);
+        final item = _displayList[index];
+        if (item is int) {
+          // It's a Juz Header
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Divider(color: AppTheme.accentGold.withOpacity(0.5)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryEmerald.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.primaryEmerald.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Text(
+                      'الجزء $item',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryEmerald,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(color: AppTheme.accentGold.withOpacity(0.5)),
+                ),
+              ],
+            ),
+          );
+        } else if (item is SurahInfo) {
+          return SurahTile(surah: item);
+        }
+        return const SizedBox.shrink();
       },
     );
   }
