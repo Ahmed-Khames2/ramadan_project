@@ -9,7 +9,6 @@ import 'dart:async';
 import 'package:ramadan_project/features/azkar/data/models/azkar_model.dart';
 import 'package:ramadan_project/features/azkar/presentation/bloc/azkar_bloc.dart';
 
-
 class AzkarDetailsPage extends StatefulWidget {
   final AzkarItem azkarItem;
   const AzkarDetailsPage({super.key, required this.azkarItem});
@@ -57,26 +56,35 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecorativeBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              _buildProgressBar(),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: widget.azkarItem.azkarTexts.length,
-                  onPageChanged: (index) =>
-                      setState(() => _currentIndex = index),
-                  itemBuilder: (context, index) {
-                    final zekr = widget.azkarItem.azkarTexts[index];
-                    return _buildZekrCard(context, zekr);
-                  },
+      body: GestureDetector(
+        onTap: () {
+          final currentZekr = widget.azkarItem.azkarTexts[_currentIndex];
+          final currentCount =
+              context.read<AzkarBloc>().state.progress[currentZekr.id] ?? 0;
+          _handleTap(currentZekr, currentCount);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: DecorativeBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                _buildProgressBar(),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: widget.azkarItem.azkarTexts.length,
+                    onPageChanged: (index) =>
+                        setState(() => _currentIndex = index),
+                    itemBuilder: (context, index) {
+                      final zekr = widget.azkarItem.azkarTexts[index];
+                      return _buildZekrContent(context, zekr);
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -122,181 +130,203 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
     final total = widget.azkarItem.azkarTexts.length;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Stack(
+      child: Column(
         children: [
-          Container(
-            height: 6,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryEmerald.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 6,
-            width:
-                MediaQuery.of(context).size.width *
-                ((_currentIndex + 1) / total),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primaryEmerald, AppTheme.accentGold],
-              ),
-              borderRadius: BorderRadius.circular(3),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryEmerald.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryEmerald.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-              ],
-            ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+                height: 8,
+                width:
+                    MediaQuery.of(context).size.width *
+                    ((_currentIndex + 1) / total),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryEmerald, AppTheme.accentGold],
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryEmerald.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'التقدم: ${((_currentIndex + 1) / total * 100).toInt()}%',
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  color: AppTheme.textGrey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${_currentIndex + 1} / $total',
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  color: AppTheme.textGrey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildZekrCard(BuildContext context, ZekrModel zekr) {
+  Widget _buildZekrContent(BuildContext context, ZekrModel zekr) {
     return BlocBuilder<AzkarBloc, AzkarState>(
       builder: (context, state) {
         final currentCount = state.progress[zekr.id] ?? 0;
         final isCompleted = currentCount >= zekr.repeat;
 
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: Container(
+        return Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
-                    vertical: 32,
+                    vertical: 16,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryEmerald.withOpacity(0.08),
-                        blurRadius: 40,
-                        offset: const Offset(0, 15),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        zekr.text,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.cairo(
+                          fontSize: 26, // Larger font for full screen
+                          height: 1.6,
+                          color: AppTheme.textDark,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ],
-                    border: Border.all(
-                      color: isCompleted
-                          ? AppTheme.primaryEmerald
-                          : AppTheme.accentGold.withOpacity(0.2),
-                      width: 2,
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        Text(
-                          zekr.text,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.cairo(
-                            fontSize: 20,
-                            color: AppTheme.textDark,
-                            height: 1.8,
+                      if (zekr.source?.isNotEmpty ?? false) ...[
+                        const SizedBox(height: 32),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentGold.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            zekr.source!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              color: AppTheme.textGrey,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         ),
-                        if (zekr.source?.isNotEmpty ?? false) ...[
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppTheme.warmBeige.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              zekr.source!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.cairo(
-                                fontSize: 13,
-                                fontStyle: FontStyle.italic,
-                                color: AppTheme.textGrey,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
+                      const SizedBox(height: 100), // Space for bottom counter
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              _buildCounterButton(zekr, currentCount, isCompleted),
-              const SizedBox(height: 24),
-              Text(
-                'الذكر ${_currentIndex + 1} من ${widget.azkarItem.azkarTexts.length}',
-                style: GoogleFonts.cairo(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textGrey,
-                ),
-              ),
-            ],
-          ),
+            ),
+            // Floating Counter Indicator at the bottom
+            Container(
+              padding: const EdgeInsets.only(bottom: 30),
+              child: _buildCircularIndicator(zekr, currentCount, isCompleted),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildCounterButton(
+  Widget _buildCircularIndicator(
     ZekrModel zekr,
     int currentCount,
     bool isCompleted,
   ) {
-    return GestureDetector(
-      onTap: () => _handleTap(zekr, currentCount),
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 100),
-        scale: _canTap ? 1.0 : 0.95,
-        child: Container(
-          width: 130,
-          height: 130,
+    final progress = currentCount / zekr.repeat;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Background Glow
+        if (isCompleted)
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryEmerald.withOpacity(0.4),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+          ),
+        SizedBox(
+          width: 80,
+          height: 80,
+          child: CircularProgressIndicator(
+            value: progress,
+            strokeWidth: 6,
+            backgroundColor: AppTheme.textGrey.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              isCompleted ? AppTheme.primaryEmerald : AppTheme.accentGold,
+            ),
+            strokeCap: StrokeCap.round,
+          ),
+        ),
+        Container(
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isCompleted ? AppTheme.primaryEmerald : Colors.white,
-            border: Border.all(color: AppTheme.primaryEmerald, width: 6),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryEmerald.withOpacity(0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Center(
             child: isCompleted
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 50)
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${zekr.repeat - currentCount}',
-                        style: GoogleFonts.cairo(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryEmerald,
-                        ),
-                      ),
-                      Text(
-                        'متبقي',
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          color: AppTheme.textGrey,
-                          height: 0.8,
-                        ),
-                      ),
-                    ],
+                ? const Icon(Icons.check, color: Colors.white, size: 30)
+                : Text(
+                    '${zekr.repeat - currentCount}',
+                    style: GoogleFonts.cairo(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryEmerald,
+                      height: 1.1,
+                    ),
                   ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
