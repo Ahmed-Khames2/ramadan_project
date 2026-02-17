@@ -101,7 +101,8 @@ class AllWorshipsSection extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const KhatmahDashboardPage(),
+                    builder: (context) =>
+                        const KhatmahDashboardPage(showBackButton: true),
                   ),
                 ),
               ),

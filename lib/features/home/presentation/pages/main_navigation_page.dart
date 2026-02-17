@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/widgets/main_scaffold.dart';
 import 'package:ramadan_project/features/home/presentation/pages/home_page.dart';
-import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
+import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
 import 'package:ramadan_project/features/azkar/presentation/pages/azkar_categories_page.dart';
 
@@ -17,7 +17,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   final List<Widget> _pages = [
     const HomeDashboardPage(),
-    const MushafPageView(),
+    const EnhancedSurahIndexPage(),
     const KhatmahDashboardPage(),
     const AzkarCategoriesPage(),
   ];

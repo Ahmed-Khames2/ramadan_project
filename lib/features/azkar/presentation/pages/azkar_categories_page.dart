@@ -14,116 +14,117 @@ class AzkarCategoriesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        toolbarHeight: 80, // Increased height for title + subtitle
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'الأذكار اليومية',
-              style: GoogleFonts.cairo(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
-                height: 1.2,
-              ),
-            ),
-            Text(
-              'أذكار المسلم وطمأنينة القلب',
-              style: GoogleFonts.cairo(
-                fontSize: 14,
-                color: AppTheme.textGrey,
-                height: 1.2,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false, // Align to start (Right in RTL)
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppTheme.textDark,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: DecorativeBackground(
         child: SafeArea(
-          child: BlocBuilder<AzkarBloc, AzkarState>(
-            builder: (context, state) {
-              if (state.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryEmerald,
-                  ),
-                );
-              }
-
-              if (state.error != null) {
-                return _buildErrorState();
-              }
-
-              if (state.allAzkar.isEmpty) {
-                return _buildEmptyState();
-              }
-
-              // Filter featured Azkar
-              final morningAzkar = state.allAzkar.firstWhere(
-                (e) => e.category == 'صباح',
-                orElse: () => state.allAzkar.first,
-              );
-              final eveningAzkar = state.allAzkar.firstWhere(
-                (e) => e.category == 'مساء',
-                orElse: () => state.allAzkar.first,
-              );
-
-              // Other categories
-              final otherCategories = state.allAzkar
-                  .map((e) => e.category)
-                  .where((c) => c != 'صباح' && c != 'مساء')
-                  .toSet()
-                  .toList();
-
-              final Map<String, List<AzkarItem>> groupedAzkar = {};
-              for (var cat in otherCategories) {
-                groupedAzkar[cat] = state.allAzkar
-                    .where((e) => e.category == cat)
-                    .toList();
-              }
-
-              return ListView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 20,
-                ),
-                children: [
-                  _buildFeaturedSection(context, morningAzkar, eveningAzkar),
-                  const SizedBox(height: 24),
-                  if (otherCategories.isNotEmpty) ...[
-                    const OrnamentalDivider(),
-                    const SizedBox(height: 24),
-                    ...otherCategories.map((category) {
-                      final items = groupedAzkar[category]!;
-                      // For other categories, we might have multiple items per category,
-                      // or just one. The user wants "same idea as morning/evening".
-                      // If a category has multiple items, we render them as a list of cards.
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: items.map((item) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: _buildPremiumCard(context, item),
-                          );
-                        }).toList(),
-                      );
-                    }),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'الأذكار اليومية',
+                      style: GoogleFonts.cairo(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryEmerald,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'أذكار المسلم وطمأنينة القلب',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        color: AppTheme.textGrey,
+                        height: 1.2,
+                      ),
+                    ),
                   ],
-                ],
-              );
-            },
+                ),
+              ),
+              Expanded(
+                child: BlocBuilder<AzkarBloc, AzkarState>(
+                  builder: (context, state) {
+                    if (state.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryEmerald,
+                        ),
+                      );
+                    }
+
+                    if (state.error != null) {
+                      return _buildErrorState();
+                    }
+
+                    if (state.allAzkar.isEmpty) {
+                      return _buildEmptyState();
+                    }
+
+                    // Filter featured Azkar
+                    final morningAzkar = state.allAzkar.firstWhere(
+                      (e) => e.category == 'صباح',
+                      orElse: () => state.allAzkar.first,
+                    );
+                    final eveningAzkar = state.allAzkar.firstWhere(
+                      (e) => e.category == 'مساء',
+                      orElse: () => state.allAzkar.first,
+                    );
+
+                    // Other categories
+                    final otherCategories = state.allAzkar
+                        .map((e) => e.category)
+                        .where((c) => c != 'صباح' && c != 'مساء')
+                        .toSet()
+                        .toList();
+
+                    final Map<String, List<AzkarItem>> groupedAzkar = {};
+                    for (var cat in otherCategories) {
+                      groupedAzkar[cat] = state.allAzkar
+                          .where((e) => e.category == cat)
+                          .toList();
+                    }
+
+                    return ListView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 20,
+                      ),
+                      children: [
+                        _buildFeaturedSection(
+                          context,
+                          morningAzkar,
+                          eveningAzkar,
+                        ),
+                        const SizedBox(height: 24),
+                        if (otherCategories.isNotEmpty) ...[
+                          const OrnamentalDivider(),
+                          const SizedBox(height: 24),
+                          ...otherCategories.map((category) {
+                            final items = groupedAzkar[category]!;
+                            // For other categories, we might have multiple items per category,
+                            // or just one. The user wants "same idea as morning/evening".
+                            // If a category has multiple items, we render them as a list of cards.
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: items.map((item) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: _buildPremiumCard(context, item),
+                                );
+                              }).toList(),
+                            );
+                          }),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
