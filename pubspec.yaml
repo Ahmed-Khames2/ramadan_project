@@ -60,6 +60,9 @@ dependencies:
   wakelock_plus: ^1.4.0
   rxdart: ^0.28.0
   bloc: ^8.1.4
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:

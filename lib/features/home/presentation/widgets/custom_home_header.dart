@@ -68,6 +68,14 @@ class CustomHomeHeader extends StatelessWidget {
   }
 
   Widget _buildLocationSelector(BuildContext context, PrayerLoaded state) {
+    // Find the matching governorate in the list to set as initial value
+    // This handles the case where selectedGovernorate has a dynamic Arabic name
+    // but corresponds to the "Current Location" item in the list.
+    final selectedInList = state.governorates.firstWhere(
+      (g) => g.nameEnglish == state.selectedGovernorate.nameEnglish,
+      orElse: () => state.selectedGovernorate,
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -76,7 +84,7 @@ class CustomHomeHeader extends StatelessWidget {
         border: Border.all(color: AppTheme.primaryEmerald.withOpacity(0.2)),
       ),
       child: PopupMenuButton<Governorate>(
-        initialValue: state.selectedGovernorate,
+        initialValue: selectedInList,
         position: PopupMenuPosition.under,
         offset: const Offset(0, 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -109,7 +117,8 @@ class CustomHomeHeader extends StatelessWidget {
         },
         itemBuilder: (context) {
           return state.governorates.map((gov) {
-            final isSelected = gov == state.selectedGovernorate;
+            final isSelected =
+                gov.nameEnglish == state.selectedGovernorate.nameEnglish;
             return PopupMenuItem(
               value: gov,
               child: Row(
