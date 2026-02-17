@@ -208,7 +208,9 @@ class QuranRepositoryImpl implements QuranRepository {
     if (query.trim().isEmpty) return [];
     if (!_isSearchCacheInitialized) await _initializeSearchCache();
 
-    return await compute(_performSearch, {
+    // Run search directly on main thread to avoid Isolate serialization overhead
+    // The dataset (6236 verses) is small enough for modern devices to search in <16ms
+    return _performSearch({
       'query': query,
       'surahNames': _normalizedSurahNameCache,
       'ayahs': _normalizedAyahCache,
@@ -399,6 +401,7 @@ class QuranRepositoryImpl implements QuranRepository {
     final Map<int, Map<int, String>> ayahs = params['ayahs'];
     List<Map<String, dynamic>> results = [];
 
+    // Search Surah Names
     for (int i = 1; i <= 114; i++) {
       if (surahNames[i]!.contains(query)) {
         results.add({
@@ -410,19 +413,26 @@ class QuranRepositoryImpl implements QuranRepository {
       }
     }
 
+    // Search Ayahs
+    // We can stop after a reasonable number of results to keep UI fast
+    int count = 0;
     for (int s = 1; s <= 114; s++) {
       ayahs[s]!.forEach((v, text) {
         if (text.contains(query)) {
-          results.add({
-            'type': 'ayah',
-            'surahNumber': s,
-            'verseNumber': v,
-            'text': quran.getVerse(s, v, verseEndSymbol: false),
-            'subtitle': '${quran.getSurahNameArabic(s)} : $v',
-          });
+          // Limit ayah results mixed with surah results
+          if (count < 50) {
+            results.add({
+              'type': 'ayah',
+              'surahNumber': s,
+              'verseNumber': v,
+              'text': quran.getVerse(s, v, verseEndSymbol: false),
+              'subtitle': '${quran.getSurahNameArabic(s)} : $v',
+            });
+            count++;
+          }
         }
       });
-      if (results.length > 50) break;
+      if (count >= 50) break;
     }
     return results;
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/domain/entities/surah_info.dart';
@@ -51,12 +52,34 @@ class SurahTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${surah.ayahCount} آيات • الصفحة ${surah.startPage}',
-                      style: GoogleFonts.cairo(
-                        fontSize: 12,
-                        color: AppTheme.textGrey,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '${surah.ayahCount} آيات',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: AppTheme.textGrey,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.textGrey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getJuzText(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: AppTheme.primaryEmerald,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -71,6 +94,17 @@ class SurahTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getJuzText() {
+    int start = quran.getJuzNumber(surah.number, 1);
+    int end = quran.getJuzNumber(surah.number, surah.ayahCount);
+
+    if (start == end) {
+      return 'الجزء $start';
+    } else {
+      return 'الأجزاء $start - ${end - 1}';
+    }
   }
 
   Widget _buildNumberIcon() {
