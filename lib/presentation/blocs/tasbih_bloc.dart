@@ -118,8 +118,9 @@ class TasbihBloc extends Bloc<TasbihEvent, TasbihState> {
       final newState = state.copyWith(
         targetCount: event.totalBeads,
         material: event.material,
-        count: 0,
-        rounds: 0,
+        // Preserve current count and rounds as requested
+        count: state.count,
+        rounds: state.rounds,
       );
       _saveState(newState);
       emit(newState);

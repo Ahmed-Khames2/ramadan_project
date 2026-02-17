@@ -117,7 +117,7 @@ class _TasbihPageState extends State<TasbihPage>
       if (currentIndex > _lastBeadIndex) {
         // Moving forward
         _tasbihBloc.add(IncrementCount());
-        HapticFeedback.lightImpact();
+        // HapticFeedback removed as requested
       }
       _lastBeadIndex = currentIndex;
     }
@@ -152,8 +152,7 @@ class _TasbihPageState extends State<TasbihPage>
                 previous.rounds != current.rounds,
             listener: (context, state) {
               if (state.rounds > 0) {
-                // Round completion feedback
-                HapticFeedback.heavyImpact();
+                // Round completion feedback (Vibration removed)
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -214,13 +213,7 @@ class _TasbihPageState extends State<TasbihPage>
               color: AppTheme.primaryEmerald,
             ),
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.settings_outlined,
-              color: AppTheme.primaryEmerald,
-            ),
-            onPressed: () => _showSettings(context),
-          ),
+          const SizedBox(width: 48), // Spacer to balance the back button
         ],
       ),
     );
@@ -295,7 +288,7 @@ class _TasbihPageState extends State<TasbihPage>
           // Lock automated detection briefly to avoid double-counting the tap animation
           _lockBeadPassDetection = true;
           _tasbihBloc.add(IncrementCount());
-          HapticFeedback.mediumImpact();
+          // HapticFeedback removed as requested
 
           setState(() {
             _updateRotation(0.2); // Animate forward slightly on tap
@@ -313,7 +306,8 @@ class _TasbihPageState extends State<TasbihPage>
             child: CustomPaint(
               painter: TasbihPainter(
                 angle: _rotationAngle,
-                beadCount: state.targetCount,
+                beadCount:
+                    33, // Fixed to 33 beads visually for aesthetic consistency
                 material: state.material,
               ),
             ),
@@ -335,9 +329,6 @@ class _TasbihPageState extends State<TasbihPage>
               _rotationAngle = 0.0;
               _lastBeadIndex = 0;
             });
-          }),
-          _buildActionButton(Icons.vibration_rounded, 'الاهتزاز', () {
-            HapticFeedback.heavyImpact();
           }),
           _buildActionButton(
             Icons.tune_rounded,

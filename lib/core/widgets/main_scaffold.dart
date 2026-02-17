@@ -23,66 +23,139 @@ class MainScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Hide AppBar for home page (currentIndex = 0)
-    final showAppBar = currentIndex != 0;
-
     return Scaffold(
       backgroundColor: AppTheme.warmBeige,
+      // No global AppBar as requested
+      appBar: null,
+      extendBody: true, // Content flows behind the floating NavBar
       drawer: drawer,
-      appBar: showAppBar
-          ? AppBar(
-              backgroundColor: AppTheme.primaryEmerald,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              centerTitle: true,
-              title: Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'UthmanTaha',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              iconTheme: const IconThemeData(color: Colors.white),
-              leading: showBackButton
-                  ? BackButton(onPressed: () => Navigator.pop(context))
-                  : null,
-              actions: actions,
-              bottom: const PreferredSize(
-                preferredSize: Size.fromHeight(1),
-                child: Divider(height: 1, color: AppTheme.accentGold),
-              ),
-            )
-          : null,
       body: body,
       bottomNavigationBar: onTabSelected != null
-          ? BottomNavigationBar(
+          ? _ModernFloatingNavBar(
               currentIndex: currentIndex,
-              onTap: onTabSelected,
-              selectedItemColor: AppTheme.primaryEmerald,
-              unselectedItemColor: AppTheme.textGrey,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'الرئيسية',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.menu_book),
-                  label: 'المصحف',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.track_changes),
-                  label: 'الختمة',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite),
-                  label: 'الأذكار',
-                ),
-              ],
+              onTap: onTabSelected!,
             )
           : null,
+    );
+  }
+}
+
+class _ModernFloatingNavBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTap;
+
+  const _ModernFloatingNavBar({
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      height: 70,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryEmerald,
+            AppTheme.primaryEmerald.withOpacity(0.9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(35),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryEmerald.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _NavBarItem(
+            icon: Icons.home_rounded,
+            label: 'الرئيسية',
+            isSelected: currentIndex == 0,
+            onTap: () => onTap(0),
+          ),
+          _NavBarItem(
+            icon: Icons.menu_book_rounded,
+            label: 'المصحف',
+            isSelected: currentIndex == 1,
+            onTap: () => onTap(1),
+          ),
+          _NavBarItem(
+            icon: Icons.auto_graph_rounded,
+            label: 'الختمة',
+            isSelected: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavBarItem(
+            icon: Icons.favorite_rounded,
+            label: 'الأذكار',
+            isSelected: currentIndex == 3,
+            onTap: () => onTap(3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavBarItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavBarItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(35),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.white.withOpacity(0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+              size: 26,
+            ),
+            if (isSelected) ...[
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
