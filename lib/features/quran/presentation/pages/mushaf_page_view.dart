@@ -80,7 +80,7 @@ class _MushafPageViewState extends State<MushafPageView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FutureBuilder(
         future: _initFuture,
         builder: (context, snapshot) {

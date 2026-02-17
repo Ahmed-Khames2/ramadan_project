@@ -35,27 +35,18 @@ void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  await initializeDateFormatting('ar', null);
+  // Initialize essential services
+  await Future.wait([initializeDateFormatting('ar', null), Hive.initFlutter()]);
 
-  // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
-  // ... (Hive init)
-  await Hive.initFlutter();
-  // ... (Adapters)
-  if (!Hive.isAdapterRegistered(0))
-    Hive.registerAdapter(UserProgressModelAdapter());
-  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(FavoriteAyahAdapter());
-  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(KhatmahPlanAdapter());
-  if (!Hive.isAdapterRegistered(3))
-    Hive.registerAdapter(KhatmahHistoryEntryAdapter());
-  if (!Hive.isAdapterRegistered(4))
-    Hive.registerAdapter(KhatmahMilestoneAdapter());
+  // Register Hive Adapters
+  _registerHiveAdapters();
 
-  await Hive.openBox('tasbih');
-  await Hive.openBox('azkar_progress');
+  // Open Hive Boxes
+  await Future.wait([Hive.openBox('tasbih'), Hive.openBox('azkar_progress')]);
 
-  // ... (DataSources & Repositories)
+  // Initialize DataSources & Repositories
   final quranDataSource = QuranLocalDataSource();
   await quranDataSource.init();
 
@@ -84,6 +75,17 @@ void main() async {
       prefs: prefs,
     ),
   );
+}
+
+void _registerHiveAdapters() {
+  if (!Hive.isAdapterRegistered(0))
+    Hive.registerAdapter(UserProgressModelAdapter());
+  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(FavoriteAyahAdapter());
+  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(KhatmahPlanAdapter());
+  if (!Hive.isAdapterRegistered(3))
+    Hive.registerAdapter(KhatmahHistoryEntryAdapter());
+  if (!Hive.isAdapterRegistered(4))
+    Hive.registerAdapter(KhatmahMilestoneAdapter());
 }
 
 class MyApp extends StatelessWidget {
