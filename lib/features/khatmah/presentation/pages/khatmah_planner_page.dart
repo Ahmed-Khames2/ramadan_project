@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
-
+import 'package:ramadan_project/core/widgets/common_widgets.dart';
+import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
 
 class KhatmahPlannerPage extends StatefulWidget {
-  const KhatmahPlannerPage({super.key});
+  final KhatmahPlan? initialPlan;
+  const KhatmahPlannerPage({super.key, this.initialPlan});
 
   @override
   State<KhatmahPlannerPage> createState() => _KhatmahPlannerPageState();
@@ -19,10 +21,8 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   bool _useCustomDays = false;
   bool _restDaysEnabled = false;
   final List<int> _selectedRestDays = [];
-  final TextEditingController _titleController = TextEditingController(
-    text: 'ختمة جديدة',
-  );
-  DateTime _startDate = DateTime.now();
+  late TextEditingController _titleController;
+  late DateTime _startDate;
 
   final List<Map<String, dynamic>> _durations = [
     {'label': 'شهر واحد', 'months': 1, 'days': 30},
@@ -42,32 +42,118 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(
+      text: widget.initialPlan?.title ?? 'ختمة جديدة',
+    );
+    _startDate = widget.initialPlan?.startDate ?? DateTime.now();
+
+    if (widget.initialPlan != null) {
+      final days = widget.initialPlan!.targetDays;
+      _customDays = days;
+      _restDaysEnabled = widget.initialPlan!.restDaysEnabled;
+      _selectedRestDays.addAll(widget.initialPlan!.restDays);
+
+      final durationIndex = _durations.indexWhere(
+        (d) => d['days'] == days && d['months'] != 0,
+      );
+      if (durationIndex != -1) {
+        _selectedDurationMonths = _durations[durationIndex]['months'];
+        _useCustomDays = false;
+      } else {
+        _useCustomDays = true;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.warmBeige,
-      appBar: AppBar(title: const Text('إعداد خطة الختمة')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacing4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSectionTitle('عنوان الختمة'),
-            _buildTitleInput(),
-            const SizedBox(height: AppTheme.spacing4),
-            _buildSectionTitle('مدة الختمة'),
-            _buildDurationSelection(),
-            if (_useCustomDays) _buildCustomDaysInput(),
-            const SizedBox(height: AppTheme.spacing4),
-            _buildSectionTitle('تاريخ البداية'),
-            _buildStartDatePicker(),
-            const SizedBox(height: AppTheme.spacing4),
-            _buildSectionTitle('أيام الراحة'),
-            _buildRestDaysToggle(),
-            if (_restDaysEnabled) _buildRestDaysPicker(),
-            const SizedBox(height: AppTheme.spacing8),
-            _buildCreateButton(),
-          ],
+      body: DecorativeBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacing4,
+                    vertical: AppTheme.spacing2,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildSectionTitle('عنوان الختمة'),
+                      _buildTitleInput(),
+                      const SizedBox(height: AppTheme.spacing4),
+                      _buildSectionTitle('مدة الختمة'),
+                      _buildDurationSelection(),
+                      if (_useCustomDays) _buildCustomDaysInput(),
+                      const SizedBox(height: AppTheme.spacing4),
+                      _buildSectionTitle('تاريخ البداية'),
+                      _buildStartDatePicker(),
+                      const SizedBox(height: AppTheme.spacing4),
+                      _buildSectionTitle('أيام الراحة'),
+                      _buildRestDaysToggle(),
+                      if (_restDaysEnabled) _buildRestDaysPicker(),
+                      const SizedBox(height: AppTheme.spacing8),
+                      _buildCreateButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppTheme.primaryEmerald,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.initialPlan == null ? 'إعداد الختمة' : 'تعديل الختمة',
+                style: GoogleFonts.cairo(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryEmerald,
+                  height: 1.2,
+                ),
+              ),
+              Text(
+                widget.initialPlan == null
+                    ? 'خطط لأهدافك ووزع وردك بذكاء'
+                    : 'تعديل تفاصيل خطتك الحالية',
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  color: AppTheme.textGrey,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -90,25 +176,43 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   }
 
   Widget _buildTitleInput() {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
       child: TextField(
         controller: _titleController,
         textAlign: TextAlign.right,
         decoration: InputDecoration(
           hintText: 'مثلاً: ختمة رمضان',
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+            horizontal: 20,
+            vertical: 16,
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           fillColor: Colors.transparent,
           hintStyle: GoogleFonts.cairo(
-            color: AppTheme.textGrey.withOpacity(0.5),
+            color: AppTheme.textGrey.withValues(alpha: 0.4),
           ),
         ),
-        style: GoogleFonts.cairo(),
+        style: GoogleFonts.cairo(
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textDark,
+        ),
       ),
     );
   }
@@ -152,12 +256,21 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
           selectedColor: AppTheme.primaryEmerald,
           labelStyle: GoogleFonts.cairo(
             color: isSelected ? Colors.white : AppTheme.textDark,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            fontSize: 13,
           ),
           backgroundColor: AppTheme.surfaceWhite,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isSelected
+                  ? AppTheme.primaryEmerald
+                  : AppTheme.primaryEmerald.withValues(alpha: 0.1),
+              width: 1,
+            ),
           ),
+          elevation: isSelected ? 4 : 0,
+          shadowColor: AppTheme.primaryEmerald.withValues(alpha: 0.3),
           showCheckmark: false,
         );
       },
@@ -167,48 +280,107 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   Widget _buildCustomDaysInput() {
     return Padding(
       padding: const EdgeInsets.only(top: AppTheme.spacing3),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Text('عدد الأيام:', style: GoogleFonts.cairo()),
-              const Spacer(),
-              SizedBox(
-                width: 60,
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    fillColor: Colors.transparent,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _customDays = int.tryParse(value) ?? 30;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text('يوم', style: GoogleFonts.cairo(color: AppTheme.textGrey)),
-            ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+            width: 1,
           ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              'عدد الأيام:',
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
+              width: 80,
+              child: TextField(
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppTheme.primaryEmerald,
+                ),
+                decoration: InputDecoration(
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppTheme.primaryEmerald.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.primaryEmerald),
+                  ),
+                  fillColor: Colors.transparent,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _customDays = int.tryParse(value) ?? 30;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'يوم',
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textGrey,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildStartDatePicker() {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
       child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           intl.DateFormat('yyyy/MM/dd', 'ar').format(_startDate),
-          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
         ),
-        trailing: const Icon(
-          Icons.calendar_today,
-          color: AppTheme.primaryEmerald,
+        trailing: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.calendar_today_rounded,
+            color: AppTheme.primaryEmerald,
+            size: 20,
+          ),
         ),
         onTap: () async {
           final picked = await showDatePicker(
@@ -227,12 +399,35 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   }
 
   Widget _buildRestDaysToggle() {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
       child: SwitchListTile(
-        title: Text('تخصيص أيام راحة', style: GoogleFonts.cairo()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'تخصيص أيام راحة',
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: AppTheme.textDark,
+          ),
+        ),
         subtitle: Text(
           'لن يتم احتساب هذه الأيام في وردك اليومي',
-          style: GoogleFonts.cairo(fontSize: 12),
+          style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textGrey),
         ),
         value: _restDaysEnabled,
         onChanged: (value) => setState(() => _restDaysEnabled = value),
@@ -262,9 +457,23 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
                 }
               });
             },
-            selectedColor: AppTheme.accentGold.withOpacity(0.3),
+            selectedColor: AppTheme.accentGold.withValues(alpha: 0.2),
             checkmarkColor: AppTheme.primaryEmerald,
-            labelStyle: GoogleFonts.cairo(fontSize: 12),
+            labelStyle: GoogleFonts.cairo(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppTheme.darkEmerald : AppTheme.textGrey,
+            ),
+            backgroundColor: AppTheme.surfaceWhite,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: isSelected
+                    ? AppTheme.accentGold
+                    : AppTheme.primaryEmerald.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
           );
         }),
       ),
@@ -289,18 +498,26 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
         );
 
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم إنشاء الخطة بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.initialPlan == null
+                  ? 'تم إنشاء الخطة بنجاح'
+                  : 'تم تحديث الخطة بنجاح',
+            ),
+          ),
+        );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryEmerald,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        elevation: 8,
+        shadowColor: AppTheme.primaryEmerald.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       child: Text(
-        'بدء الختمة',
+        widget.initialPlan == null ? 'بدء الختمة' : 'حفظ التعديلات',
         style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 18),
       ),
     );

@@ -29,9 +29,12 @@ import 'package:ramadan_project/features/khatmah/data/datasources/khatmah_local_
 import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_repository_impl.dart'
     as prayer_repo;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await initializeDateFormatting('ar', null);
 
   // Initialize SharedPreferences
@@ -69,6 +72,9 @@ void main() async {
 
   final favoritesRepository = FavoritesRepository();
   await favoritesRepository.init();
+
+  // Initialization complete - remove splash screen
+  FlutterNativeSplash.remove();
 
   runApp(
     MyApp(
@@ -138,7 +144,7 @@ class MyApp extends StatelessWidget {
           ),
         ],
         child: MaterialApp(
-          title: 'Quran - Ramadan',
+          title: 'زاد المؤمن',
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigationRoutes.navigatorKey,
           theme: AppTheme.lightTheme,

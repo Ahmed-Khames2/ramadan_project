@@ -24,6 +24,7 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
     on<CreateKhatamPlan>(_onCreateKhatamPlan);
     on<CreateAdvancedKhatmahPlan>(_onCreateAdvancedKhatmahPlan);
     on<UpdateProgress>(_onUpdateProgress);
+    on<UpdateKhatmahProgress>(_onUpdateKhatmahProgress);
     on<ToggleReadingMode>(_onToggleReadingMode);
   }
 
@@ -59,7 +60,7 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
       if (khatmahPlan != null) {
         planEntity = calculateKhatamTarget(
           targetDays: khatmahPlan.targetDays,
-          currentProgressPage: progress.lastReadPage ?? 0,
+          currentProgressPage: khatmahPlan.currentProgressPage,
           startDate: khatmahPlan.startDate,
           restDaysEnabled: khatmahPlan.restDaysEnabled,
           restDays: khatmahPlan.restDays,
@@ -167,6 +168,57 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
       add(LoadKhatamData());
     } catch (e) {
       emit(KhatamError("Failed to update progress: $e"));
+    }
+  }
+
+  Future<void> _onUpdateKhatmahProgress(
+    UpdateKhatmahProgress event,
+    Emitter<KhatamState> emit,
+  ) async {
+    try {
+      final plan = khatmahRepository.getKhatmahPlan();
+      if (plan != null) {
+        plan.currentProgressPage = event.page;
+        plan.lastReadAt = DateTime.now();
+        await khatmahRepository.saveKhatmahPlan(plan);
+
+        // Update milestones based on independent progress
+        final totalPages = 604;
+        final percentage = (event.page / totalPages) * 100;
+        final existingMilestones = khatmahRepository.getKhatmahMilestones();
+
+        final List<Map<String, dynamic>> milestoneDefs = [
+          {'id': 'quarter', 'threshold': 25.0, 'title': 'بداية مباركة'},
+          {'id': 'half', 'threshold': 50.0, 'title': 'نصف الطريق'},
+          {
+            'id': 'three_quarters',
+            'threshold': 75.0,
+            'title': 'على وشك الوصول',
+          },
+          {'id': 'complete', 'threshold': 100.0, 'title': 'ختمة مباركة'},
+        ];
+
+        for (var milestone in milestoneDefs) {
+          if (percentage >= (milestone['threshold'] as double)) {
+            final isAlreadyUnlocked = existingMilestones.any(
+              (m) => (m as dynamic).id == milestone['id'],
+            );
+            if (!isAlreadyUnlocked) {
+              await khatmahRepository.unlockMilestone(
+                KhatmahMilestone(
+                  id: milestone['id'] as String,
+                  title: milestone['title'] as String,
+                  unlockedAt: DateTime.now(),
+                  icon: 'star',
+                ),
+              );
+            }
+          }
+        }
+        add(LoadKhatamData());
+      }
+    } catch (e) {
+      emit(KhatamError("Failed to update khatmah progress: $e"));
     }
   }
 

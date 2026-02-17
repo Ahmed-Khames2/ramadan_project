@@ -1,60 +1,142 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
-import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
+import 'package:ramadan_project/features/khatmah/domain/entities/khatam_plan.dart';
+import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'khatmah_planner_page.dart';
 import 'khatmah_history_page.dart';
 
-class KhatmahDashboardPage extends StatelessWidget {
+class KhatmahDashboardPage extends StatefulWidget {
   const KhatmahDashboardPage({super.key});
+
+  @override
+  State<KhatmahDashboardPage> createState() => _KhatmahDashboardPageState();
+}
+
+class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
+  bool _hasAgreedToReadAhead = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.warmBeige,
-      appBar: AppBar(title: const Text('متابعة الختمة')),
-      body: BlocBuilder<KhatamBloc, KhatamState>(
-        builder: (context, state) {
-          if (state is KhatamLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: DecorativeBackground(
+        child: SafeArea(
+          child: BlocBuilder<KhatamBloc, KhatamState>(
+            builder: (context, state) {
+              if (state is KhatamLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryEmerald,
+                  ),
+                );
+              }
 
-          if (state is KhatamLoaded) {
-            final plan = state.plan;
-            final khatmahModel = state.khatmahPlan;
+              if (state is KhatamLoaded) {
+                final plan = state.plan;
+                final khatmahModel = state.khatmahPlan;
 
-            if (khatmahModel == null) {
-              return _buildEmptyState(context);
-            }
+                if (khatmahModel == null) {
+                  return Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(child: _buildEmptyState(context)),
+                    ],
+                  );
+                }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<KhatamBloc>().add(LoadKhatamData());
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppTheme.spacing4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                return Column(
                   children: [
-                    _buildProgressCard(context, plan),
-                    const SizedBox(height: AppTheme.spacing4),
-                    _buildStatsGrid(context, plan),
-                    const SizedBox(height: AppTheme.spacing4),
-                    _buildTodayTargetCard(context, plan),
-                    const SizedBox(height: AppTheme.spacing4),
-                    _buildActionButtons(context),
+                    _buildHeader(context),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          context.read<KhatamBloc>().add(LoadKhatamData());
+                        },
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacing4,
+                            vertical: AppTheme.spacing2,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (plan != null) ...[
+                                _buildProgressHeader(context, plan),
+                                const SizedBox(height: AppTheme.spacing4),
+                                _buildStatsGrid(context, plan),
+                                const SizedBox(height: AppTheme.spacing4),
+                                _buildTodayTargetCard(
+                                  context,
+                                  plan,
+                                  khatmahModel,
+                                ),
+                              ],
+                              const SizedBox(height: AppTheme.spacing4),
+                              _buildActionButtons(context, khatmahModel),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
+                );
+              }
+
+              return Column(
+                children: [
+                  _buildHeader(context),
+                  const Expanded(child: Center(child: Text('حدث خطأ ما'))),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppTheme.primaryEmerald,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'متابعة الختمة',
+                style: GoogleFonts.cairo(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryEmerald,
+                  height: 1.2,
                 ),
               ),
-            );
-          }
-
-          return const Center(child: Text('حدث خطأ ما'));
-        },
+              Text(
+                'نظم خطتك اليومية لختم القرآن الكريم',
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  color: AppTheme.textGrey,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -65,22 +147,22 @@ class KhatmahDashboardPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.menu_book,
-            size: 80,
-            color: AppTheme.primaryEmerald.withOpacity(0.3),
+            Icons.auto_stories,
+            size: 100,
+            color: AppTheme.primaryEmerald.withValues(alpha: 0.2),
           ),
           const SizedBox(height: AppTheme.spacing4),
           Text(
-            'لا توجد ختمة نشطة حالياً',
+            'ابدأ مشروع ختمة جديد',
             style: GoogleFonts.cairo(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
             ),
           ),
           const SizedBox(height: AppTheme.spacing2),
           Text(
-            'ابدأ رحلتك مع القرآن الكريم اليوم',
+            'نظم قراءتك للقرآن الكريم في رمضان',
             style: GoogleFonts.cairo(color: AppTheme.textGrey),
           ),
           const SizedBox(height: AppTheme.spacing6),
@@ -94,83 +176,147 @@ class KhatmahDashboardPage extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryEmerald,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 14),
+              elevation: 4,
+              shadowColor: AppTheme.primaryEmerald.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text('إنشاء خطة ختمة'),
+            child: Text(
+              'إنشاء خطة الآن',
+              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressCard(BuildContext context, dynamic plan) {
-    final progress = plan?.progressPercentage ?? 0.0;
+  Widget _buildProgressHeader(BuildContext context, KhatamPlan plan) {
+    final progress = plan.progressPercentage;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing6),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'التقدم الإجمالي',
-                  style: GoogleFonts.cairo(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing6),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryEmerald.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'الإنجاز العام',
+                      style: GoogleFonts.cairo(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppTheme.textGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      plan.statusMessage,
+                      style: GoogleFonts.cairo(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppTheme.primaryEmerald,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${progress.toStringAsFixed(1)}%',
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${progress.toStringAsFixed(0)}%',
                   style: GoogleFonts.cairo(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
                     color: AppTheme.primaryEmerald,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacing4),
-            LinearProgressIndicator(
-              value: progress / 100,
-              backgroundColor: AppTheme.primaryEmerald.withOpacity(0.1),
-              color: AppTheme.primaryEmerald,
-              minHeight: 12,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            const SizedBox(height: AppTheme.spacing3),
-            Text(
-              plan?.statusMessage ?? '',
-              style: GoogleFonts.cairo(color: AppTheme.textGrey, fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacing6),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress / 100,
+                child: Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryEmerald,
+                        AppTheme.primaryEmerald.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatsGrid(BuildContext context, dynamic plan) {
+  Widget _buildStatsGrid(BuildContext context, KhatamPlan plan) {
+    final bool isAhead = plan.isAhead;
+    final int diff = plan.pagesDifference;
+
     return Row(
       children: [
         Expanded(
           child: _buildStatItem(
-            'عدد الصفحات',
-            '${plan?.currentProgressPage ?? 0}',
-            Icons.pages,
+            'الصفحات المقروءة',
+            '${plan.currentProgressPage}',
+            Icons.menu_book_rounded,
+            AppTheme.primaryEmerald,
           ),
         ),
         const SizedBox(width: AppTheme.spacing3),
         Expanded(
           child: _buildStatItem(
-            'معدل التقدم',
-            plan?.isAhead == true ? 'سابق للجدول' : 'متأخر',
-            plan?.isAhead == true ? Icons.trending_up : Icons.trending_down,
-            color: plan?.isAhead == true ? Colors.green : Colors.orange,
+            (plan.remainingTodayPages) == 0 ? 'حالة التميز' : 'المتبقي اليوم',
+            (plan.remainingTodayPages) == 0
+                ? (isAhead ? 'سابق للجدول' : 'ماشي عالمسطرة')
+                : '${plan.remainingTodayPages} صفحة',
+            (plan.remainingTodayPages) == 0
+                ? Icons.stars_rounded
+                : Icons.hourglass_top_rounded,
+            (plan.remainingTodayPages) == 0
+                ? Colors.green.shade700
+                : AppTheme.accentGold,
+            subtitle: (plan.remainingTodayPages) == 0 && diff > 0
+                ? '+$diff صفحة مسبقة'
+                : null,
           ),
         ),
       ],
@@ -180,185 +326,390 @@ class KhatmahDashboardPage extends StatelessWidget {
   Widget _buildStatItem(
     String label,
     String value,
-    IconData icon, {
-    Color? color,
+    IconData icon,
+    Color color, {
+    String? subtitle,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing4),
-        child: Column(
-          children: [
-            Icon(icon, color: color ?? AppTheme.accentGold),
-            const SizedBox(height: AppTheme.spacing2),
-            Text(
-              label,
-              style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textGrey),
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing4),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: color.withValues(alpha: 0.5), size: 18),
+          const SizedBox(height: AppTheme.spacing2),
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textGrey,
             ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(
+              height: 1.1,
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              color: AppTheme.textDark,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
             Text(
-              value,
+              subtitle,
               style: GoogleFonts.cairo(
+                fontSize: 9,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: color ?? AppTheme.textDark,
+                color: Colors.green.shade600,
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildTodayTargetCard(BuildContext context, dynamic plan) {
-    if (plan == null) return const SizedBox.shrink();
+  Widget _buildTodayTargetCard(
+    BuildContext context,
+    KhatamPlan plan,
+    KhatmahPlan? khatmahModel,
+  ) {
+    if (khatmahModel == null) return const SizedBox.shrink();
 
-    return Card(
-      color: AppTheme.primaryEmerald,
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing6),
-        child: Column(
-          children: [
-            Text(
-              'ورد اليوم',
-              style: GoogleFonts.cairo(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+    final bool isDoneToday = plan.remainingTodayPages == 0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.spacing6),
+          decoration: BoxDecoration(
+            color: (isDoneToday ? AppTheme.primaryEmerald : AppTheme.accentGold)
+                .withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color:
+                  (isDoneToday ? AppTheme.primaryEmerald : AppTheme.accentGold)
+                      .withValues(alpha: 0.2),
+              width: 2,
             ),
-            const SizedBox(height: AppTheme.spacing3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTargetBox('من صفحة', '${plan.todayTargetStartPage}'),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Icon(
-                    Icons.arrow_forward_ios,
-                    color: AppTheme.softGold,
-                    size: 16,
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDoneToday
+                        ? Icons.task_alt_rounded
+                        : Icons.menu_book_rounded,
+                    color: isDoneToday
+                        ? AppTheme.primaryEmerald
+                        : AppTheme.darkEmerald,
+                    size: 20,
                   ),
-                ),
-                _buildTargetBox('إلى صفحة', '${plan.todayTargetEndPage}'),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacing6),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Navigate to Mushaf at the specific page
-                      Navigator.push(
+                  const SizedBox(width: 8),
+                  Text(
+                    isDoneToday
+                        ? 'الورد القادم (ما تم إنجازه مسبقاً)'
+                        : 'ورد اليوم',
+                    style: GoogleFonts.cairo(
+                      color: isDoneToday
+                          ? AppTheme.primaryEmerald
+                          : AppTheme.darkEmerald,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTheme.spacing4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildTargetBox(
+                    'بدءاً من',
+                    '${plan.dailyTargetStartPage}',
+                    isDoneToday,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    height: 40,
+                    width: 2,
+                    color:
+                        (isDoneToday
+                                ? AppTheme.primaryEmerald
+                                : AppTheme.accentGold)
+                            .withValues(alpha: 0.3),
+                  ),
+                  _buildTargetBox(
+                    'وصولاً إلى',
+                    '${plan.dailyTargetEndPage}',
+                    isDoneToday,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTheme.spacing6),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (isDoneToday) {
+                      if (_hasAgreedToReadAhead) {
+                        _navigateToMushaf(
+                          context,
+                          khatmahModel.currentProgressPage + 1,
+                        );
+                      } else {
+                        _showReadAheadDialog(
+                          context,
+                          khatmahModel.currentProgressPage + 1,
+                        );
+                      }
+                    } else {
+                      _navigateToMushaf(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => MushafPageView(
-                            initialPage: plan.todayTargetStartPage,
-                          ),
-                        ),
+                        khatmahModel.currentProgressPage + 1,
                       );
-                    },
-                    icon: const Icon(Icons.chrome_reader_mode),
-                    label: const Text('اقرأ الآن'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentGold,
-                      foregroundColor: AppTheme.darkEmerald,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    }
+                  },
+                  icon: Icon(
+                    isDoneToday
+                        ? Icons.rocket_launch_rounded
+                        : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(
+                    isDoneToday
+                        ? 'استمر في القراءة المسبقة'
+                        : 'ابدأ القراءة الآن',
+                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDoneToday
+                        ? AppTheme.primaryEmerald
+                        : AppTheme.darkEmerald,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
-                const SizedBox(width: AppTheme.spacing2),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<AudioBloc>().add(
-                        AudioPlayPages(
-                          plan.todayTargetStartPage,
-                          plan.todayTargetEndPage,
-                        ),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('بدأ تشغيل ورد اليوم...'),
-                          backgroundColor: AppTheme.primaryEmerald,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.play_circle_fill),
-                    label: const Text('استمع للورد'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.primaryEmerald,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTargetBox(String label, String value) {
+  Widget _buildTargetBox(String label, String value, bool isHighlight) {
     return Column(
       children: [
         Text(
           label,
-          style: GoogleFonts.cairo(color: Colors.white70, fontSize: 12),
+          style: GoogleFonts.cairo(
+            color: AppTheme.textGrey,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         Text(
           value,
           style: GoogleFonts.cairo(
-            color: Colors.white,
+            color: isHighlight ? AppTheme.primaryEmerald : AppTheme.darkEmerald,
+            fontWeight: FontWeight.w900,
+            fontSize: 32,
+          ),
+        ),
+        Text(
+          'صفحة',
+          style: GoogleFonts.cairo(
+            color: AppTheme.textGrey,
+            fontSize: 10,
             fontWeight: FontWeight.bold,
-            fontSize: 24,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Column(
-      children: [
-        _buildActionButton(
-          context,
-          'تعديل خطة الختمة',
-          Icons.edit_calendar,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const KhatmahPlannerPage()),
+  Widget _buildActionButtons(BuildContext context, KhatmahPlan? khatmahModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-        ),
-        const SizedBox(height: AppTheme.spacing2),
-        _buildActionButton(context, 'سجل الختمات السابقة', Icons.history, () {
-          Navigator.push(
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildPremiumActionButton(
             context,
-            MaterialPageRoute(builder: (_) => const KhatmahHistoryPage()),
-          );
-        }),
-      ],
+            'تعديل خطة الختمة',
+            'عدل الأيام أو عدد الصفحات اليومية',
+            Icons.settings_suggest_rounded,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => KhatmahPlannerPage(initialPlan: khatmahModel),
+              ),
+            ),
+          ),
+          Divider(height: 1, color: AppTheme.accentGold.withValues(alpha: 0.1)),
+          _buildPremiumActionButton(
+            context,
+            'سجل الإنجازات',
+            'راجع رحلتك في ختم القرآن',
+            Icons.history_edu_rounded,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const KhatmahHistoryPage()),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildActionButton(
+  Widget _buildPremiumActionButton(
     BuildContext context,
     String title,
+    String subtitle,
     IconData icon,
     VoidCallback onTap,
   ) {
-    return ListTile(
+    return InkWell(
       onTap: onTap,
-      leading: Icon(icon, color: AppTheme.primaryEmerald),
-      title: Text(title, style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-      tileColor: AppTheme.surfaceWhite,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: AppTheme.primaryEmerald),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.cairo(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: AppTheme.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: AppTheme.textGrey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToMushaf(BuildContext context, int startPage) {
+    final khatamBloc = context.read<KhatamBloc>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MushafPageView(
+          initialPage: startPage,
+          shouldSaveProgress: false,
+          onPageChanged: (page) {
+            khatamBloc.add(UpdateKhatmahProgress(page));
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showReadAheadDialog(BuildContext context, int startPage) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Icon(Icons.rocket_launch_rounded, color: AppTheme.primaryEmerald),
+            const SizedBox(width: 12),
+            Text(
+              'أنت رائع!',
+              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          'لقد أتممت ورد اليوم بنجاح، هل تريد البدء في ورد الغد مسبقاً؟ البرنامج هيفضل يسجل تقدمك تلقائياً.',
+          style: GoogleFonts.cairo(),
+          textAlign: TextAlign.right,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'لاحقاً',
+              style: GoogleFonts.cairo(color: AppTheme.textGrey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _hasAgreedToReadAhead = true;
+              });
+              Navigator.pop(context);
+              _navigateToMushaf(context, startPage);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryEmerald,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text('نعم، استمر', style: GoogleFonts.cairo()),
+          ),
+        ],
+      ),
     );
   }
 }

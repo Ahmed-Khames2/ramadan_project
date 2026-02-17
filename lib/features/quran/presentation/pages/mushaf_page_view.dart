@@ -8,7 +8,15 @@ import 'package:ramadan_project/features/quran/presentation/widgets/continuous_m
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
-  const MushafPageView({super.key, this.initialPage = 1});
+  final bool shouldSaveProgress;
+  final ValueChanged<int>? onPageChanged;
+
+  const MushafPageView({
+    super.key,
+    this.initialPage = 1,
+    this.shouldSaveProgress = true,
+    this.onPageChanged,
+  });
 
   @override
   State<MushafPageView> createState() => _MushafPageViewState();
@@ -92,7 +100,10 @@ class _MushafPageViewState extends State<MushafPageView> {
             reverse: false,
             onPageChanged: (index) {
               _currentPage = _pageForPortraitIndex(index);
-              _saveBookmark(_currentPage);
+              if (widget.shouldSaveProgress) {
+                _saveBookmark(_currentPage);
+              }
+              widget.onPageChanged?.call(_currentPage);
             },
             itemBuilder: (context, index) {
               return ContinuousMushafPageWidget(

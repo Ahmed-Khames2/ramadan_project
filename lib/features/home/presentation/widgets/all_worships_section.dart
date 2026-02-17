@@ -198,7 +198,7 @@ class _ScaleActionCardState extends State<_ScaleActionCard> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: widget.color.withOpacity(0.1),
                     shape: BoxShape.circle,

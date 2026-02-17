@@ -55,3 +55,12 @@ class CreateAdvancedKhatmahPlan extends KhatamEvent {
     title,
   ];
 }
+
+class UpdateKhatmahProgress extends KhatamEvent {
+  final int page;
+
+  const UpdateKhatmahProgress(this.page);
+
+  @override
+  List<Object> get props => [page];
+}
