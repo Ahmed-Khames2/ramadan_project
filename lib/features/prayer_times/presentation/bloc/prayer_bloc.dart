@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/prayer_time.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/governorate.dart';
 import 'package:ramadan_project/features/prayer_times/domain/repositories/prayer_repository.dart';
-
 
 // Events
 abstract class PrayerEvent extends Equatable {
@@ -107,9 +107,13 @@ class PrayerError extends PrayerState {
 // Bloc
 class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   final PrayerRepository repository;
+  final SharedPreferences prefs;
   Timer? _refreshTimer;
 
-  PrayerBloc({required this.repository}) : super(PrayerInitial()) {
+  static const String _kGovernorateKey = 'selected_governorate';
+
+  PrayerBloc({required this.repository, required this.prefs})
+    : super(PrayerInitial()) {
     on<LoadPrayerData>(_onLoadPrayerData);
     on<SelectGovernorate>(_onSelectGovernorate);
     on<RefreshPrayers>(_onRefreshPrayers);
@@ -127,12 +131,19 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     emit(PrayerLoading());
     try {
       final governorates = repository.getGovernorates();
-      final defaultGov = governorates.first; // Cairo
-      final prayerTimes = repository.getPrayerTimes(defaultGov, DateTime.now());
+
+      // Load saved governorate or default to Cairo
+      final savedGovName = prefs.getString(_kGovernorateKey);
+      final initialGov = governorates.firstWhere(
+        (g) => g.nameEnglish == savedGovName,
+        orElse: () => governorates.first, // Default is Cairo
+      );
+
+      final prayerTimes = repository.getPrayerTimes(initialGov, DateTime.now());
 
       final newState = PrayerLoaded(
         governorates: governorates,
-        selectedGovernorate: defaultGov,
+        selectedGovernorate: initialGov,
         prayerTimes: prayerTimes,
         lastUpdated: DateTime.now(),
       );
@@ -150,6 +161,9 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     if (state is PrayerLoaded) {
       final currentState = state as PrayerLoaded;
       try {
+        // Persist selection
+        await prefs.setString(_kGovernorateKey, event.governorate.nameEnglish);
+
         final prayerTimes = repository.getPrayerTimes(
           event.governorate,
           DateTime.now(),

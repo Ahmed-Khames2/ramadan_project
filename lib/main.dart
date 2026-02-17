@@ -27,65 +27,38 @@ import 'package:ramadan_project/features/favorites/data/repositories/favorites_r
 import 'package:ramadan_project/features/khatmah/data/repositories/khatmah_repository_impl.dart';
 import 'package:ramadan_project/features/khatmah/data/datasources/khatmah_local_datasource.dart';
 import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_repository_impl.dart'
-
-// Core
-
-// Features - Quran
-
-// Features - Khatmah
-// import 'package:ramadan_project/features/khatmah/data/models/khatmah_models.dart';
-
-// Features - Azkar
-
-// Features - Audio
-
-// Features - Prayer Times
     as prayer_repo;
-
-// Features - Home
-
-// Features - Favorites
-
-// Shared Models/Services still in legacy path for now
-// import 'package:ramadan_project/data/models/favorite_ayah.dart';
-
-// Search Bloc
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ar', null);
 
+  // Initialize SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
 
-
-  // Initialize Hive
+  // ... (Hive init)
   await Hive.initFlutter();
-  if (!Hive.isAdapterRegistered(0)) {
+  // ... (Adapters)
+  if (!Hive.isAdapterRegistered(0))
     Hive.registerAdapter(UserProgressModelAdapter());
-  }
-  if (!Hive.isAdapterRegistered(1)) {
-    Hive.registerAdapter(FavoriteAyahAdapter());
-  }
-  if (!Hive.isAdapterRegistered(2)) {
-    Hive.registerAdapter(KhatmahPlanAdapter());
-  }
-  if (!Hive.isAdapterRegistered(3)) {
+  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(FavoriteAyahAdapter());
+  if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(KhatmahPlanAdapter());
+  if (!Hive.isAdapterRegistered(3))
     Hive.registerAdapter(KhatmahHistoryEntryAdapter());
-  }
-  if (!Hive.isAdapterRegistered(4)) {
+  if (!Hive.isAdapterRegistered(4))
     Hive.registerAdapter(KhatmahMilestoneAdapter());
-  }
 
   await Hive.openBox('tasbih');
   await Hive.openBox('azkar_progress');
 
-  // Initialize DataSources
+  // ... (DataSources & Repositories)
   final quranDataSource = QuranLocalDataSource();
   await quranDataSource.init();
 
   final khatmahDataSource = KhatmahLocalDataSource();
   await khatmahDataSource.init();
 
-  // Initialize Repositories
   final quranRepository = QuranRepositoryImpl(localDataSource: quranDataSource);
   await quranRepository.init();
 
@@ -102,6 +75,7 @@ void main() async {
       quranRepository: quranRepository,
       khatmahRepository: khatmahRepository,
       favoritesRepository: favoritesRepository,
+      prefs: prefs,
     ),
   );
 }
@@ -110,12 +84,14 @@ class MyApp extends StatelessWidget {
   final QuranRepository quranRepository;
   final KhatmahRepository khatmahRepository;
   final FavoritesRepository favoritesRepository;
+  final SharedPreferences prefs;
 
   const MyApp({
     super.key,
     required this.quranRepository,
     required this.khatmahRepository,
     required this.favoritesRepository,
+    required this.prefs,
   });
 
   @override
@@ -128,6 +104,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MultiBlocProvider(
         providers: [
+          // ... (other blocs)
           BlocProvider(
             create: (context) => KhatamBloc(
               quranRepository: quranRepository,
@@ -151,9 +128,10 @@ class MyApp extends StatelessWidget {
             )..add(const AudioStarted()),
           ),
           BlocProvider(
-            create: (context) =>
-                PrayerBloc(repository: prayer_repo.PrayerRepositoryImpl())
-                  ..add(LoadPrayerData()),
+            create: (context) => PrayerBloc(
+              repository: prayer_repo.PrayerRepositoryImpl(),
+              prefs: prefs,
+            )..add(LoadPrayerData()),
           ),
           BlocProvider(
             create: (context) => SearchBloc(repository: quranRepository),
