@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/continuous_mushaf_widget.dart';
 
@@ -55,21 +55,26 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   Future<void> _saveBookmark(int page) async {
-    final prefs = await SharedPreferences.getInstance();
     try {
+      // Get page data to find the first Ayah and its details
       final pageData = await context.read<QuranRepository>().getPage(page);
       if (pageData.ayahs.isNotEmpty) {
         final firstAyah = pageData.ayahs.first;
-        await prefs.setInt('last_read_page', page);
-        await prefs.setInt('last_read_surah', firstAyah.surahNumber);
-        await prefs.setInt('last_read_ayah', firstAyah.ayahNumber);
-        await prefs.setInt(
-          'last_read_juz',
-          quran.getJuzNumber(firstAyah.surahNumber, firstAyah.ayahNumber),
+        final juz = quran.getJuzNumber(
+          firstAyah.surahNumber,
+          firstAyah.ayahNumber,
+        );
+
+        // Save complete progress to repository
+        await context.read<QuranRepository>().saveLastRead(
+          page,
+          firstAyah.ayahNumber,
+          surahNumber: firstAyah.surahNumber,
+          juzNumber: juz,
         );
       }
     } catch (e) {
-      // Silent fail
+      debugPrint('Error saving progress: $e');
     }
   }
 

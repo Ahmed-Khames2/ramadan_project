@@ -14,10 +14,17 @@ class QuranLocalDataSource {
     return _progressBox?.get('current');
   }
 
-  Future<void> saveProgress(int page, int ayahId) async {
+  Future<void> saveProgress(
+    int page,
+    int ayahId, {
+    int? surahNumber,
+    int? juzNumber,
+  }) async {
     final current = getProgress() ?? UserProgressModel();
     current.lastReadPage = page;
     current.lastReadAyahId = ayahId;
+    if (surahNumber != null) current.lastReadSurahNumber = surahNumber;
+    if (juzNumber != null) current.lastReadJuz = juzNumber;
     await _progressBox?.put('current', current);
   }
 

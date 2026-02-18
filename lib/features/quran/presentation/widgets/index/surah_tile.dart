@@ -8,8 +8,17 @@ import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_vi
 
 class SurahTile extends StatelessWidget {
   final SurahInfo surah;
+  final bool isLastRead;
+  final int? initialPage;
+  final VoidCallback? onReturn;
 
-  const SurahTile({super.key, required this.surah});
+  const SurahTile({
+    super.key,
+    required this.surah,
+    this.isLastRead = false,
+    this.initialPage,
+    this.onReturn,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +26,15 @@ class SurahTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: IslamicCard(
         padding: EdgeInsets.zero,
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  MushafPageView(initialPage: surah.startPage),
+                  MushafPageView(initialPage: initialPage ?? surah.startPage),
             ),
           );
+          if (onReturn != null) onReturn!();
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -114,14 +124,31 @@ class SurahTile extends StatelessWidget {
         Icon(
           Icons.star_outline_rounded,
           size: 48,
-          color: AppTheme.accentGold.withOpacity(0.3),
+          color: isLastRead
+              ? AppTheme.primaryEmerald
+              : AppTheme.accentGold.withOpacity(0.3),
         ),
+        if (isLastRead)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryEmerald,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.bookmark, size: 10, color: Colors.white),
+            ),
+          ),
         Text(
           '${surah.number}',
           style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppTheme.primaryEmerald,
+            color: isLastRead
+                ? AppTheme.primaryEmerald
+                : AppTheme.primaryEmerald,
           ),
         ),
       ],
