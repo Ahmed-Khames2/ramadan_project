@@ -8,19 +8,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'dart:io';
 import 'package:ramadan_project/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/features/quran/data/datasources/quran_local_datasource.dart';
 import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:ramadan_project/features/khatmah/data/datasources/khatmah_local_datasource.dart';
 import 'package:ramadan_project/features/khatmah/data/repositories/khatmah_repository_impl.dart';
 import 'package:ramadan_project/features/favorites/data/repositories/favorites_repository.dart';
 
+import 'package:ramadan_project/features/ramadan_worship/data/datasources/worship_local_datasource.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/repositories/worship_repository_impl.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
+
+import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
+
 // Mock Path Provider for testing
-class MockPathProviderPlatform extends PathProviderPlatform with MockPlatformInterfaceMixin {
+class MockPathProviderPlatform extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
   @override
   Future<String?> getApplicationDocumentsDirectory() async {
     return Directory.systemTemp.path;
@@ -40,6 +48,12 @@ void main() {
     // Initialize Hive for testing
     final tempDir = Directory.systemTemp;
     Hive.init(tempDir.path);
+
+    // Register Adapters
+    if (!Hive.isAdapterRegistered(5))
+      Hive.registerAdapter(WorshipTaskModelAdapter());
+    if (!Hive.isAdapterRegistered(6))
+      Hive.registerAdapter(DayProgressModelAdapter());
   });
 
   testWidgets('App smoke test', (WidgetTester tester) async {
@@ -51,7 +65,9 @@ void main() {
     await khatmahDataSource.init();
 
     // Initialize Repositories
-    final quranRepository = QuranRepositoryImpl(localDataSource: quranDataSource);
+    final quranRepository = QuranRepositoryImpl(
+      localDataSource: quranDataSource,
+    );
     await quranRepository.init();
 
     final khatmahRepository = KhatmahRepositoryImpl(
@@ -62,12 +78,30 @@ void main() {
     final favoritesRepository = FavoritesRepository();
     await favoritesRepository.init();
 
+    final worshipDataSource = WorshipLocalDataSourceImpl();
+    await worshipDataSource.init();
+
+    final customTasksDataSource = CustomTasksDataSourceImpl();
+    await customTasksDataSource.init();
+
+    final worshipRepository = WorshipRepositoryImpl(
+      localDataSource: worshipDataSource,
+      customTasksDataSource: customTasksDataSource,
+    );
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp(
-      quranRepository: quranRepository,
-      khatmahRepository: khatmahRepository,
-      favoritesRepository: favoritesRepository,
-    ));
+    await tester.pumpWidget(
+      MyApp(
+        quranRepository: quranRepository,
+        khatmahRepository: khatmahRepository,
+        favoritesRepository: favoritesRepository,
+        worshipRepository: worshipRepository,
+        prefs: prefs,
+      ),
+    );
 
     // Wait for the app to settle
     await tester.pumpAndSettle();

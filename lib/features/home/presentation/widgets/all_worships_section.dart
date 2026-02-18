@@ -9,6 +9,7 @@ import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dash
 import 'package:ramadan_project/features/azkar/presentation/pages/tasbih_page.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import 'package:ramadan_project/features/qibla/presentation/pages/qibla_compass_page.dart';
+import 'package:ramadan_project/features/ramadan_worship/presentation/pages/ramadan_worship_tracker_page.dart';
 
 class AllWorshipsSection extends StatelessWidget {
   const AllWorshipsSection({super.key});
@@ -94,6 +95,18 @@ class AllWorshipsSection extends StatelessWidget {
                   ),
                 ),
               ),
+              // _buildFeatureCard(
+              //   context,
+              //   title: 'متابعة العبادات',
+              //   icon: FontAwesomeIcons.personPraying,
+              //   color: AppTheme.primaryEmerald,
+              //   onTap: () => Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //       builder: (context) => const RamadanWorshipTrackerPage(),
+              //     ),
+              //   ),
+              // ),
               _buildFeatureCard(
                 context,
                 title: 'ختمة القرآن',

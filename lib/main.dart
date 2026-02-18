@@ -32,6 +32,13 @@ import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_r
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:ramadan_project/features/splash/presentation/pages/splash_page.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/datasources/worship_local_datasource.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/repositories/worship_repository_impl.dart';
+import 'package:ramadan_project/features/ramadan_worship/domain/repositories/worship_repository.dart';
+import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
+import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +76,17 @@ void main() async {
   final favoritesRepository = FavoritesRepository();
   await favoritesRepository.init();
 
+  final worshipDataSource = WorshipLocalDataSourceImpl();
+  await worshipDataSource.init();
+
+  final customTasksDataSource = CustomTasksDataSourceImpl();
+  await customTasksDataSource.init();
+
+  final worshipRepository = WorshipRepositoryImpl(
+    localDataSource: worshipDataSource,
+    customTasksDataSource: customTasksDataSource,
+  );
+
   // Initialization complete - remove splash screen
   FlutterNativeSplash.remove();
 
@@ -77,6 +95,7 @@ void main() async {
       quranRepository: quranRepository,
       khatmahRepository: khatmahRepository,
       favoritesRepository: favoritesRepository,
+      worshipRepository: worshipRepository,
       prefs: prefs,
     ),
   );
@@ -91,12 +110,17 @@ void _registerHiveAdapters() {
     Hive.registerAdapter(KhatmahHistoryEntryAdapter());
   if (!Hive.isAdapterRegistered(4))
     Hive.registerAdapter(KhatmahMilestoneAdapter());
+  if (!Hive.isAdapterRegistered(5))
+    Hive.registerAdapter(WorshipTaskModelAdapter());
+  if (!Hive.isAdapterRegistered(6))
+    Hive.registerAdapter(DayProgressModelAdapter());
 }
 
 class MyApp extends StatelessWidget {
   final QuranRepository quranRepository;
   final KhatmahRepository khatmahRepository;
   final FavoritesRepository favoritesRepository;
+  final WorshipRepository worshipRepository;
   final SharedPreferences prefs;
 
   const MyApp({
@@ -104,6 +128,7 @@ class MyApp extends StatelessWidget {
     required this.quranRepository,
     required this.khatmahRepository,
     required this.favoritesRepository,
+    required this.worshipRepository,
     required this.prefs,
   });
 
@@ -114,6 +139,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: quranRepository),
         RepositoryProvider.value(value: khatmahRepository),
         RepositoryProvider.value(value: favoritesRepository),
+        RepositoryProvider.value(value: worshipRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -148,6 +174,10 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => SearchBloc(repository: quranRepository),
+          ),
+          BlocProvider(
+            create: (context) =>
+                WorshipCubit(worshipRepository)..loadDailyProgress(),
           ),
         ],
         child: MaterialApp(
