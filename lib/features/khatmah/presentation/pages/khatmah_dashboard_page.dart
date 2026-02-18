@@ -116,7 +116,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 color: AppTheme.primaryEmerald,
               ),
             ),
-            const SizedBox(width: 8),   
+            const SizedBox(width: 8),
           ],
           Expanded(
             child: Column(
@@ -575,19 +575,6 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
       ),
       child: Column(
         children: [
-          _buildPremiumActionButton(
-            context,
-            'تعديل خطة الختمة',
-            'عدل الأيام أو عدد الصفحات اليومية',
-            Icons.settings_suggest_rounded,
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => KhatmahPlannerPage(initialPlan: khatmahModel),
-              ),
-            ),
-          ),
-          Divider(height: 1, color: AppTheme.accentGold.withValues(alpha: 0.1)),
           _buildPremiumActionButton(
             context,
             'سجل الإنجازات',

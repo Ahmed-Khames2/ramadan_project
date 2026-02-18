@@ -132,12 +132,12 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/app_logo.svg"
 
 flutter_native_splash:
-  color: "#FFFDF5"
+  color: "#1B5E20"
   image: "assets/images/app_logo.svg"
   android_gravity: center
   ios_content_mode: center
   fullscreen: true
   android_12:
     image: "assets/images/app_logo.svg"
-    color: "#FFFDF5"
+    color: "#1B5E20"
   web: false

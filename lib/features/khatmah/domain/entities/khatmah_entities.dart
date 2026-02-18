@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+part 'khatmah_entities.g.dart';
 
 @HiveType(typeId: 2)
 class KhatmahPlan extends HiveObject {

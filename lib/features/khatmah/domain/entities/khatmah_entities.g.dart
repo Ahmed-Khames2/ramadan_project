@@ -1,13 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'package:hive/hive.dart';
-import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
 
-// part of 'khatmah_models.dart';
+part of 'khatmah_entities.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
-
 
 class KhatmahPlanAdapter extends TypeAdapter<KhatmahPlan> {
   @override
