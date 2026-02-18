@@ -178,7 +178,7 @@ class _PrayerItem extends StatelessWidget {
           // Prayer Time
           Text(
             DateFormat('h:mm a', 'ar').format(prayer.time),
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: timeColor,

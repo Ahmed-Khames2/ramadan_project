@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -35,6 +36,9 @@ import 'package:ramadan_project/features/splash/presentation/pages/splash_page.d
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Disable runtime font fetching - use locally bundled fonts only
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   // Initialize essential services
   await Future.wait([initializeDateFormatting('ar', null), Hive.initFlutter()]);
