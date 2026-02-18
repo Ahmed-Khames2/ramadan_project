@@ -25,7 +25,6 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
     on<CreateAdvancedKhatmahPlan>(_onCreateAdvancedKhatmahPlan);
     on<UpdateProgress>(_onUpdateProgress);
     on<UpdateKhatmahProgress>(_onUpdateKhatmahProgress);
-    on<ToggleReadingMode>(_onToggleReadingMode);
   }
 
   Future<void> _onCreateAdvancedKhatmahPlan(
@@ -219,27 +218,6 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
       }
     } catch (e) {
       emit(KhatamError("Failed to update khatmah progress: $e"));
-    }
-  }
-
-  Future<void> _onToggleReadingMode(
-    ToggleReadingMode event,
-    Emitter<KhatamState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is KhatamLoaded) {
-      final progress = currentState.progress;
-      final currentMode = progress.readingMode ?? 'verse';
-      // Update reading mode in progress model via repository
-      // TODO: Implement reading mode persistence in QuranRepository
-      print(
-        'Switching reading mode to: ${currentMode == 'verse' ? 'mushaf' : 'verse'}',
-      );
-
-      // Update reading mode in progress model via repository
-      // Need to add this method to QuranRepository or just use saveLastRead with dummy
-      // For now, let's assume it works or we'll add it soon.
-      add(LoadKhatamData());
     }
   }
 }

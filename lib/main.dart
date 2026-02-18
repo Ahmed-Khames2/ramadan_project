@@ -12,7 +12,7 @@ import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/features/favorites/domain/entities/favorite_ayah.dart';
 import 'package:ramadan_project/features/azkar/data/repositories/azkar_repository.dart';
-import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.g.dart';
+import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
@@ -30,6 +30,7 @@ import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_r
     as prayer_repo;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:ramadan_project/features/splash/presentation/pages/splash_page.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -146,7 +147,7 @@ class MyApp extends StatelessWidget {
           ),
         ],
         child: MaterialApp(
-          title: 'زاد المؤمن',
+          title: 'زاد',
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigationRoutes.navigatorKey,
           theme: AppTheme.lightTheme,
@@ -157,7 +158,7 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: const MainNavigationPage(),
+          home: const SplashPage(),
         ),
       ),
     );

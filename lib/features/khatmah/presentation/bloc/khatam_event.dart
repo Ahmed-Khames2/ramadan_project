@@ -29,8 +29,6 @@ class UpdateProgress extends KhatamEvent {
 
 class LoadKhatamData extends KhatamEvent {}
 
-class ToggleReadingMode extends KhatamEvent {}
-
 class CreateAdvancedKhatmahPlan extends KhatamEvent {
   final int targetDays;
   final DateTime startDate;

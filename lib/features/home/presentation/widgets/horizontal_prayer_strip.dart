@@ -6,17 +6,73 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/prayer_time.dart';
 
-class HorizontalPrayerStrip extends StatelessWidget {
+class HorizontalPrayerStrip extends StatefulWidget {
   const HorizontalPrayerStrip({super.key});
 
   @override
+  State<HorizontalPrayerStrip> createState() => _HorizontalPrayerStripState();
+}
+
+class _HorizontalPrayerStripState extends State<HorizontalPrayerStrip> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToCurrentPrayer(List<PrayerTime> prayers) {
+    if (!mounted) return;
+
+    final currentIndex = prayers.indexWhere((p) => p.isCurrent);
+    if (currentIndex != -1) {
+      // Item width (90) + separator (12)
+      const double itemWidth = 90;
+      const double separatorWidth = 12;
+
+      // Calculate scroll position to center the current prayer
+      // Screen width is needed for perfect centering, but scrolling to start of item is usually enough
+      // or offsetting it slightly.
+      final double offset = currentIndex * (itemWidth + separatorWidth);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            offset,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PrayerBloc, PrayerState>(
+    return BlocConsumer<PrayerBloc, PrayerState>(
+      listener: (context, state) {
+        if (state is PrayerLoaded) {
+          _scrollToCurrentPrayer(state.prayerTimes);
+        }
+      },
       builder: (context, state) {
         if (state is PrayerLoaded) {
+          // Trigger initial scroll
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToCurrentPrayer(state.prayerTimes);
+          });
+
           return SizedBox(
-            height: 125, // Increased height to fix overflow
+            height: 125,
             child: ListView.separated(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppTheme.spacing4,
               ),

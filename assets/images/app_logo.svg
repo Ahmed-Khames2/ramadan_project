@@ -1,6 +1,36 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="120" fill="#1B5E20"/>
-  <path d="M360 256C360 313.438 313.438 360 256 360C198.562 360 152 313.438 152 256C152 198.562 198.562 152 256 152C278.438 152 299.125 159.062 316.125 171.125C305.812 176.562 298.5 186.938 298.5 199.125C298.5 217.5 313.5 232.5 331.875 232.5C344.062 232.5 354.438 225.188 359.875 214.875C359.938 221.812 360 228.812 360 256Z" fill="#C5A059"/>
-  <path d="M256 182L262.8 203.2H285.2L267.2 216.4L274 237.6L256 224.4L238 237.6L244.8 216.4L226.8 203.2H249.2L256 182Z" fill="#C5A059"/>
-  <circle cx="256" cy="256" r="230" stroke="#C5A059" stroke-width="8" stroke-dasharray="20 20"/>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Modern Minimalist Logo for "زاد" (Zad) -->
+  
+  <!-- Rounded Square Background -->
+  <rect width="512" height="512" rx="140" fill="#1B5E20"/>
+  
+  <!-- Premium Ornaments -->
+  <circle cx="256" cy="256" r="230" stroke="#C5A059" stroke-width="2" stroke-opacity="0.15" fill="none"/>
+  <circle cx="256" cy="256" r="215" stroke="#C5A059" stroke-width="1" stroke-opacity="0.1" fill="none"/>
+
+  <!-- Typography: زاد (R to L: Zayn, Alef, Dal) -->
+  <g transform="translate(256, 256)" stroke="#C5A059" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    
+    <!-- Alef (Center - Middle Letter) -->
+    <path d="M0 -110 L0 100" />
+    
+    <!-- Zayn (Right - First Letter) -->
+    <g transform="translate(110, 0)">
+       <path d="M25 -60 C25 -60 25 80 -40 105" />
+       <!-- Zayn Dot -->
+       <circle cx="25" cy="-125" r="16" fill="#C5A059" stroke="none" />
+    </g>
+
+    <!-- Dal (Left - Last Letter) -->
+    <g transform="translate(-110, 0)">
+       <path d="M50 -50 C50 -50 -40 -50 -40 80 L50 105" />
+    </g>
+    
+  </g>
+  
+  <!-- Subtle Corners Details -->
+  <rect x="40" y="40" width="20" height="20" rx="4" fill="#C5A059" fill-opacity="0.1"/>
+  <rect x="452" y="40" width="20" height="20" rx="4" fill="#C5A059" fill-opacity="0.1"/>
+  <rect x="40" y="452" width="20" height="20" rx="4" fill="#C5A059" fill-opacity="0.1"/>
+  <rect x="452" y="452" width="20" height="20" rx="4" fill="#C5A059" fill-opacity="0.1"/>
 </svg>
