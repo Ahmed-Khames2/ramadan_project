@@ -24,7 +24,7 @@ class MainScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.warmBeige,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // No global AppBar as requested
       appBar: null,
       extendBody: true, // Content flows behind the floating NavBar

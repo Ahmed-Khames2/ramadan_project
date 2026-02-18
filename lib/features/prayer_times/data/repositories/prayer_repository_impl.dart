@@ -8,6 +8,12 @@ class PrayerRepositoryImpl implements PrayerRepository {
   List<Governorate> getGovernorates() {
     return const [
       Governorate(
+        nameArabic: 'موقعي الحالي',
+        nameEnglish: 'Current Location',
+        latitude: 0.0,
+        longitude: 0.0,
+      ),
+      Governorate(
         nameArabic: 'القاهرة',
         nameEnglish: 'Cairo',
         latitude: 30.0444,
@@ -178,6 +184,64 @@ class PrayerRepositoryImpl implements PrayerRepository {
       governorate.latitude,
       governorate.longitude,
     );
+    final params = CalculationMethod.egyptian.getParameters();
+    params.madhab = Madhab.shafi;
+
+    final prayerTimes = PrayerTimes.today(coordinates, params);
+    final current = prayerTimes.currentPrayer();
+    final next = prayerTimes.nextPrayer();
+
+    return [
+      PrayerTime(
+        nameArabic: 'الفجر',
+        nameEnglish: 'Fajr',
+        time: prayerTimes.fajr,
+        isCurrent:
+            current == Prayer.fajr ||
+            (current == Prayer.none && next == Prayer.fajr),
+      ),
+      PrayerTime(
+        nameArabic: 'الظهر',
+        nameEnglish: 'Dhuhr',
+        time: prayerTimes.dhuhr,
+        isCurrent:
+            current == Prayer.dhuhr ||
+            (current == Prayer.none && next == Prayer.dhuhr),
+      ),
+      PrayerTime(
+        nameArabic: 'العصر',
+        nameEnglish: 'Asr',
+        time: prayerTimes.asr,
+        isCurrent:
+            current == Prayer.asr ||
+            (current == Prayer.none && next == Prayer.asr),
+      ),
+      PrayerTime(
+        nameArabic: 'المغرب',
+        nameEnglish: 'Maghrib',
+        time: prayerTimes.maghrib,
+        isCurrent:
+            current == Prayer.maghrib ||
+            (current == Prayer.none && next == Prayer.maghrib),
+      ),
+      PrayerTime(
+        nameArabic: 'العشاء',
+        nameEnglish: 'Isha',
+        time: prayerTimes.isha,
+        isCurrent:
+            current == Prayer.isha ||
+            (current == Prayer.none && next == Prayer.isha),
+      ),
+    ];
+  }
+
+  @override
+  List<PrayerTime> getPrayerTimesByCoordinates(
+    double latitude,
+    double longitude,
+    DateTime date,
+  ) {
+    final coordinates = Coordinates(latitude, longitude);
     final params = CalculationMethod.egyptian.getParameters();
     params.madhab = Madhab.shafi;
 

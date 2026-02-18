@@ -12,7 +12,9 @@ import 'khatmah_planner_page.dart';
 import 'khatmah_history_page.dart';
 
 class KhatmahDashboardPage extends StatefulWidget {
-  const KhatmahDashboardPage({super.key});
+  final bool showBackButton;
+
+  const KhatmahDashboardPage({super.key, this.showBackButton = false});
 
   @override
   State<KhatmahDashboardPage> createState() => _KhatmahDashboardPageState();
@@ -106,35 +108,42 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.primaryEmerald,
+          if (widget.showBackButton) ...[
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.primaryEmerald,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'متابعة الختمة',
-                style: GoogleFonts.cairo(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryEmerald,
-                  height: 1.2,
+            const SizedBox(width: 8),   
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: widget.showBackButton
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'متابعة الختمة',
+                  style: GoogleFonts.cairo(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryEmerald,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-              Text(
-                'نظم خطتك اليومية لختم القرآن الكريم',
-                style: GoogleFonts.cairo(
-                  fontSize: 14,
-                  color: AppTheme.textGrey,
-                  height: 1.2,
+                const SizedBox(height: 4),
+                Text(
+                  'نظم خطتك اليومية لختم القرآن الكريم',
+                  style: GoogleFonts.cairo(
+                    fontSize: 14,
+                    color: AppTheme.textGrey,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

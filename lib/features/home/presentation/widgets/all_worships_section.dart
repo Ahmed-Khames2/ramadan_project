@@ -8,6 +8,7 @@ import 'package:ramadan_project/features/azkar/presentation/pages/azkar_categori
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
 import 'package:ramadan_project/features/azkar/presentation/pages/tasbih_page.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/pages/prayer_calendar_page.dart';
+import 'package:ramadan_project/features/qibla/presentation/pages/qibla_compass_page.dart';
 
 class AllWorshipsSection extends StatelessWidget {
   const AllWorshipsSection({super.key});
@@ -101,7 +102,8 @@ class AllWorshipsSection extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const KhatmahDashboardPage(),
+                    builder: (context) =>
+                        const KhatmahDashboardPage(showBackButton: true),
                   ),
                 ),
               ),
@@ -123,6 +125,18 @@ class AllWorshipsSection extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const CalendarPage()),
+                ),
+              ),
+              _buildFeatureCard(
+                context,
+                title: 'اتجاه القبلة',
+                icon: FontAwesomeIcons.kaaba,
+                color: AppTheme.accentGold,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const QiblaCompassPage(),
+                  ),
                 ),
               ),
             ],

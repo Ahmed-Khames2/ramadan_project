@@ -20,7 +20,7 @@ class IslamicCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardTheme.color ?? AppTheme.surfaceWhite,
         borderRadius: BorderRadius.circular(borderRadius ?? 20),
         border: Border.all(
           color: AppTheme.accentGold.withOpacity(0.12),
@@ -198,7 +198,7 @@ class DecorativeBackground extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: AppTheme.warmBeige,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Stack(
         children: [
           if (showTexture)
