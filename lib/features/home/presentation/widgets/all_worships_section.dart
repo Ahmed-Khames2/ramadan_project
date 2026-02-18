@@ -95,18 +95,18 @@ class AllWorshipsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              // _buildFeatureCard(
-              //   context,
-              //   title: 'متابعة العبادات',
-              //   icon: FontAwesomeIcons.personPraying,
-              //   color: AppTheme.primaryEmerald,
-              //   onTap: () => Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //       builder: (context) => const RamadanWorshipTrackerPage(),
-              //     ),
-              //   ),
-              // ),
+              _buildFeatureCard(
+                context,
+                title: 'متابعة العبادات',
+                icon: FontAwesomeIcons.personPraying,
+                color: AppTheme.primaryEmerald,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RamadanWorshipTrackerPage(),
+                  ),
+                ),
+              ),
               _buildFeatureCard(
                 context,
                 title: 'ختمة القرآن',
