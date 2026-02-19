@@ -1,3 +1,4 @@
+import 'package:just_audio/just_audio.dart';
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 
 abstract class AudioRepository {
@@ -14,6 +15,7 @@ abstract class AudioRepository {
   Stream<Duration> get positionStream;
   Stream<Duration> get durationStream;
   Stream<bool> get isPlayingStream;
+  Stream<PlayerState> get playerStateStream; // Added to track processing states
   Stream<int?> get currentAyahStream; // Which ayah is currently playing
 
   // Download methods

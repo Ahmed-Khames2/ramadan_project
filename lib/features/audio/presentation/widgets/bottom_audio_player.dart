@@ -18,10 +18,8 @@ class BottomAudioPlayer extends StatelessWidget {
           previous.position != current.position ||
           previous.duration != current.duration,
       builder: (context, state) {
-        // Only show if playing or paused (i.e., audio session active)
-        // If initial or stop, hide it? Or maybe always show if user selected a reciter?
-        // Let's show it if available.
-        if (state.status == AudioStatus.initial && state.currentAyah == null) {
+        // Only show if playing or paused (i.e., audio session active), check via currentAyah
+        if (state.currentAyah == null) {
           return const SizedBox.shrink();
         }
 
@@ -32,7 +30,11 @@ class BottomAudioPlayer extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark
                 ? theme.colorScheme.surface
-                : theme.colorScheme.primary,
+                : theme
+                      .colorScheme
+                      .primary, // Using primary color for light mode mostly
+            // Or maybe stick to the specific emerald green if design dictates
+            // For now using theme.primary as it likely maps to the green.
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
@@ -95,21 +97,23 @@ class BottomAudioPlayer extends StatelessWidget {
                   ),
 
                   // Controls
+
+                  // Previous Ayah
                   IconButton(
                     onPressed: () {
-                      context.read<AudioBloc>().add(
-                        AudioSeek(state.position - const Duration(seconds: 10)),
-                      );
+                      context.read<AudioBloc>().add(const AudioSkipPrevious());
                     },
                     icon: Icon(
-                      Icons.replay_10,
+                      Icons.skip_previous_rounded,
                       color: isDark
                           ? theme.colorScheme.onSurface
                           : Colors.white,
                     ),
+                    tooltip: 'الآية السابقة',
                   ),
 
                   Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isDark ? theme.colorScheme.primary : Colors.white,
@@ -132,30 +136,32 @@ class BottomAudioPlayer extends StatelessWidget {
                                 strokeWidth: 2,
                                 color: isDark
                                     ? Colors.white
-                                    : theme.colorScheme.primary,
+                                    : const Color(
+                                        0xFF1B5E20,
+                                      ), // Dark green on white
                               ),
                             )
                           : Icon(
                               isPlaying ? Icons.pause : Icons.play_arrow,
                               color: isDark
                                   ? Colors.white
-                                  : theme.colorScheme.primary,
+                                  : const Color(0xFF1B5E20),
                             ),
                     ),
                   ),
 
+                  // Next Ayah
                   IconButton(
                     onPressed: () {
-                      context.read<AudioBloc>().add(
-                        AudioSeek(state.position + const Duration(seconds: 10)),
-                      );
+                      context.read<AudioBloc>().add(const AudioSkipNext());
                     },
                     icon: Icon(
-                      Icons.forward_10,
+                      Icons.skip_next_rounded,
                       color: isDark
                           ? theme.colorScheme.onSurface
                           : Colors.white,
                     ),
+                    tooltip: 'الآية التالية',
                   ),
                 ],
               ),

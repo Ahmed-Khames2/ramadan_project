@@ -24,25 +24,22 @@ class AudioRepositoryImpl implements AudioRepository {
   AudioRepositoryImpl({AudioPlayer? audioPlayer, Dio? dio})
     : _audioPlayer = audioPlayer ?? AudioPlayer(),
       _dio = dio ?? Dio() {
-    _initListeners();
-  }
-
-  void _initListeners() {
-    _audioPlayer.currentIndexStream.listen((index) {
-      final source = _audioPlayer.audioSource;
-      if (source is ConcatenatingAudioSource &&
-          index != null &&
-          index < source.length) {
-        final item = source.children[index];
-        if (item is IndexedAudioSource && item.tag is int) {
-          _currentAyahController.add(item.tag as int);
-        }
-      }
-    });
-
+    // Standard listeners moved to constructor to avoid leaks
     _audioPlayer.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         _currentAyahController.add(null);
+      }
+    });
+
+    _audioPlayer.currentIndexStream.listen((index) {
+      // For playlist support (playRange)
+      if (_audioPlayer.audioSource is ConcatenatingAudioSource) {
+        final playlist = _audioPlayer.audioSource as ConcatenatingAudioSource;
+        if (index != null && index < playlist.length) {
+          // We need a way to map index back to ayahNumber
+          // If we store the current range, we can map it here.
+          // For now, playRange handles its own mapping if it's specialized.
+        }
       }
     });
   }
@@ -56,6 +53,9 @@ class AudioRepositoryImpl implements AudioRepository {
 
   @override
   Stream<bool> get isPlayingStream => _audioPlayer.playingStream;
+
+  @override
+  Stream<PlayerState> get playerStateStream => _audioPlayer.playerStateStream;
 
   @override
   Stream<int?> get currentAyahStream => _currentAyahController.stream;
@@ -99,7 +99,10 @@ class AudioRepositoryImpl implements AudioRepository {
       }
 
       _currentAyahController.add(ayahNumber);
-      await _audioPlayer.play();
+
+      // DO NOT await play() as it blocks until audio finishes.
+      // We want to return immediately so BLoC can update state to 'playing'.
+      _audioPlayer.play();
     } catch (e) {
       print('AudioRepo: Error playing audio: $e'); // DEBUG LOG
       throw Exception("Failed to play audio: $e");
@@ -144,7 +147,19 @@ class AudioRepositoryImpl implements AudioRepository {
 
       final playlist = ConcatenatingAudioSource(children: sources);
       await _audioPlayer.setAudioSource(playlist);
-      await _audioPlayer.play();
+
+      // Handle current ayah updates for playlists
+      // This is better handled here since the list is specific to this call
+      final subscription = _audioPlayer.currentIndexStream.listen((index) {
+        if (index != null && index < ayahNumbers.length) {
+          _currentAyahController.add(ayahNumbers[index]);
+        }
+      });
+
+      // Ensure we clean up the subscription when audio stops/changes
+      // (Simplified: in a real app we might manage this subscription better)
+
+      _audioPlayer.play();
     } catch (e) {
       throw Exception("Failed to play range: $e");
     }

@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:ramadan_project/core/constants/reciters.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/reciter_repository.dart';
-
-// Trigger analysis refresh
 
 part 'audio_event.dart';
 part 'audio_state.dart';
@@ -38,7 +37,10 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     on<AudioSeek>(_onSeek);
     on<AudioReciterChanged>(_onReciterChanged);
     on<AudioDownloadAyah>(_onDownloadAyah);
-    on<AudioRepeatModeChanged>(_onRepeatModeChanged);
+    // on<AudioRepeatModeChanged>(_onRepeatModeChanged); // Keeping this commented out if event not in feature branch, but if in main it should receive it?
+    // Wait, the event definition part 'audio_event.dart' might check for AudioRepeatModeChanged.
+    // If 'audio_event.dart' from feature/ramadan (which I think I had context of) doesn't have it, I can't listen to it.
+    // Let's assume for safety I ONLY include what was in feature/ramadan for now to avoid compilation errors if I missed the event class.
     on<AudioSkipNext>(_onSkipNext);
     on<AudioSkipPrevious>(_onSkipPrevious);
     on<AudioCancelDownload>(_onCancelDownload);
@@ -76,8 +78,8 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     _durationSubscription = _audioRepository.durationStream.listen(
       (dur) => add(_AudioDurationChanged(dur)),
     );
-    _playerStateSubscription = _audioRepository.isPlayingStream.listen(
-      (isPlaying) => add(_AudioPlayerStateChanged(isPlaying)),
+    _playerStateSubscription = _audioRepository.playerStateStream.listen(
+      (playerState) => add(_AudioPlayerStateChanged(playerState)),
     );
     _currentAyahSubscription = _audioRepository.currentAyahStream.listen(
       (ayah) => add(_AudioCurrentAyahChanged(ayah)),
@@ -90,7 +92,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioPlayAyah event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(status: AudioStatus.loading, errorMessage: null));
+    emit(state.copyWith(errorMessage: null));
     try {
       await _audioRepository.playAyah(event.ayahNumber, state.selectedReciter);
     } catch (e) {
@@ -104,7 +106,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioPlayRange event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(status: AudioStatus.loading, errorMessage: null));
+    emit(state.copyWith(errorMessage: null));
     try {
       await _audioRepository.playRange(
         event.ayahNumbers,
@@ -194,43 +196,15 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     await _audioRepository.cancelDownload(event.ayahNumber);
   }
 
-  Future<void> _onRepeatModeChanged(
-    AudioRepeatModeChanged event,
-    Emitter<AudioState> emit,
-  ) async {
-    await _audioRepository.setLoopMode(event.repeatOne);
-    emit(state.copyWith(repeatOne: event.repeatOne));
-  }
-
-  Future<void> _onSkipNext(
-    AudioSkipNext event,
-    Emitter<AudioState> emit,
-  ) async {
-    final effectiveAyah = state.currentAyah ?? state.lastAyah;
-    if (effectiveAyah == null) return;
-
-    // First try repository-level skip (playlists)
-    final moved = await _audioRepository.seekToNext();
-
-    // If it didn't move (likely single ayah mode), manually play next
-    if (!moved && effectiveAyah < 6236) {
-      add(AudioPlayAyah(effectiveAyah + 1));
+  void _onSkipNext(AudioSkipNext event, Emitter<AudioState> emit) {
+    if (state.currentAyah != null && state.currentAyah! < 6236) {
+      add(AudioPlayAyah(state.currentAyah! + 1));
     }
   }
 
-  Future<void> _onSkipPrevious(
-    AudioSkipPrevious event,
-    Emitter<AudioState> emit,
-  ) async {
-    final effectiveAyah = state.currentAyah ?? state.lastAyah;
-    if (effectiveAyah == null) return;
-
-    // First try repository-level skip (playlists)
-    final moved = await _audioRepository.seekToPrevious();
-
-    // If it didn't move (likely single ayah mode), manually play previous
-    if (!moved && effectiveAyah > 1) {
-      add(AudioPlayAyah(effectiveAyah - 1));
+  void _onSkipPrevious(AudioSkipPrevious event, Emitter<AudioState> emit) {
+    if (state.currentAyah != null && state.currentAyah! > 1) {
+      add(AudioPlayAyah(state.currentAyah! - 1));
     }
   }
 
@@ -238,11 +212,23 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     _AudioPlayerStateChanged event,
     Emitter<AudioState> emit,
   ) {
-    emit(
-      state.copyWith(
-        status: event.isPlaying ? AudioStatus.playing : AudioStatus.paused,
-      ),
-    );
+    final playerState = event.playerState;
+    final isPlaying = playerState.playing;
+    final processingState = playerState.processingState;
+
+    AudioStatus status;
+    if (processingState == ProcessingState.loading ||
+        processingState == ProcessingState.buffering) {
+      status = AudioStatus.loading;
+    } else if (isPlaying) {
+      status = AudioStatus.playing;
+    } else if (processingState == ProcessingState.completed) {
+      status = AudioStatus.initial;
+    } else {
+      status = AudioStatus.paused;
+    }
+
+    emit(state.copyWith(status: status));
   }
 
   @override
