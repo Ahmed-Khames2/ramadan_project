@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
@@ -39,18 +39,20 @@ class CustomHomeHeader extends StatelessWidget {
             children: [
               Text(
                 hijriString,
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 gregorianString,
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textGrey,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
@@ -90,7 +92,12 @@ class CustomHomeHeader extends StatelessWidget {
         initialValue: selectedInList,
         position: PopupMenuPosition.under,
         offset: const Offset(0, 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Theme.of(context).cardColor,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppTheme.primaryEmerald.withOpacity(0.1)),
+        ),
         child: Row(
           children: [
             Icon(
@@ -101,7 +108,7 @@ class CustomHomeHeader extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               state.selectedGovernorate.nameArabic,
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryEmerald,
@@ -129,13 +136,13 @@ class CustomHomeHeader extends StatelessWidget {
                 children: [
                   Text(
                     gov.nameArabic,
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.normal,
                       color: isSelected
                           ? AppTheme.primaryEmerald
-                          : AppTheme.textDark,
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   if (isSelected)

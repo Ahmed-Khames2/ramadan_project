@@ -1,5 +1,5 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:io' if (dart.library.html) 'dart:html' show Platform;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/prayer_time.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -42,7 +42,7 @@ class NotificationService {
       await cancelAllNotifications();
 
       bool canScheduleExact = true;
-      if (Platform.isAndroid) {
+      if (!kIsWeb && Platform.isAndroid) {
         final bool? exactAlarmsPermitted = await _notifications
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
@@ -90,7 +90,7 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       final androidPlugin = _notifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin

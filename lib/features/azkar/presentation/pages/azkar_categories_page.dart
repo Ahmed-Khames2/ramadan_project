@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/azkar/presentation/bloc/azkar_bloc.dart';
 import 'package:ramadan_project/features/azkar/data/models/azkar_model.dart';
@@ -19,26 +19,41 @@ class AzkarCategoriesPage extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                padding: const EdgeInsets.fromLTRB(16, 24, 24, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'الأذكار اليومية',
-                      style: GoogleFonts.cairo(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryEmerald,
-                        height: 1.2,
-                      ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: AppTheme.primaryEmerald,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'الأذكار اليومية',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryEmerald,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'أذكار المسلم وطمأنينة القلب',
-                      style: GoogleFonts.cairo(
-                        fontSize: 14,
-                        color: AppTheme.textGrey,
-                        height: 1.2,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 48),
+                      child: Text(
+                        'أذكار المسلم وطمأنينة القلب',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textGrey,
+                          height: 1.2,
+                        ),
                       ),
                     ),
                   ],
@@ -56,7 +71,7 @@ class AzkarCategoriesPage extends StatelessWidget {
                     }
 
                     if (state.error != null) {
-                      return _buildErrorState();
+                      return _buildErrorState(context);
                     }
 
                     if (state.allAzkar.isEmpty) {
@@ -141,16 +156,16 @@ class AzkarCategoriesPage extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _buildFeaturedCard(context, morning, 'أذكار الصباح', const [
-            Color(0xFFFFF9C4),
-            Color(0xFFFFB300),
+          child: _buildFeaturedCard(context, morning, 'أذكار الصباح', [
+            AppTheme.accentGold,
+            AppTheme.accentGold.withValues(alpha: 0.15),
           ], Icons.wb_sunny_rounded),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildFeaturedCard(context, evening, 'أذكار المساء', const [
-            Color(0xFFE1F5FE),
-            Color(0xFF0277BD),
+          child: _buildFeaturedCard(context, evening, 'أذكار المساء', [
+            AppTheme.primaryEmerald,
+            AppTheme.darkEmerald,
           ], Icons.nightlight_round),
         ),
       ],
@@ -158,11 +173,14 @@ class AzkarCategoriesPage extends StatelessWidget {
   }
 
   Widget _buildPremiumCard(BuildContext context, AzkarItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Use a consistent, unified color palette based on AppTheme
     // We can use the category to slightly vary the shade or keep it uniform
     final List<Color> colors = [
-      AppTheme.surfaceWhite,
-      const Color(0xFFF1F8E9), // Very light Green
+      Theme.of(context).cardColor,
+      isDark
+          ? AppTheme.primaryEmerald.withOpacity(0.1)
+          : const Color(0xFFF1F8E9), // Very light Green
     ];
 
     return GestureDetector(
@@ -234,10 +252,10 @@ class AzkarCategoriesPage extends StatelessWidget {
                       children: [
                         Text(
                           item.title,
-                          style: GoogleFonts.cairo(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textDark,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -254,7 +272,7 @@ class AzkarCategoriesPage extends StatelessWidget {
                               ),
                               child: Text(
                                 '${item.azkarTexts.length} ذكراً',
-                                style: GoogleFonts.cairo(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppTheme.primaryEmerald,
                                   fontWeight: FontWeight.w600,
@@ -354,10 +372,12 @@ class AzkarCategoriesPage extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           title,
-                          style: GoogleFonts.cairo(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textDark,
+                            color: title.contains('الصباح')
+                                ? AppTheme.darkEmerald
+                                : Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -366,14 +386,20 @@ class AzkarCategoriesPage extends StatelessWidget {
                             Icon(
                               Icons.format_list_bulleted_rounded,
                               size: 14,
-                              color: AppTheme.textGrey.withOpacity(0.8),
+                              color: title.contains('الصباح')
+                                  ? AppTheme.darkEmerald.withValues(alpha: 0.7)
+                                  : Colors.white.withValues(alpha: 0.8),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${item.azkarTexts.length} ذكراً',
-                              style: GoogleFonts.cairo(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.textGrey.withOpacity(0.8),
+                                color: title.contains('الصباح')
+                                    ? AppTheme.darkEmerald.withValues(
+                                        alpha: 0.7,
+                                      )
+                                    : Colors.white.withValues(alpha: 0.8),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -405,7 +431,7 @@ class AzkarCategoriesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -414,7 +440,16 @@ class AzkarCategoriesPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'حدث خطأ في تحميل الأذكار',
-            style: GoogleFonts.cairo(fontSize: 18),
+            style: TextStyle(fontSize: 18, color: AppTheme.textDark),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => context.read<AzkarBloc>().add(LoadAllAzkar()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryEmerald,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('إعادة المحاولة'),
           ),
         ],
       ),
@@ -425,7 +460,7 @@ class AzkarCategoriesPage extends StatelessWidget {
     return Center(
       child: Text(
         'لا توجد أذكار متوفرة حالياً',
-        style: GoogleFonts.cairo(fontSize: 18),
+        style: TextStyle(fontSize: 18),
       ),
     );
   }

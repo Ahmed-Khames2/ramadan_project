@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'dart:async';
@@ -98,14 +98,17 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppTheme.textDark),
+            icon: Icon(
+              Icons.close_rounded,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(
             child: Text(
               widget.azkarItem.title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryEmerald,
@@ -114,7 +117,10 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppTheme.textDark),
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             onPressed: () {
               context.read<AzkarBloc>().add(
                 ResetCategoryProgress(widget.azkarItem.azkarTexts),
@@ -171,7 +177,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
             children: [
               Text(
                 'التقدم: ${((_currentIndex + 1) / total * 100).toInt()}%',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.textGrey,
                   fontWeight: FontWeight.bold,
@@ -179,7 +185,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
               ),
               Text(
                 '${_currentIndex + 1} / $total',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.textGrey,
                   fontWeight: FontWeight.bold,
@@ -214,10 +220,10 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                       Text(
                         zekr.text,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           fontSize: 26, // Larger font for full screen
                           height: 1.6,
-                          color: AppTheme.textDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -235,7 +241,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                           child: Text(
                             zekr.source!,
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.cairo(
+                            style: TextStyle(
                               fontSize: 14,
                               color: AppTheme.textGrey,
                               fontStyle: FontStyle.italic,
@@ -303,7 +309,11 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
           height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isCompleted ? AppTheme.primaryEmerald : Colors.white,
+            color: isCompleted
+                ? AppTheme.primaryEmerald
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).cardColor
+                      : Colors.white),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -317,7 +327,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                 ? const Icon(Icons.check, color: Colors.white, size: 30)
                 : Text(
                     '${zekr.repeat - currentCount}',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryEmerald,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart'; // For IslamicCard
@@ -38,10 +38,10 @@ class AllWorshipsSection extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 'جميع العبادات',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -217,7 +217,10 @@ class _ScaleActionCardState extends State<_ScaleActionCard> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Colors.white, widget.color.withOpacity(0.05)],
+                colors: [
+                  Theme.of(context).cardColor,
+                  widget.color.withOpacity(0.05),
+                ],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -238,10 +241,10 @@ class _ScaleActionCardState extends State<_ScaleActionCard> {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.2,
                   ),
                 ),

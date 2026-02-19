@@ -59,6 +59,8 @@ class HomeDashboardPage extends StatelessWidget {
                       const SizedBox(height: AppTheme.spacing8),
 
                       // All Worships Section
+                      const OrnamentalDivider(),
+                      const SizedBox(height: AppTheme.spacing4),
                       const AllWorshipsSection(),
 
                       const SizedBox(height: AppTheme.spacing8),

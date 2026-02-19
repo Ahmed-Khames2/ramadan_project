@@ -58,15 +58,27 @@ class _ModernFloatingNavBar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primaryEmerald,
-            AppTheme.primaryEmerald.withOpacity(0.9),
-          ],
+          colors: Theme.of(context).brightness == Brightness.dark
+              ? [const Color(0xFF0A2B1D), const Color(0xFF051C13)]
+              : [
+                  AppTheme.primaryEmerald,
+                  AppTheme.primaryEmerald.withOpacity(0.9),
+                ],
         ),
         borderRadius: BorderRadius.circular(35),
+        border: Theme.of(context).brightness == Brightness.dark
+            ? Border.all(
+                color: AppTheme.primaryEmerald.withOpacity(0.2),
+                width: 1,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryEmerald.withOpacity(0.3),
+            color:
+                (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : AppTheme.primaryEmerald)
+                    .withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
             spreadRadius: -2,
@@ -95,8 +107,8 @@ class _ModernFloatingNavBar extends StatelessWidget {
             onTap: () => onTap(2),
           ),
           _NavBarItem(
-            icon: Icons.favorite_rounded,
-            label: 'الأذكار',
+            icon: Icons.settings_rounded,
+            label: 'الإعدادات',
             isSelected: currentIndex == 3,
             onTap: () => onTap(3),
           ),

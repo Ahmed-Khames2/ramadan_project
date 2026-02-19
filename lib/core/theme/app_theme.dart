@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors
@@ -26,6 +25,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Cairo', // Set local Cairo as default
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryEmerald,
         primary: primaryEmerald,
@@ -76,21 +76,80 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: Colors.white70),
       ),
-      textTheme: GoogleFonts.cairoTextTheme().copyWith(
-        displayLarge: const TextStyle(
-          color: textDark,
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(color: textDark, fontWeight: FontWeight.bold),
+        displayMedium: TextStyle(color: textDark, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(color: textDark, fontWeight: FontWeight.bold),
+        bodyLarge: TextStyle(color: textDark),
+        bodyMedium: TextStyle(color: textDark),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'Cairo', // Set local Cairo as default
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryEmerald,
+        brightness: Brightness.dark,
+        primary: primaryEmerald,
+        secondary: accentGold,
+        surface: surfaceDark,
+        onSurface: textLight,
+        onPrimary: Colors.white,
+      ),
+      scaffoldBackgroundColor: surfaceDark,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkEmerald,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: 'UthmanTaha',
+          fontSize: 22,
           fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
-        displayMedium: const TextStyle(
-          color: textDark,
-          fontWeight: FontWeight.bold,
+      ),
+      cardTheme: CardThemeData(
+        color: cardDark,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 1,
+          ),
         ),
-        titleLarge: const TextStyle(
-          color: textDark,
-          fontWeight: FontWeight.bold,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
-        bodyLarge: const TextStyle(color: textDark),
-        bodyMedium: const TextStyle(color: textDark),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: accentGold.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+        ),
+        hintStyle: const TextStyle(color: Colors.white60),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(color: textLight, fontWeight: FontWeight.bold),
+        displayMedium: TextStyle(color: textLight, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(color: textLight, fontWeight: FontWeight.bold),
+        bodyLarge: TextStyle(color: textLight),
+        bodyMedium: TextStyle(color: textLight),
       ),
     );
   }
