@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -23,16 +24,124 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="ramadan_project">
+  <meta name="apple-mobile-web-app-title" content="زاد المؤمن">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>ramadan_project</title>
+  <title>زاد المؤمن</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      background-color: #1B5E20;
+      /* Emerald Green */
+      margin: 0;
+      overflow: hidden;
+      /* Prevent scroll during load */
+    }
+
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1B5E20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .loading-logo {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #FFD700;
+      /* Gold */
+      width: 40px;
+      height: 40px;
+      -webkit-animation: spin 1s linear infinite;
+      /* Safari */
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.9;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 0.9;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="loading-container" id="splash-screen">
+    <img src="icons/Icon-192.png" alt="Logo" class="loading-logo">
+    <div class="spinner"></div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
+
+  <script>
+    // Remove splash screen when Flutter app is loaded
+    window.addEventListener('load', function () {
+      const splash = document.getElementById('splash-screen');
+
+      // Use MutationObserver to detect when Flutter adds its view to the body
+      const observer = new MutationObserver((mutations) => {
+        // Look for flutter view or glass pane
+        if (document.querySelector('flt-glass-pane') || document.querySelector('flutter-view')) {
+          if (splash) {
+            splash.style.opacity = '0'; // Fade out
+            setTimeout(() => {
+              splash.remove();
+            }, 500); // Wait for transition
+            observer.disconnect();
+          }
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Fallback timeout in case observer fails or specific elements aren't found (e.g., if renderer changes)
+      setTimeout(() => {
+        if (splash && document.body.children.length > 3) { // Assuming script tags + splash + flutter content
+          splash.style.opacity = '0';
+          setTimeout(() => splash.remove(), 500);
+        }
+      }, 10000); // 10 seconds fallback
+    });
+  </script>
 </body>
+
 </html>

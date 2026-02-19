@@ -32,6 +32,10 @@ class MushafVerseBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: surahNumbers.map((surahNum) {
           final ayahs = surahGroups[surahNum]!;
+
+          // Sort by ayahNumber to ensure correct order
+          ayahs.sort((a, b) => (a.ayahNumber as int).compareTo(b.ayahNumber as int));
+
           final firstAyah = ayahs.first;
           final isNewSurah = firstAyah.ayahNumber == 1;
           final showBasmala = isNewSurah && surahNum != 1 && surahNum != 9;
@@ -39,18 +43,20 @@ class MushafVerseBody extends StatelessWidget {
           final spans = <InlineSpan>[];
           final baseTextStyle =
               theme.textTheme.bodyLarge?.copyWith(
-                fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
-                fontSize: (24 * scale).clamp(20, 56),
-                height: 1.9,
-                color: const Color(0xFF000000),
-                fontWeight: FontWeight.w500,
-                fontFamilyFallback: const ['UthmanTaha', 'Arial'],
-              ) ??
-              const TextStyle();
+                    fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
+                    fontSize: (24 * scale).clamp(20, 56),
+                    height: 1.9,
+                    color: const Color(0xFF000000),
+                    fontWeight: FontWeight.w500,
+                    fontFamilyFallback: const ['UthmanTaha', 'Arial'],
+                  ) ??
+                  const TextStyle();
 
           for (final ayah in ayahs) {
+            // Add Ayah text
             spans.add(TextSpan(text: ayah.text, style: baseTextStyle));
 
+            // Add Ayah number symbol
             spans.add(
               WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
@@ -58,10 +64,12 @@ class MushafVerseBody extends StatelessWidget {
               ),
             );
 
+            // Add space between ayahs
             spans.add(const TextSpan(text: ' '));
           }
 
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (isNewSurah) ...[
                 SurahHeaderWidget(surahNumber: surahNum, scale: scale),

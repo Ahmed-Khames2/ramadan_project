@@ -175,16 +175,16 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         backgroundColor: AppTheme.primaryEmerald,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_rounded),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavoritesPage()),
-            ),
-            tooltip: 'المفضلة',
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.favorite_rounded),
+        //     onPressed: () => Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => const FavoritesPage()),
+        //     ),
+        //     tooltip: 'المفضلة',
+        //   ),
+        // ],
       ),
       body: DecorativeBackground(
         child: Column(
