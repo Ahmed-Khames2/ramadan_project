@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
@@ -126,7 +126,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
               children: [
                 Text(
                   'متابعة الختمة',
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryEmerald,
@@ -136,9 +136,11 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 const SizedBox(height: 4),
                 Text(
                   'نظم خطتك اليومية لختم القرآن الكريم',
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textGrey,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                     height: 1.2,
                   ),
                 ),
@@ -163,7 +165,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
           const SizedBox(height: AppTheme.spacing4),
           Text(
             'ابدأ مشروع ختمة جديد',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
@@ -172,7 +174,9 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
           const SizedBox(height: AppTheme.spacing2),
           Text(
             'نظم قراءتك للقرآن الكريم في رمضان',
-            style: GoogleFonts.cairo(color: AppTheme.textGrey),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
           const SizedBox(height: AppTheme.spacing6),
           ElevatedButton(
@@ -194,7 +198,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
             ),
             child: Text(
               'إنشاء خطة الآن',
-              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -226,16 +230,18 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                   children: [
                     Text(
                       'الإنجاز العام',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: AppTheme.textGrey,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       plan.statusMessage,
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: AppTheme.primaryEmerald,
@@ -255,7 +261,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 ),
                 child: Text(
                   '${progress.toStringAsFixed(0)}%',
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                     color: AppTheme.primaryEmerald,
@@ -304,6 +310,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
       children: [
         Expanded(
           child: _buildStatItem(
+            context,
             'الصفحات المقروءة',
             '${plan.currentProgressPage}',
             Icons.menu_book_rounded,
@@ -313,6 +320,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
         const SizedBox(width: AppTheme.spacing3),
         Expanded(
           child: _buildStatItem(
+            context,
             (plan.remainingTodayPages) == 0 ? 'حالة التميز' : 'المتبقي اليوم',
             (plan.remainingTodayPages) == 0
                 ? (isAhead ? 'سابق للجدول' : 'ماشي عالمسطرة')
@@ -333,6 +341,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
   }
 
   Widget _buildStatItem(
+    BuildContext context,
     String label,
     String value,
     IconData icon,
@@ -342,12 +351,14 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing4),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.02,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -360,28 +371,28 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
           const SizedBox(height: AppTheme.spacing2),
           Text(
             label,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: AppTheme.textGrey,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
             textAlign: TextAlign.center,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               height: 1.1,
               fontWeight: FontWeight.w800,
               fontSize: 14,
-              color: AppTheme.textDark,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade600,
@@ -438,7 +449,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                     isDoneToday
                         ? 'الورد القادم (ما تم إنجازه مسبقاً)'
                         : 'ورد اليوم',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       color: isDoneToday
                           ? AppTheme.primaryEmerald
                           : AppTheme.darkEmerald,
@@ -453,6 +464,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildTargetBox(
+                    context,
                     'بدءاً من',
                     '${plan.dailyTargetStartPage}',
                     isDoneToday,
@@ -468,6 +480,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                             .withValues(alpha: 0.3),
                   ),
                   _buildTargetBox(
+                    context,
                     'وصولاً إلى',
                     '${plan.dailyTargetEndPage}',
                     isDoneToday,
@@ -507,7 +520,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                     isDoneToday
                         ? 'استمر في القراءة المسبقة'
                         : 'ابدأ القراءة الآن',
-                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isDoneToday
@@ -529,20 +542,25 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
     );
   }
 
-  Widget _buildTargetBox(String label, String value, bool isHighlight) {
+  Widget _buildTargetBox(
+    BuildContext context,
+    String label,
+    String value,
+    bool isHighlight,
+  ) {
     return Column(
       children: [
         Text(
           label,
-          style: GoogleFonts.cairo(
-            color: AppTheme.textGrey,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             color: isHighlight ? AppTheme.primaryEmerald : AppTheme.darkEmerald,
             fontWeight: FontWeight.w900,
             fontSize: 32,
@@ -550,8 +568,8 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
         ),
         Text(
           'صفحة',
-          style: GoogleFonts.cairo(
-            color: AppTheme.textGrey,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -563,11 +581,13 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
   Widget _buildActionButtons(BuildContext context, KhatmahPlan? khatmahModel) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.03,
+            ),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -585,6 +605,41 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
               MaterialPageRoute(builder: (_) => const KhatmahHistoryPage()),
             ),
           ),
+          const Divider(height: 1),
+          _buildPremiumActionButton(
+            context,
+            'حذف الختمة الحالية',
+            'سيتم مسح جميع بيانات هذه الختمة',
+            Icons.delete_sweep_rounded,
+            () => _showDeleteConfirmation(context),
+            isDestructive: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف الختمة'),
+        content: const Text(
+          'هل أنت متأكد من حذف الختمة الحالية؟ لا يمكن تراجع عن هذا الإجراء.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<KhatamBloc>().add(DeleteKhatmahPlan());
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('حذف'),
+          ),
         ],
       ),
     );
@@ -595,8 +650,10 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
     String title,
     String subtitle,
     IconData icon,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
+    final color = isDestructive ? Colors.red : AppTheme.primaryEmerald;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -607,10 +664,10 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: AppTheme.primaryEmerald),
+              child: Icon(icon, color: color),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -619,23 +676,32 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: AppTheme.textDark,
+                      color: isDestructive
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppTheme.textGrey,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left_rounded, color: AppTheme.textGrey),
+            Icon(
+              Icons.chevron_left_rounded,
+              color: isDestructive
+                  ? Colors.red.withOpacity(0.5)
+                  : AppTheme.textGrey,
+            ),
           ],
         ),
       ),
@@ -668,24 +734,18 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
           children: [
             Icon(Icons.rocket_launch_rounded, color: AppTheme.primaryEmerald),
             const SizedBox(width: 12),
-            Text(
-              'أنت رائع!',
-              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-            ),
+            Text('أنت رائع!', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Text(
           'لقد أتممت ورد اليوم بنجاح، هل تريد البدء في ورد الغد مسبقاً؟ البرنامج هيفضل يسجل تقدمك تلقائياً.',
-          style: GoogleFonts.cairo(),
+          style: TextStyle(),
           textAlign: TextAlign.right,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'لاحقاً',
-              style: GoogleFonts.cairo(color: AppTheme.textGrey),
-            ),
+            child: Text('لاحقاً', style: TextStyle(color: AppTheme.textGrey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -702,7 +762,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Text('نعم، استمر', style: GoogleFonts.cairo()),
+            child: Text('نعم، استمر', style: TextStyle()),
           ),
         ],
       ),

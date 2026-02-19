@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart' as intl;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
@@ -134,7 +134,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
             children: [
               Text(
                 widget.initialPlan == null ? 'إعداد الختمة' : 'تعديل الختمة',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryEmerald,
@@ -145,7 +145,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
                 widget.initialPlan == null
                     ? 'خطط لأهدافك ووزع وردك بذكاء'
                     : 'تعديل تفاصيل خطتك الحالية',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textGrey,
                   height: 1.2,
@@ -166,7 +166,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
       ),
       child: Text(
         title,
-        style: GoogleFonts.cairo(
+        style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
           color: AppTheme.primaryEmerald,
@@ -178,7 +178,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   Widget _buildTitleInput() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -205,13 +205,11 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           fillColor: Colors.transparent,
-          hintStyle: GoogleFonts.cairo(
-            color: AppTheme.textGrey.withValues(alpha: 0.4),
-          ),
+          hintStyle: TextStyle(color: AppTheme.textGrey.withValues(alpha: 0.4)),
         ),
-        style: GoogleFonts.cairo(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: AppTheme.textDark,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -254,12 +252,14 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
             });
           },
           selectedColor: AppTheme.primaryEmerald,
-          labelStyle: GoogleFonts.cairo(
-            color: isSelected ? Colors.white : AppTheme.textDark,
+          labelStyle: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             fontSize: 13,
           ),
-          backgroundColor: AppTheme.surfaceWhite,
+          backgroundColor: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
@@ -283,7 +283,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.surfaceWhite,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: AppTheme.primaryEmerald.withValues(alpha: 0.1),
@@ -294,9 +294,9 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
           children: [
             Text(
               'عدد الأيام:',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const Spacer(),
@@ -305,7 +305,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
               child: TextField(
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: AppTheme.primaryEmerald,
@@ -333,7 +333,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
             const SizedBox(width: 12),
             Text(
               'يوم',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textGrey,
               ),
@@ -347,7 +347,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   Widget _buildStartDatePicker() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -365,9 +365,9 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           intl.DateFormat('yyyy/MM/dd', 'ar').format(_startDate),
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppTheme.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         trailing: Container(
@@ -401,7 +401,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
   Widget _buildRestDaysToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -419,15 +419,15 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'تخصيص أيام راحة',
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
-            color: AppTheme.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         subtitle: Text(
           'لن يتم احتساب هذه الأيام في وردك اليومي',
-          style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textGrey),
+          style: TextStyle(fontSize: 11, color: AppTheme.textGrey),
         ),
         value: _restDaysEnabled,
         onChanged: (value) => setState(() => _restDaysEnabled = value),
@@ -459,12 +459,14 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
             },
             selectedColor: AppTheme.accentGold.withValues(alpha: 0.2),
             checkmarkColor: AppTheme.primaryEmerald,
-            labelStyle: GoogleFonts.cairo(
+            labelStyle: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? AppTheme.darkEmerald : AppTheme.textGrey,
+              color: isSelected
+                  ? AppTheme.darkEmerald
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
-            backgroundColor: AppTheme.surfaceWhite,
+            backgroundColor: Theme.of(context).cardColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
@@ -518,7 +520,7 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
       ),
       child: Text(
         widget.initialPlan == null ? 'بدء الختمة' : 'حفظ التعديلات',
-        style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       ),
     );
   }

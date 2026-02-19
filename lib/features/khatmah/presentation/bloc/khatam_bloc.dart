@@ -25,6 +25,7 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
     on<CreateAdvancedKhatmahPlan>(_onCreateAdvancedKhatmahPlan);
     on<UpdateProgress>(_onUpdateProgress);
     on<UpdateKhatmahProgress>(_onUpdateKhatmahProgress);
+    on<DeleteKhatmahPlan>(_onDeleteKhatmahPlan);
   }
 
   Future<void> _onCreateAdvancedKhatmahPlan(
@@ -218,6 +219,18 @@ class KhatamBloc extends Bloc<KhatamEvent, KhatamState> {
       }
     } catch (e) {
       emit(KhatamError("Failed to update khatmah progress: $e"));
+    }
+  }
+
+  Future<void> _onDeleteKhatmahPlan(
+    DeleteKhatmahPlan event,
+    Emitter<KhatamState> emit,
+  ) async {
+    try {
+      await khatmahRepository.deleteKhatmahPlan();
+      add(LoadKhatamData());
+    } catch (e) {
+      emit(KhatamError("Failed to delete khatmah plan: $e"));
     }
   }
 }
