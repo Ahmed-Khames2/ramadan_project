@@ -1,6 +1,6 @@
 import 'dart:math' show pi, cos, sin;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class QiblaArrowPainter extends CustomPainter {

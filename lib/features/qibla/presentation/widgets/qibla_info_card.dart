@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class QiblaInfoCard extends StatelessWidget {
   final IconData icon;
@@ -16,35 +14,38 @@ class QiblaInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: theme.cardColor.withOpacity(isDark ? 0.8 : 0.7),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.primaryEmerald.withOpacity(0.2),
+          color: theme.colorScheme.primary.withOpacity(0.2),
           width: 1,
         ),
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppTheme.primaryEmerald, size: 28),
+          Icon(icon, color: theme.colorScheme.primary, size: 28),
           const SizedBox(height: 12),
           Text(
             label,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 13,
-              color: AppTheme.textGrey,
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryEmerald,
+              color: theme.colorScheme.primary,
             ),
           ),
         ],

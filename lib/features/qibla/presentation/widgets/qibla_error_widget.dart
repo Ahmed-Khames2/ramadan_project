@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
@@ -40,7 +40,7 @@ class QiblaErrorWidget extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               'تعذر تحديد اتجاه القبلة',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textDark,
@@ -50,7 +50,7 @@ class QiblaErrorWidget extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               errorMessage ?? 'حدث خطأ غير متوقع',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.textGrey,
                 height: 1.6,
@@ -69,7 +69,7 @@ class QiblaErrorWidget extends StatelessWidget {
                     icon: const Icon(Icons.refresh_rounded, size: 20),
                     label: Text(
                       'إعادة المحاولة',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -93,7 +93,7 @@ class QiblaErrorWidget extends StatelessWidget {
                     icon: const Icon(Icons.settings_rounded, size: 20),
                     label: Text(
                       'فتح الإعدادات',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
