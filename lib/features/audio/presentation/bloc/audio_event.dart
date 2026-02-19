@@ -118,11 +118,3 @@ class AudioRepeatModeChanged extends AudioEvent {
   @override
   List<Object?> get props => [repeatOne];
 }
-
-class AudioSkipNext extends AudioEvent {
-  const AudioSkipNext();
-}
-
-class AudioSkipPrevious extends AudioEvent {
-  const AudioSkipPrevious();
-}
