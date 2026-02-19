@@ -1,14 +1,15 @@
 import 'dart:math' show pi, atan2, sqrt, cos, sin;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:ramadan_project/core/theme/app_theme.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:adhan/adhan.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_arrow_painter.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/modern_compass_painter.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_info_card.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_error_widget.dart';
+import 'package:ramadan_project/core/widgets/common_widgets.dart';
 
 class QiblaCompassPage extends StatefulWidget {
   const QiblaCompassPage({super.key});
@@ -18,7 +19,7 @@ class QiblaCompassPage extends StatefulWidget {
 }
 
 class _QiblaCompassPageState extends State<QiblaCompassPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   double? _qiblahDirection;
   Position? _currentPosition;
   bool _isLoading = true;
@@ -28,6 +29,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -38,22 +40,36 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   @override
   void dispose() {
     _pulseController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _errorMessage != null) {
+      // Retry initialization when app returns from background if there was an error
+      _initializeQibla();
+    }
+  }
+
   Future<void> _initializeQibla() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied ||
-            permission == LocationPermission.deniedForever) {
-          setState(() {
-            _errorMessage = 'يرجى السماح بالوصول إلى الموقع';
-            _isLoading = false;
-          });
-          return;
-        }
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _errorMessage = 'يرجى السماح بالوصول إلى الموقع لمشاهدة القبلة';
+          _isLoading = false;
+        });
+        return;
       }
 
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -112,18 +128,18 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppTheme.primaryEmerald,
+            color: Theme.of(context).colorScheme.primary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'اتجاه القبلة',
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppTheme.primaryEmerald,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         centerTitle: true,
@@ -134,9 +150,9 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppTheme.primaryEmerald.withOpacity(0.08),
-              const Color(0xFFF5F9F7),
-              AppTheme.accentGold.withOpacity(0.06),
+              Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).colorScheme.secondary.withOpacity(0.06),
             ],
           ),
         ),
@@ -145,23 +161,28 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(
-                      color: AppTheme.primaryEmerald,
+                    CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
                       strokeWidth: 3,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'جاري تحديد الموقع...',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textGrey,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
                 ),
               )
             : _errorMessage != null
-            ? QiblaErrorWidget(errorMessage: _errorMessage)
+            ? QiblaErrorWidget(
+                errorMessage: _errorMessage,
+                onRetry: _initializeQibla,
+              )
             : _buildCompassView(),
       ),
     );
@@ -173,18 +194,31 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'خطأ في قراءة البوصلة',
-              style: GoogleFonts.cairo(color: AppTheme.textGrey),
+        if (snapshot.hasError || (!snapshot.hasData && kIsWeb)) {
+          // Fallback for Web or Desktop where compass sensors are missing
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                children: [
+                  _buildWebManualNotice(),
+                  const SizedBox(height: 20),
+                  _buildModernCompass(0, _qiblahDirection ?? 0),
+                  const SizedBox(height: 32),
+                  _buildInfoCards(distance),
+                  const SizedBox(height: 16),
+                  _buildInstructionCard(),
+                ],
+              ),
             ),
           );
         }
 
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryEmerald),
+          return Center(
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
           );
         }
 
@@ -202,67 +236,16 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
                 const SizedBox(height: 32),
 
                 // Info Cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: QiblaInfoCard(
-                        icon: Icons.explore_rounded,
-                        label: 'الاتجاه',
-                        value: '${(_qiblahDirection ?? 0).toStringAsFixed(1)}°',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: QiblaInfoCard(
-                        icon: Icons.location_on_rounded,
-                        label: 'المسافة',
-                        value: '${distance.toStringAsFixed(0)} كم',
-                      ),
-                    ),
-                  ],
-                ),
+                _buildInfoCards(distance),
 
                 const SizedBox(height: 16),
 
+                const SizedBox(height: 24),
+                const OrnamentalDivider(),
+                const SizedBox(height: 24),
+
                 // Instruction
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.primaryEmerald.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentGold.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline_rounded,
-                          color: AppTheme.accentGold,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          'وجه الجهاز نحو السهم الذهبي',
-                          style: GoogleFonts.cairo(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildInstructionCard(),
               ],
             ),
           ),
@@ -272,15 +255,18 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   }
 
   Widget _buildModernCompass(double heading, double qiblahOffset) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.5),
+        color: Theme.of(context).cardColor.withOpacity(isDark ? 0.8 : 0.5),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryEmerald.withOpacity(0.1),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
             blurRadius: 30,
             spreadRadius: 5,
             offset: const Offset(0, 10),
@@ -331,13 +317,15 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppTheme.primaryEmerald,
-                        AppTheme.primaryEmerald.withOpacity(0.8),
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.primary.withOpacity(0.8),
                       ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryEmerald.withOpacity(0.4),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.4),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -359,31 +347,128 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryEmerald.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppTheme.primaryEmerald.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.phone_android_rounded,
-                  color: AppTheme.primaryEmerald,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '${heading.toStringAsFixed(1)}°',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCards(double distance) {
+    return Row(
+      children: [
+        Expanded(
+          child: QiblaInfoCard(
+            icon: Icons.explore_rounded,
+            label: 'الاتجاه',
+            value: '${(_qiblahDirection ?? 0).toStringAsFixed(1)}°',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: QiblaInfoCard(
+            icon: Icons.location_on_rounded,
+            label: 'المسافة',
+            value: '${distance.toStringAsFixed(0)} كم',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInstructionCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.info_outline_rounded,
+              color: Theme.of(context).colorScheme.secondary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              kIsWeb
+                  ? 'اتجاه القبلة من جهة الشمال هو السهم الذهبي'
+                  : 'وجه الجهاز نحو السهم الذهبي',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebManualNotice() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'حساس البوصلة غير متوفر على هذا الجهاز. يظهر السهم اتجاه القبلة بالنسبة للشمال.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

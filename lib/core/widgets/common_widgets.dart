@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../theme/app_theme.dart';
 
 class IslamicCard extends StatelessWidget {
@@ -18,17 +18,22 @@ class IslamicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? AppTheme.surfaceWhite,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(borderRadius ?? 20),
         border: Border.all(
-          color: AppTheme.accentGold.withOpacity(0.12),
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : AppTheme.accentGold.withOpacity(0.12),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -65,13 +70,14 @@ class IslamicBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacing3,
         vertical: AppTheme.spacing2 / 2,
       ),
       decoration: BoxDecoration(
-        color: baseColor.withOpacity(0.08),
+        color: baseColor.withOpacity(isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(AppTheme.spacing2),
         border: Border.all(color: baseColor.withOpacity(0.2), width: 0.8),
       ),
@@ -85,7 +91,7 @@ class IslamicBadge extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Text(
               text,
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: baseColor,
@@ -171,7 +177,7 @@ class RevelationBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             isMakki ? 'مكية' : 'مدنية',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
               color: baseColor,

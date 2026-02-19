@@ -7,6 +7,9 @@ class BottomAudioPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocBuilder<AudioBloc, AudioState>(
       buildWhen: (previous, current) =>
           previous.status != current.status ||
@@ -27,10 +30,12 @@ class BottomAudioPlayer extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1B5E20), // Deep emerald
+            color: isDark
+                ? theme.colorScheme.surface
+                : theme.colorScheme.primary,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -49,8 +54,13 @@ class BottomAudioPlayer extends StatelessWidget {
                   // Reciter Info
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: Colors.white24,
-                    child: const Icon(Icons.person, color: Colors.white),
+                    backgroundColor: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.white24,
+                    child: Icon(
+                      Icons.person,
+                      color: isDark ? theme.colorScheme.primary : Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -59,8 +69,10 @@ class BottomAudioPlayer extends StatelessWidget {
                       children: [
                         Text(
                           state.selectedReciter.arabicName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: isDark
+                                ? theme.colorScheme.onSurface
+                                : Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -71,8 +83,10 @@ class BottomAudioPlayer extends StatelessWidget {
                           state.currentAyah != null
                               ? 'الآية ${state.currentAyah}'
                               : 'اختر آية للبدء',
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: isDark
+                                ? theme.colorScheme.onSurface.withOpacity(0.6)
+                                : Colors.white70,
                             fontSize: 12,
                           ),
                         ),
@@ -83,19 +97,22 @@ class BottomAudioPlayer extends StatelessWidget {
                   // Controls
                   IconButton(
                     onPressed: () {
-                      // Previous (Logic complex without playlist)
-                      // Just seek -10s?
                       context.read<AudioBloc>().add(
                         AudioSeek(state.position - const Duration(seconds: 10)),
                       );
                     },
-                    icon: const Icon(Icons.replay_10, color: Colors.white),
+                    icon: Icon(
+                      Icons.replay_10,
+                      color: isDark
+                          ? theme.colorScheme.onSurface
+                          : Colors.white,
+                    ),
                   ),
 
                   Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: isDark ? theme.colorScheme.primary : Colors.white,
                     ),
                     child: IconButton(
                       onPressed: () {
@@ -108,14 +125,21 @@ class BottomAudioPlayer extends StatelessWidget {
                         }
                       },
                       icon: isBuffering
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isDark
+                                    ? Colors.white
+                                    : theme.colorScheme.primary,
+                              ),
                             )
                           : Icon(
                               isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: const Color(0xFF1B5E20),
+                              color: isDark
+                                  ? Colors.white
+                                  : theme.colorScheme.primary,
                             ),
                     ),
                   ),
@@ -126,7 +150,12 @@ class BottomAudioPlayer extends StatelessWidget {
                         AudioSeek(state.position + const Duration(seconds: 10)),
                       );
                     },
-                    icon: const Icon(Icons.forward_10, color: Colors.white),
+                    icon: Icon(
+                      Icons.forward_10,
+                      color: isDark
+                          ? theme.colorScheme.onSurface
+                          : Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -136,8 +165,12 @@ class BottomAudioPlayer extends StatelessWidget {
                   value:
                       state.position.inMilliseconds /
                       state.duration.inMilliseconds.clamp(1, double.infinity),
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                  backgroundColor: isDark
+                      ? theme.colorScheme.primary.withOpacity(0.1)
+                      : Colors.white24,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isDark ? theme.colorScheme.primary : Colors.white,
+                  ),
                 ),
               ],
             ],

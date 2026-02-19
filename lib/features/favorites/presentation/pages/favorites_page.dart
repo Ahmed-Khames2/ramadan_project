@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/features/favorites/domain/entities/favorite_ayah.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 import '../../data/repositories/favorites_repository.dart';
@@ -48,7 +48,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('تم الحذف من المفضلة', style: GoogleFonts.cairo()),
+          content: Text('تم الحذف من المفضلة', style: TextStyle()),
           backgroundColor: AppTheme.primaryEmerald,
           duration: const Duration(seconds: 2),
         ),
@@ -113,7 +113,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
           const SizedBox(height: 24),
           Text(
             'لا توجد آيات مفضلة',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
@@ -123,7 +123,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
           Text(
             'اضغط مطولاً على أي آية لإضافتها للمفضلة',
             textAlign: TextAlign.center,
-            style: GoogleFonts.cairo(fontSize: 14, color: AppTheme.textGrey),
+            style: TextStyle(fontSize: 14, color: AppTheme.textGrey),
           ),
         ],
       ),
@@ -159,7 +159,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   const SizedBox(width: 8),
                   Text(
                     '${favorite.surahName} • الآية ${favorite.ayahNumber}',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryEmerald,
@@ -208,7 +208,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   TextButton.icon(
                     onPressed: () => _removeFavorite(favorite),
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    label: Text('حذف', style: GoogleFonts.cairo(fontSize: 13)),
+                    label: Text('حذف', style: TextStyle(fontSize: 13)),
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                   ),
                   const SizedBox(width: 8),
@@ -227,10 +227,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       );
                     },
                     icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                    label: Text(
-                      'اذهب للآية',
-                      style: GoogleFonts.cairo(fontSize: 13),
-                    ),
+                    label: Text('اذهب للآية', style: TextStyle(fontSize: 13)),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.primaryEmerald,
                     ),
@@ -250,18 +247,18 @@ class _FavoritesPageState extends State<FavoritesPage> {
       builder: (context) => AlertDialog(
         title: Text(
           'حذف الكل',
-          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         content: Text(
           'هل تريد حذف جميع الآيات المفضلة؟',
-          style: GoogleFonts.cairo(),
+          style: TextStyle(),
           textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء', style: GoogleFonts.cairo()),
+            child: Text('إلغاء', style: TextStyle()),
           ),
           TextButton(
             onPressed: () async {
@@ -270,7 +267,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               _loadFavorites();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('حذف', style: GoogleFonts.cairo()),
+            child: Text('حذف', style: TextStyle()),
           ),
         ],
       ),

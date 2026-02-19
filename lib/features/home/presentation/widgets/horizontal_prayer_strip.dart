@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
@@ -101,14 +101,21 @@ class _PrayerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isCurrent ? AppTheme.primaryEmerald : Colors.white;
-    final textColor = isCurrent ? Colors.white : AppTheme.textDark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final backgroundColor = isCurrent
+        ? AppTheme.primaryEmerald
+        : theme.cardColor;
+    final textColor = isCurrent ? Colors.white : theme.colorScheme.onSurface;
     final timeColor = isCurrent
         ? Colors.white.withOpacity(0.9)
-        : AppTheme.primaryEmerald;
+        : (isDark ? theme.colorScheme.secondary : theme.colorScheme.primary);
     final borderColor = isCurrent
         ? Colors.transparent
-        : AppTheme.primaryEmerald.withOpacity(0.2);
+        : (isDark
+              ? Colors.white.withOpacity(0.1)
+              : theme.colorScheme.primary.withOpacity(0.2));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -140,7 +147,9 @@ class _PrayerItem extends StatelessWidget {
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.2)
+                      : Colors.black.withOpacity(0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -155,7 +164,7 @@ class _PrayerItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: isCurrent
                   ? Colors.white.withOpacity(0.15)
-                  : AppTheme.primaryEmerald.withOpacity(0.05),
+                  : theme.colorScheme.primary.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -168,7 +177,7 @@ class _PrayerItem extends StatelessWidget {
           // Prayer Name
           Text(
             prayer.nameArabic,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
               color: textColor,
@@ -178,7 +187,7 @@ class _PrayerItem extends StatelessWidget {
           // Prayer Time
           Text(
             DateFormat('h:mm a', 'ar').format(prayer.time),
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: timeColor,

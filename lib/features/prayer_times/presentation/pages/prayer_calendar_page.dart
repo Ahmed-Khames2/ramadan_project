@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/calendar_bloc.dart';
@@ -50,7 +50,8 @@ class _CalendarPageState extends State<CalendarPage> {
                         child: Column(
                           children: [
                             _buildCalendarView(state),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 24),
+                            const OrnamentalDivider(),
                             _buildEventsList(state),
                             const SizedBox(height: 32),
                           ],
@@ -104,7 +105,7 @@ class _CalendarPageState extends State<CalendarPage> {
             children: [
               Text(
                 'التقويم الإسلامي',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryEmerald,
@@ -115,7 +116,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 children: [
                   Text(
                     '${_getArabicHijriMonth(hijriDate.hMonth)} ${hijriDate.hYear}هـ',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.accentGold,
@@ -131,10 +132,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   const SizedBox(width: 8),
                   Text(
                     '${state.focusedDay.year}م',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      color: AppTheme.accentGold,
-                    ),
+                    style: TextStyle(fontSize: 14, color: AppTheme.accentGold),
                   ),
                 ],
               ),
@@ -147,20 +145,27 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildCalendarView(CalendarState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryEmerald.withOpacity(0.08),
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : AppTheme.primaryEmerald.withOpacity(0.08),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
         ],
         border: Border.all(
-          color: AppTheme.accentGold.withOpacity(0.2),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : AppTheme.accentGold.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -221,7 +226,7 @@ class _CalendarPageState extends State<CalendarPage> {
           headerStyle: HeaderStyle(
             formatButtonVisible: false,
             titleCentered: true,
-            titleTextStyle: GoogleFonts.cairo(
+            titleTextStyle: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
@@ -236,12 +241,12 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
           ),
           daysOfWeekStyle: DaysOfWeekStyle(
-            weekdayStyle: GoogleFonts.cairo(
+            weekdayStyle: TextStyle(
               color: AppTheme.textGrey,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
-            weekendStyle: GoogleFonts.cairo(
+            weekendStyle: TextStyle(
               color: AppTheme.accentGold,
               fontWeight: FontWeight.bold,
               fontSize: 13,
@@ -289,16 +294,18 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           Text(
             '${day.day}',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              color: isSelected ? Colors.white : AppTheme.textDark,
+              color: isSelected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
               height: 1.1,
             ),
           ),
           Text(
             '${hijriDate.hDay}',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w500 : FontWeight.bold,
               color: isSelected
@@ -328,7 +335,7 @@ class _CalendarPageState extends State<CalendarPage> {
               const SizedBox(width: 8),
               Text(
                 'مناسبات هجرية',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryEmerald,
@@ -343,10 +350,7 @@ class _CalendarPageState extends State<CalendarPage> {
               padding: const EdgeInsets.only(top: 16),
               child: Text(
                 'لا توجد مناسبات رسمية لهذا اليوم',
-                style: GoogleFonts.cairo(
-                  color: AppTheme.textGrey,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppTheme.textGrey, fontSize: 14),
               ),
             ),
           )
@@ -398,15 +402,15 @@ class _CalendarPageState extends State<CalendarPage> {
                     children: [
                       Text(
                         event.title,
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: AppTheme.textDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         event.description,
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           color: AppTheme.textGrey,
                           fontSize: 13,
                         ),
@@ -439,11 +443,12 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildEventDetailSheet(CalendarEvent event) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -472,7 +477,7 @@ class _CalendarPageState extends State<CalendarPage> {
           const SizedBox(height: 24),
           Text(
             event.title,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryEmerald,
@@ -488,7 +493,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             child: Text(
               'مناسبة دينية إسلامية',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.accentGold,
@@ -499,7 +504,7 @@ class _CalendarPageState extends State<CalendarPage> {
           Text(
             event.description,
             textAlign: TextAlign.center,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 16,
               color: AppTheme.textDark,
               height: 1.6,
@@ -521,10 +526,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               child: Text(
                 'تم',
-                style: GoogleFonts.cairo(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),

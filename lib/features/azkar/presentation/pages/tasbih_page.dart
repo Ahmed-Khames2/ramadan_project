@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/settings/presentation/tasbih_settings_sheet.dart';
@@ -117,7 +117,7 @@ class _TasbihPageState extends State<TasbihPage>
       if (currentIndex > _lastBeadIndex) {
         // Moving forward
         _tasbihBloc.add(IncrementCount());
-        // HapticFeedback removed as requested
+        HapticFeedback.selectionClick();
       }
       _lastBeadIndex = currentIndex;
     }
@@ -158,7 +158,7 @@ class _TasbihPageState extends State<TasbihPage>
                     content: Text(
                       'أتممت دورة كاملة بنجاح!',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     backgroundColor: AppTheme.primaryEmerald,
                     behavior: SnackBarBehavior.floating,
@@ -175,6 +175,8 @@ class _TasbihPageState extends State<TasbihPage>
                 return Column(
                   children: [
                     _buildHeader(context),
+                    const SizedBox(height: 16),
+                    const OrnamentalDivider(),
                     const Spacer(flex: 2),
                     _buildCounterDisplay(state),
                     const Spacer(flex: 2),
@@ -193,24 +195,25 @@ class _TasbihPageState extends State<TasbihPage>
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 60, left: 24, right: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.primaryEmerald,
+              color: theme.colorScheme.primary,
             ),
             onPressed: () => Navigator.pop(context),
           ),
           Text(
             'المسبحة الإلكترونية',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryEmerald,
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(width: 48), // Spacer to balance the back button
@@ -220,14 +223,16 @@ class _TasbihPageState extends State<TasbihPage>
   }
 
   Widget _buildCounterDisplay(TasbihState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryEmerald.withOpacity(0.05),
+            color: theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -243,10 +248,10 @@ class _TasbihPageState extends State<TasbihPage>
             child: Text(
               '${state.count}',
               key: ValueKey(state.count),
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 72,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
+                color: theme.colorScheme.primary,
                 height: 1.2,
               ),
             ),
@@ -254,14 +259,14 @@ class _TasbihPageState extends State<TasbihPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: AppTheme.accentGold.withOpacity(0.1),
+              color: theme.colorScheme.secondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               'الدورة: ${state.rounds}',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.accentGold,
+                color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -288,7 +293,7 @@ class _TasbihPageState extends State<TasbihPage>
           // Lock automated detection briefly to avoid double-counting the tap animation
           _lockBeadPassDetection = true;
           _tasbihBloc.add(IncrementCount());
-          // HapticFeedback removed as requested
+          HapticFeedback.mediumImpact();
 
           setState(() {
             _updateRotation(0.2); // Animate forward slightly on tap
@@ -341,6 +346,7 @@ class _TasbihPageState extends State<TasbihPage>
   }
 
   Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
+    final theme = Theme.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -354,7 +360,7 @@ class _TasbihPageState extends State<TasbihPage>
               Container(
                 padding: const EdgeInsets.all(AppTheme.spacing3),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceWhite,
+                  color: theme.cardColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -364,15 +370,15 @@ class _TasbihPageState extends State<TasbihPage>
                     ),
                   ],
                 ),
-                child: Icon(icon, color: AppTheme.primaryEmerald, size: 24),
+                child: Icon(icon, color: theme.colorScheme.primary, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
                 label,
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textGrey,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
@@ -407,13 +413,15 @@ class TasbihPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // For now let's use fixed gold for string as it fits both themes elegantly.
+    // For now let's use fixed gold for string as it fits both themes elegantly.
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.42; // Slightly larger for elegance
-    final perspectiveRadiusY = radius * 0.75; // More balanced ellipse
+    final radius = size.width * 0.42;
+    final perspectiveRadiusY = radius * 0.75;
 
     // Draw string
     final stringPaint = Paint()
-      ..color = AppTheme.accentGold.withOpacity(0.2)
+      ..color = const Color(0xFFD4AF37).withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
@@ -535,9 +543,9 @@ class TasbihPainter extends CustomPainter {
       final distToFocal = (normAngle - math.pi / 2).abs();
       if (distToFocal < (math.pi / beadCount)) {
         final focalPaint = Paint()
-          ..color = AppTheme.accentGold.withOpacity(
-            0.4 * (1.0 - distToFocal / (math.pi / beadCount)),
-          )
+          ..color = const Color(
+            0xFFD4AF37,
+          ).withOpacity(0.4 * (1.0 - distToFocal / (math.pi / beadCount)))
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5
           ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 3);

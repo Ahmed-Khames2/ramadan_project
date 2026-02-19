@@ -3,7 +3,7 @@ import '../../../../core/widgets/main_scaffold.dart';
 import 'package:ramadan_project/features/home/presentation/pages/home_page.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
-import 'package:ramadan_project/features/azkar/presentation/pages/azkar_categories_page.dart';
+import 'package:ramadan_project/features/settings/presentation/pages/settings_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -19,14 +19,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     const HomeDashboardPage(),
     const EnhancedSurahIndexPage(),
     const KhatmahDashboardPage(),
-    const AzkarCategoriesPage(),
+    const SettingsPage(),
   ];
 
   final List<String> _titles = [
     'الرئيسية',
     'المصحف الشريف',
     'متابعة الختمة',
-    'حصن المسلم',
+    'الإعدادات',
   ];
 
   @override

@@ -17,13 +17,15 @@ class BasmalaWidget extends StatelessWidget {
           fontFamily: 'AThuluthRegular',
           fontSize: (38 * scale).clamp(28, 52),
           height: 1.4,
-          color: const Color(0xFF111111),
+          color: Theme.of(context).colorScheme.onSurface,
           fontWeight: FontWeight.w500,
           shadows: [
             Shadow(
               blurRadius: 1,
               offset: const Offset(0, 1),
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(
+                Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1,
+              ),
             ),
           ],
         ),

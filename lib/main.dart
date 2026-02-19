@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -17,7 +18,6 @@ import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entitie
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
-import 'package:ramadan_project/features/home/presentation/pages/main_navigation_page.dart';
 import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:ramadan_project/features/quran/data/datasources/quran_local_datasource.dart';
 import 'package:ramadan_project/features/audio/data/repositories/audio_repository_impl.dart';
@@ -31,6 +31,8 @@ import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_r
     as prayer_repo;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:ramadan_project/features/splash/presentation/pages/splash_page.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
@@ -39,16 +41,24 @@ import 'package:ramadan_project/features/ramadan_worship/data/repositories/worsh
 import 'package:ramadan_project/features/ramadan_worship/domain/repositories/worship_repository.dart';
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
+import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // Disable runtime font fetching - use locally bundled fonts only
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Basic global error handling for user feedback
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Global Error: ${details.exception}');
+  };
 
   // Initialize essential services
-  await Future.wait([initializeDateFormatting('ar', null), Hive.initFlutter()]);
+  await Future.wait([
+    initializeDateFormatting('ar', null),
+    Hive.initFlutter(),
+    // if (!kIsWeb) _clearAudioCache(), // Removed to keep audio cache for offline use
+  ]);
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -99,6 +109,19 @@ void main() async {
       prefs: prefs,
     ),
   );
+}
+
+Future<void> _clearAudioCache() async {
+  if (kIsWeb) return; // Audio cache clearing is mobile-only
+  try {
+    final tempDir = await getTemporaryDirectory();
+    final cacheDir = Directory('${tempDir.path}/just_audio_cache');
+    if (await cacheDir.exists()) {
+      await cacheDir.delete(recursive: true);
+    }
+  } catch (e) {
+    debugPrint('Error clearing audio cache: $e');
+  }
 }
 
 void _registerHiveAdapters() {
@@ -179,20 +202,27 @@ class MyApp extends StatelessWidget {
             create: (context) =>
                 WorshipCubit(worshipRepository)..loadDailyProgress(),
           ),
+          BlocProvider(create: (context) => ThemeModeCubit(prefs)),
         ],
-        child: MaterialApp(
-          title: 'زاد',
-          debugShowCheckedModeBanner: false,
-          navigatorKey: NavigationRoutes.navigatorKey,
-          theme: AppTheme.lightTheme,
-          locale: const Locale('ar'),
-          supportedLocales: const [Locale('ar')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: const SplashPage(),
+        child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return MaterialApp(
+              title: 'زاد',
+              debugShowCheckedModeBanner: false,
+              navigatorKey: NavigationRoutes.navigatorKey,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
+              locale: const Locale('ar'),
+              supportedLocales: const [Locale('ar')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              home: const SplashPage(),
+            );
+          },
         ),
       ),
     );

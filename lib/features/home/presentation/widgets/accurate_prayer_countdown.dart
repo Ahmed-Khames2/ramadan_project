@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
@@ -128,7 +128,7 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                   children: [
                     Text(
                       'الصلاة القادمة: ${_nextPrayer!.nameArabic}',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
                         fontWeight: FontWeight.w500,
@@ -137,7 +137,7 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                     const SizedBox(height: AppTheme.spacing2),
                     Text(
                       DateFormat.jm().format(_nextPrayer!.time),
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.accentGold,
@@ -155,7 +155,7 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                         const SizedBox(width: 8),
                         Text(
                           'متبقي $hours ساعة و $minutes دقيقة',
-                          style: GoogleFonts.cairo(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

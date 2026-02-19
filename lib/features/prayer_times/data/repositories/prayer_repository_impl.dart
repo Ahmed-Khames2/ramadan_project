@@ -188,7 +188,6 @@ class PrayerRepositoryImpl implements PrayerRepository {
     params.madhab = Madhab.shafi;
 
     final prayerTimes = PrayerTimes.today(coordinates, params);
-    final current = prayerTimes.currentPrayer();
     final next = prayerTimes.nextPrayer();
 
     return [
@@ -196,41 +195,31 @@ class PrayerRepositoryImpl implements PrayerRepository {
         nameArabic: 'الفجر',
         nameEnglish: 'Fajr',
         time: prayerTimes.fajr,
-        isCurrent:
-            current == Prayer.fajr ||
-            (current == Prayer.none && next == Prayer.fajr),
+        isCurrent: next == Prayer.fajr,
       ),
       PrayerTime(
         nameArabic: 'الظهر',
         nameEnglish: 'Dhuhr',
         time: prayerTimes.dhuhr,
-        isCurrent:
-            current == Prayer.dhuhr ||
-            (current == Prayer.none && next == Prayer.dhuhr),
+        isCurrent: next == Prayer.dhuhr,
       ),
       PrayerTime(
         nameArabic: 'العصر',
         nameEnglish: 'Asr',
         time: prayerTimes.asr,
-        isCurrent:
-            current == Prayer.asr ||
-            (current == Prayer.none && next == Prayer.asr),
+        isCurrent: next == Prayer.asr,
       ),
       PrayerTime(
         nameArabic: 'المغرب',
         nameEnglish: 'Maghrib',
         time: prayerTimes.maghrib,
-        isCurrent:
-            current == Prayer.maghrib ||
-            (current == Prayer.none && next == Prayer.maghrib),
+        isCurrent: next == Prayer.maghrib,
       ),
       PrayerTime(
         nameArabic: 'العشاء',
         nameEnglish: 'Isha',
         time: prayerTimes.isha,
-        isCurrent:
-            current == Prayer.isha ||
-            (current == Prayer.none && next == Prayer.isha),
+        isCurrent: next == Prayer.isha,
       ),
     ];
   }
@@ -246,7 +235,6 @@ class PrayerRepositoryImpl implements PrayerRepository {
     params.madhab = Madhab.shafi;
 
     final prayerTimes = PrayerTimes.today(coordinates, params);
-    final current = prayerTimes.currentPrayer();
     final next = prayerTimes.nextPrayer();
 
     return [
@@ -254,41 +242,31 @@ class PrayerRepositoryImpl implements PrayerRepository {
         nameArabic: 'الفجر',
         nameEnglish: 'Fajr',
         time: prayerTimes.fajr,
-        isCurrent:
-            current == Prayer.fajr ||
-            (current == Prayer.none && next == Prayer.fajr),
+        isCurrent: next == Prayer.fajr,
       ),
       PrayerTime(
         nameArabic: 'الظهر',
         nameEnglish: 'Dhuhr',
         time: prayerTimes.dhuhr,
-        isCurrent:
-            current == Prayer.dhuhr ||
-            (current == Prayer.none && next == Prayer.dhuhr),
+        isCurrent: next == Prayer.dhuhr,
       ),
       PrayerTime(
         nameArabic: 'العصر',
         nameEnglish: 'Asr',
         time: prayerTimes.asr,
-        isCurrent:
-            current == Prayer.asr ||
-            (current == Prayer.none && next == Prayer.asr),
+        isCurrent: next == Prayer.asr,
       ),
       PrayerTime(
         nameArabic: 'المغرب',
         nameEnglish: 'Maghrib',
         time: prayerTimes.maghrib,
-        isCurrent:
-            current == Prayer.maghrib ||
-            (current == Prayer.none && next == Prayer.maghrib),
+        isCurrent: next == Prayer.maghrib,
       ),
       PrayerTime(
         nameArabic: 'العشاء',
         nameEnglish: 'Isha',
         time: prayerTimes.isha,
-        isCurrent:
-            current == Prayer.isha ||
-            (current == Prayer.none && next == Prayer.isha),
+        isCurrent: next == Prayer.isha,
       ),
     ];
   }

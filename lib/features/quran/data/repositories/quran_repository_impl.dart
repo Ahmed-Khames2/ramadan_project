@@ -76,6 +76,10 @@ class QuranRepositoryImpl implements QuranRepository {
     for (int i = 1; i <= 114; i++) {
       if (_surahCache.containsKey(i)) continue;
       await _loadSurahJson(i);
+      // Preload active surah's tafsir too
+      if (i == 1 || i == 36 || i == 18) {
+        _loadTafsirJson(i);
+      }
       await Future.delayed(const Duration(milliseconds: 50));
     }
   }
@@ -134,7 +138,9 @@ class QuranRepositoryImpl implements QuranRepository {
       final surahJson = _surahCache[ref.surah]!;
       final verses = surahJson['verse'] as Map<String, dynamic>;
       final text =
-          verses['verse_${ref.ayah}'] as String? ?? 'Error loading text';
+          (verses['verse_${ref.ayah}'] as String? ?? 'Error loading text')
+              .replaceAll('\ufeff', '')
+              .trim();
 
       pageAyahs.add(
         Ayah(
@@ -148,6 +154,9 @@ class QuranRepositoryImpl implements QuranRepository {
         ),
       );
     }
+
+    // Force strict global ordering
+    pageAyahs.sort((a, b) => a.globalAyahNumber.compareTo(b.globalAyahNumber));
 
     final firstRef = refs.first;
     return QuranPage(
@@ -195,11 +204,14 @@ class QuranRepositoryImpl implements QuranRepository {
     if (!_tafsirCache.containsKey(surahNumber)) {
       await _loadTafsirJson(surahNumber);
     }
-    final surahTafsir = _tafsirCache[surahNumber];
-    if (surahTafsir == null) return "Error loading Tafsir";
+    final surahData = _tafsirCache[surahNumber];
+    if (surahData == null || !surahData.containsKey('verse')) {
+      return "تفسير غير متاح لهذه الآية";
+    }
 
-    return surahTafsir['verse_$ayahNumber'] ??
-        surahTafsir['$ayahNumber'] ??
+    final verses = surahData['verse'] as Map<String, dynamic>;
+    return verses['verse_$ayahNumber'] ??
+        verses['$ayahNumber'] ??
         "تفسير غير متاح لهذه الآية";
   }
 
@@ -348,10 +360,15 @@ class QuranRepositoryImpl implements QuranRepository {
       final String jsonString = await rootBundle.loadString(
         'assets/json/quranjson/translation/ar/ar_translation_$surahNum.json',
       );
-      _tafsirCache[surahNum] = json.decode(jsonString) as Map<String, dynamic>;
+      // Use compute for larger files if needed, but here we just ensure basic async loading
+      _tafsirCache[surahNum] = await compute(_decodeJson, jsonString);
     } catch (e) {
       _tafsirCache[surahNum] = {};
     }
+  }
+
+  static Map<String, dynamic> _decodeJson(String jsonString) {
+    return json.decode(jsonString) as Map<String, dynamic>;
   }
 
   int _getGlobalAyahNumber(int surah, int ayah) {

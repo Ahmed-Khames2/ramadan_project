@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class SurahFilterChip extends StatelessWidget {
@@ -16,8 +16,13 @@ class SurahFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
-      color: isSelected ? AppTheme.primaryEmerald : Colors.white,
+      color: isSelected
+          ? AppTheme.primaryEmerald
+          : (isDark ? theme.colorScheme.surface : Colors.white),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -34,10 +39,14 @@ class SurahFilterChip extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : AppTheme.primaryEmerald,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                        ? theme.colorScheme.onSurface
+                        : AppTheme.primaryEmerald),
             ),
           ),
         ),

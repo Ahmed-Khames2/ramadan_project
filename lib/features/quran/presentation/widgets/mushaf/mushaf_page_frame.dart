@@ -15,10 +15,10 @@ class MushafPageFrame extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -35,7 +35,11 @@ class MushafPageFrame extends StatelessWidget {
               margin: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: const Color(0xFFD4AF37).withOpacity(0.5),
+                  color:
+                      (theme.brightness == Brightness.dark
+                              ? const Color(0xFFC5A028)
+                              : const Color(0xFFD4AF37))
+                          .withOpacity(0.5),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -56,10 +60,10 @@ class MushafPageFrame extends StatelessWidget {
           ),
 
           // Corner Ornaments
-          _buildCorner(Alignment.topLeft, 0),
-          _buildCorner(Alignment.topRight, 90),
-          _buildCorner(Alignment.bottomRight, 180),
-          _buildCorner(Alignment.bottomLeft, 270),
+          _buildCorner(context, Alignment.topLeft, 0),
+          _buildCorner(context, Alignment.topRight, 90),
+          _buildCorner(context, Alignment.bottomRight, 180),
+          _buildCorner(context, Alignment.bottomLeft, 270),
 
           // Main Content
           Column(
@@ -88,7 +92,7 @@ class MushafPageFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildCorner(Alignment alignment, double angle) {
+  Widget _buildCorner(BuildContext context, Alignment alignment, double angle) {
     return Align(
       alignment: alignment,
       child: Padding(
@@ -99,8 +103,10 @@ class MushafPageFrame extends StatelessWidget {
             'assets/images/frame_corner.svg',
             width: 40,
             height: 40,
-            colorFilter: const ColorFilter.mode(
-              Color(0xFFD4AF37),
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFC5A028)
+                  : const Color(0xFFD4AF37),
               BlendMode.srcIn,
             ),
           ),

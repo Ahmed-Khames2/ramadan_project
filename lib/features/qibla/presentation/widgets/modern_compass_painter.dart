@@ -1,6 +1,6 @@
 import 'dart:math' show pi, cos, sin;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class ModernCompassPainter extends CustomPainter {
@@ -67,7 +67,7 @@ class ModernCompassPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: dir['text'] as String,
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: isNorth ? AppTheme.primaryEmerald : AppTheme.textGrey,

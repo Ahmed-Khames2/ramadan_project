@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/ramadan_worship/domain/entities/worship_task.dart';
 
@@ -17,17 +17,22 @@ class WorshipTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: task.isCompleted
             ? AppTheme.primaryEmerald.withValues(alpha: 0.1)
-            : Colors.white,
+            : theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: task.isCompleted
               ? AppTheme.primaryEmerald
-              : Colors.grey.withValues(alpha: 0.2),
+              : (isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.grey.withValues(alpha: 0.2)),
         ),
       ),
       child: ListTile(
@@ -35,10 +40,12 @@ class WorshipTaskCard extends StatelessWidget {
         leading: _buildIcon(),
         title: Text(
           task.title,
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: task.isCompleted ? AppTheme.primaryEmerald : Colors.black87,
+            color: task.isCompleted
+                ? AppTheme.primaryEmerald
+                : theme.colorScheme.onSurface,
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
           ),
         ),
@@ -78,7 +85,7 @@ class WorshipTaskCard extends StatelessWidget {
           ),
           Text(
             "${task.currentProgress} / ${task.target}",
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
