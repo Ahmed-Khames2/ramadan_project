@@ -25,13 +25,14 @@ class UserProgressModelAdapter extends TypeAdapter<UserProgressModel> {
       startDate: fields[5] as DateTime?,
       scrollOffset: fields[6] as double?,
       lastReadSurahNumber: fields[7] as int?,
+      lastReadJuz: fields[8] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProgressModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.lastReadPage)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class UserProgressModelAdapter extends TypeAdapter<UserProgressModel> {
       ..writeByte(6)
       ..write(obj.scrollOffset)
       ..writeByte(7)
-      ..write(obj.lastReadSurahNumber);
+      ..write(obj.lastReadSurahNumber)
+      ..writeByte(8)
+      ..write(obj.lastReadJuz);
   }
 
   @override

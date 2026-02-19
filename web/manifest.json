@@ -1,12 +1,12 @@
 {
-    "name": "ramadan_project",
-    "short_name": "ramadan_project",
+    "name": "زاد المؤمن",
+    "short_name": "زاد المؤمن",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#1B5E20",
+    "theme_color": "#1B5E20",
+    "description": "تطبيق زاد المؤمن - رفيقك في العبادة",
+    "orientation": "portrait",
     "prefer_related_applications": false,
     "icons": [
         {

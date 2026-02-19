@@ -227,8 +227,17 @@ class QuranRepositoryImpl implements QuranRepository {
   Future<void> removeBookmark(int page) => localDataSource.removeBookmark(page);
 
   @override
-  Future<void> saveLastRead(int page, int ayahId) =>
-      localDataSource.saveProgress(page, ayahId);
+  Future<void> saveLastRead(
+    int page,
+    int ayahId, {
+    int? surahNumber,
+    int? juzNumber,
+  }) => localDataSource.saveProgress(
+    page,
+    ayahId,
+    surahNumber: surahNumber,
+    juzNumber: juzNumber,
+  );
 
   @override
   Future<void> addFavorite(int ayahId) => localDataSource.addFavorite(ayahId);

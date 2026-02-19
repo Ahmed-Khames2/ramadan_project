@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';

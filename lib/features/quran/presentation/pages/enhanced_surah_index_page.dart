@@ -13,6 +13,8 @@ import '../widgets/index/search_result_tile.dart';
 import '../widgets/index/surah_filter_chip.dart';
 import '../widgets/index/juz_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import '../../domain/repositories/quran_repository.dart';
+import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 
 class EnhancedSurahIndexPage extends StatefulWidget {
   const EnhancedSurahIndexPage({super.key});
@@ -38,11 +40,32 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   String? _selectedRevelationType; // null, 'Makkah', 'Madinah'
   int? _selectedJuz; // 1-30
 
+  // Progress Tracking
+  int? _lastReadSurah;
+  int? _lastReadPage;
+
+  String? _lastReadSurahName;
+
   @override
   void initState() {
     super.initState();
     _allSurahs = _getSurahList();
     _updateDisplayList();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final progress = context.read<QuranRepository>().getProgress();
+    if (progress != null) {
+      setState(() {
+        _lastReadSurah = progress.lastReadSurahNumber;
+        _lastReadPage = progress.lastReadPage;
+
+        if (_lastReadSurah != null) {
+          _lastReadSurahName = quran.getSurahNameArabic(_lastReadSurah!);
+        }
+      });
+    }
   }
 
   void _updateDisplayList() {
@@ -152,16 +175,16 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         backgroundColor: AppTheme.primaryEmerald,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_rounded),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavoritesPage()),
-            ),
-            tooltip: 'المفضلة',
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.favorite_rounded),
+        //     onPressed: () => Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => const FavoritesPage()),
+        //     ),
+        //     tooltip: 'المفضلة',
+        //   ),
+        // ],
       ),
       body: DecorativeBackground(
         child: Column(
@@ -200,6 +223,30 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
           ],
         ),
       ),
+
+      floatingActionButton: _lastReadPage != null
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        MushafPageView(initialPage: _lastReadPage!),
+                  ),
+                );
+                _loadProgress(); // Refresh on return
+              },
+              backgroundColor: AppTheme.primaryEmerald,
+              icon: const Icon(Icons.history_edu, color: Colors.white),
+              label: Text(
+                'متابعة القراءة: $_lastReadSurahName',
+                style: GoogleFonts.cairo(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -341,7 +388,13 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
             ),
           );
         } else if (item is SurahInfo) {
-          return SurahTile(surah: item);
+          final isLastRead = item.number == _lastReadSurah;
+          return SurahTile(
+            surah: item,
+            isLastRead: isLastRead,
+            initialPage: isLastRead ? _lastReadPage : null,
+            onReturn: _loadProgress,
+          );
         }
         return const SizedBox.shrink();
       },

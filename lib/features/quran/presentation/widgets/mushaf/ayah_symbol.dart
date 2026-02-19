@@ -33,11 +33,12 @@ class AyahSymbol extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   ayahNumber.toArabicDigits(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'UthmanTaha',
-                    fontSize: 10 * scale,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Colors.black,
+                    height: 1.0,
                   ),
                 ),
               ),

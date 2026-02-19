@@ -34,7 +34,12 @@ abstract class QuranRepository {
   /// Persistence
   Future<void> saveBookmark(int page);
   Future<void> removeBookmark(int page);
-  Future<void> saveLastRead(int page, int ayahId);
+  Future<void> saveLastRead(
+    int page,
+    int ayahId, {
+    int? surahNumber,
+    int? juzNumber,
+  });
   Future<void> addFavorite(int ayahId);
   Future<void> removeFavorite(int ayahId);
   Future<void> saveScrollOffset(double offset);

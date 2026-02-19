@@ -28,6 +28,9 @@ class UserProgressModel extends HiveObject {
   @HiveField(7)
   int? lastReadSurahNumber; // For Surah tracking
 
+  @HiveField(8)
+  int? lastReadJuz; // For Juz tracking
+
   UserProgressModel({
     this.lastReadPage,
     this.lastReadAyahId,
@@ -37,5 +40,6 @@ class UserProgressModel extends HiveObject {
     this.startDate,
     this.scrollOffset,
     this.lastReadSurahNumber,
+    this.lastReadJuz,
   });
 }

@@ -31,15 +31,28 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MainScaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
-      title: _titles[_currentIndex],
-      currentIndex: _currentIndex,
-      onTabSelected: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) {
+          return;
+        }
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+        }
       },
+      child: MainScaffold(
+        body: IndexedStack(index: _currentIndex, children: _pages),
+        title: _titles[_currentIndex],
+        currentIndex: _currentIndex,
+        onTabSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
     );
   }
 }

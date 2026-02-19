@@ -14,7 +14,10 @@ class CustomHomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     // Hijri Date
     HijriCalendar.setLocal('ar');
-    final hijriDate = HijriCalendar.now();
+    // Hikri Date Correction: Subtract 1 day to match local sighting
+    final hijriDate = HijriCalendar.fromDate(
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
     final hijriString =
         '${hijriDate.hDay} ${hijriDate.longMonthName} ${hijriDate.hYear}';
 
