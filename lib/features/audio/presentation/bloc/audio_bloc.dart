@@ -38,6 +38,9 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     on<AudioSeek>(_onSeek);
     on<AudioReciterChanged>(_onReciterChanged);
     on<AudioDownloadAyah>(_onDownloadAyah);
+    on<AudioRepeatModeChanged>(_onRepeatModeChanged);
+    on<AudioSkipNext>(_onSkipNext);
+    on<AudioSkipPrevious>(_onSkipPrevious);
     on<AudioCancelDownload>(_onCancelDownload);
 
     // Internal events
@@ -49,8 +52,12 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     );
     on<_AudioPlayerStateChanged>(_onPlayerStateChanged);
     on<_AudioCurrentAyahChanged>(
-      (event, emit) =>
-          emit(state.copyWithNullable(currentAyah: () => event.ayahNumber)),
+      (event, emit) => emit(
+        state.copyWithNullable(
+          currentAyah: () => event.ayahNumber,
+          lastAyah: event.ayahNumber != null ? () => event.ayahNumber : null,
+        ),
+      ),
     );
     on<_AudioDownloadProgressChanged>(
       (event, emit) => emit(state.copyWith(downloadProgress: event.progress)),
@@ -185,6 +192,46 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     Emitter<AudioState> emit,
   ) async {
     await _audioRepository.cancelDownload(event.ayahNumber);
+  }
+
+  Future<void> _onRepeatModeChanged(
+    AudioRepeatModeChanged event,
+    Emitter<AudioState> emit,
+  ) async {
+    await _audioRepository.setLoopMode(event.repeatOne);
+    emit(state.copyWith(repeatOne: event.repeatOne));
+  }
+
+  Future<void> _onSkipNext(
+    AudioSkipNext event,
+    Emitter<AudioState> emit,
+  ) async {
+    final effectiveAyah = state.currentAyah ?? state.lastAyah;
+    if (effectiveAyah == null) return;
+
+    // First try repository-level skip (playlists)
+    final moved = await _audioRepository.seekToNext();
+
+    // If it didn't move (likely single ayah mode), manually play next
+    if (!moved && effectiveAyah < 6236) {
+      add(AudioPlayAyah(effectiveAyah + 1));
+    }
+  }
+
+  Future<void> _onSkipPrevious(
+    AudioSkipPrevious event,
+    Emitter<AudioState> emit,
+  ) async {
+    final effectiveAyah = state.currentAyah ?? state.lastAyah;
+    if (effectiveAyah == null) return;
+
+    // First try repository-level skip (playlists)
+    final moved = await _audioRepository.seekToPrevious();
+
+    // If it didn't move (likely single ayah mode), manually play previous
+    if (!moved && effectiveAyah > 1) {
+      add(AudioPlayAyah(effectiveAyah - 1));
+    }
   }
 
   void _onPlayerStateChanged(

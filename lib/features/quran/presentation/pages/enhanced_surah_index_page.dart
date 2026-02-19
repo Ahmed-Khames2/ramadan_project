@@ -14,6 +14,7 @@ import '../widgets/index/juz_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
+import 'package:ramadan_project/features/favorites/presentation/pages/favorites_page.dart';
 
 class EnhancedSurahIndexPage extends StatefulWidget {
   const EnhancedSurahIndexPage({super.key});
@@ -174,16 +175,16 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         backgroundColor: AppTheme.primaryEmerald,
         foregroundColor: Colors.white,
         elevation: 0,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.favorite_rounded),
-        //     onPressed: () => Navigator.push(
-        //       context,
-        //       MaterialPageRoute(builder: (context) => const FavoritesPage()),
-        //     ),
-        //     tooltip: 'المفضلة',
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_rounded),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FavoritesPage()),
+            ),
+            tooltip: 'المفضلة',
+          ),
+        ],
       ),
       body: DecorativeBackground(
         child: Column(

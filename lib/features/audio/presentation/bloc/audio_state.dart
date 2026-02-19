@@ -5,48 +5,48 @@ enum AudioStatus { initial, loading, playing, paused, error }
 class AudioState extends Equatable {
   final AudioStatus status;
   final int? currentAyah;
+  final int? lastAyah;
   final Reciter selectedReciter;
   final Duration position;
   final Duration duration;
   final String? errorMessage;
   final Map<int, double>
   downloadProgress; // Map of Ayah number to progress 0.0-1.0
+  final bool repeatOne;
 
   const AudioState({
     this.status = AudioStatus.initial,
     this.currentAyah,
+    this.lastAyah,
     this.selectedReciter = Reciters.defaultReciter,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.errorMessage,
     this.downloadProgress = const {},
+    this.repeatOne = false,
   });
 
   AudioState copyWith({
     AudioStatus? status,
     int? currentAyah,
+    int? lastAyah,
     Reciter? selectedReciter,
     Duration? position,
     Duration? duration,
     String? errorMessage,
     Map<int, double>? downloadProgress,
+    bool? repeatOne,
   }) {
     return AudioState(
       status: status ?? this.status,
-      currentAyah:
-          currentAyah, // Allow null to be passed? No, if passed as null it means clear it?
-      // Actually copyWith semantics usually ignore null, so we need a way to clear it.
-      // But for currentAyah, if we pass null explicitly we might want to clear it.
-      // Let's use a sentinel or just handle it logic-side.
-      // For now, if currentAyah is passed, we use it. If we want to clear, we might need a nullable wrapper.
-      // But here: currentAyah ?? this.currentAyah means we can't clear it easily.
-      // Let's assume we won't clear it via copyWith null, but passing a specific value.
+      currentAyah: currentAyah ?? this.currentAyah,
+      lastAyah: lastAyah ?? this.lastAyah,
       selectedReciter: selectedReciter ?? this.selectedReciter,
       position: position ?? this.position,
       duration: duration ?? this.duration,
-      errorMessage:
-          errorMessage, // Reset error message on copy normally? Or keep it?
+      errorMessage: errorMessage,
       downloadProgress: downloadProgress ?? this.downloadProgress,
+      repeatOne: repeatOne ?? this.repeatOne,
     );
   }
 
@@ -54,20 +54,24 @@ class AudioState extends Equatable {
   AudioState copyWithNullable({
     AudioStatus? status,
     int? Function()? currentAyah, // Function that returns int?
+    int? Function()? lastAyah,
     Reciter? selectedReciter,
     Duration? position,
     Duration? duration,
     String? errorMessage,
     Map<int, double>? downloadProgress,
+    bool? repeatOne,
   }) {
     return AudioState(
       status: status ?? this.status,
       currentAyah: currentAyah != null ? currentAyah() : this.currentAyah,
+      lastAyah: lastAyah != null ? lastAyah() : this.lastAyah,
       selectedReciter: selectedReciter ?? this.selectedReciter,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       errorMessage: errorMessage,
       downloadProgress: downloadProgress ?? this.downloadProgress,
+      repeatOne: repeatOne ?? this.repeatOne,
     );
   }
 
@@ -75,10 +79,12 @@ class AudioState extends Equatable {
   List<Object?> get props => [
     status,
     currentAyah,
+    lastAyah,
     selectedReciter,
     position,
     duration,
     errorMessage,
     downloadProgress,
+    repeatOne,
   ];
 }

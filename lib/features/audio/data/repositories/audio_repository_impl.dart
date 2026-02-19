@@ -23,7 +23,29 @@ class AudioRepositoryImpl implements AudioRepository {
 
   AudioRepositoryImpl({AudioPlayer? audioPlayer, Dio? dio})
     : _audioPlayer = audioPlayer ?? AudioPlayer(),
-      _dio = dio ?? Dio();
+      _dio = dio ?? Dio() {
+    _initListeners();
+  }
+
+  void _initListeners() {
+    _audioPlayer.currentIndexStream.listen((index) {
+      final source = _audioPlayer.audioSource;
+      if (source is ConcatenatingAudioSource &&
+          index != null &&
+          index < source.length) {
+        final item = source.children[index];
+        if (item is IndexedAudioSource && item.tag is int) {
+          _currentAyahController.add(item.tag as int);
+        }
+      }
+    });
+
+    _audioPlayer.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        _currentAyahController.add(null);
+      }
+    });
+  }
 
   @override
   Stream<Duration> get positionStream => _audioPlayer.positionStream;
@@ -78,13 +100,6 @@ class AudioRepositoryImpl implements AudioRepository {
 
       _currentAyahController.add(ayahNumber);
       await _audioPlayer.play();
-
-      // When playback completes, reset current ayah
-      _audioPlayer.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
-          _currentAyahController.add(null);
-        }
-      });
     } catch (e) {
       print('AudioRepo: Error playing audio: $e'); // DEBUG LOG
       throw Exception("Failed to play audio: $e");
@@ -129,13 +144,6 @@ class AudioRepositoryImpl implements AudioRepository {
 
       final playlist = ConcatenatingAudioSource(children: sources);
       await _audioPlayer.setAudioSource(playlist);
-
-      _audioPlayer.currentIndexStream.listen((index) {
-        if (index != null && index < ayahNumbers.length) {
-          _currentAyahController.add(ayahNumbers[index]);
-        }
-      });
-
       await _audioPlayer.play();
     } catch (e) {
       throw Exception("Failed to play range: $e");
@@ -249,5 +257,28 @@ class AudioRepositoryImpl implements AudioRepository {
       await audioDir.create(recursive: true);
     }
     return '${audioDir.path}/$ayahNumber.mp3';
+  }
+
+  @override
+  Future<void> setLoopMode(bool repeatOne) async {
+    await _audioPlayer.setLoopMode(repeatOne ? LoopMode.one : LoopMode.off);
+  }
+
+  @override
+  Future<bool> seekToNext() async {
+    if (_audioPlayer.hasNext) {
+      await _audioPlayer.seekToNext();
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> seekToPrevious() async {
+    if (_audioPlayer.hasPrevious) {
+      await _audioPlayer.seekToPrevious();
+      return true;
+    }
+    return false;
   }
 }

@@ -9,11 +9,13 @@ import 'mushaf/mushaf_page_frame.dart';
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
   final double fontScale;
+  final VoidCallback? onShowControls;
 
   const ContinuousMushafPageWidget({
     super.key,
     required this.pageNumber,
     this.fontScale = 1.0,
+    this.onShowControls,
   });
 
   @override
@@ -25,6 +27,7 @@ class _ContinuousMushafPageWidgetState
     extends State<ContinuousMushafPageWidget> {
   late Future<QuranPage> _pageData;
   QuranPage? _cachedPage;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -39,6 +42,12 @@ class _ContinuousMushafPageWidgetState
       _cachedPage = null; // Reset cache on page change
       _loadData();
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -110,11 +119,22 @@ class _ContinuousMushafPageWidgetState
 
     return MushafPageFrame(
       page: page,
-      child: SingleChildScrollView(
-        // السماح بالسكرول العمودي
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: MushafVerseBody(page: page, scale: contentScale),
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        thickness: 4,
+        radius: const Radius.circular(10),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          // السماح بالسكرول العمودي
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: MushafVerseBody(
+              page: page,
+              scale: contentScale,
+              onShowControls: widget.onShowControls,
+            ),
+          ),
         ),
       ),
     );

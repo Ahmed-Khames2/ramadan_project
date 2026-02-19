@@ -25,6 +25,9 @@ abstract class QuranRepository {
   /// Get Tafsir for a specific ayah
   Future<String> getTafsir(int surahNumber, int ayahNumber);
 
+  /// Preload Tafsir for an entire surah
+  Future<void> preloadTafsir(int surahNumber);
+
   /// Search across all ayahs
   Future<List<Map<String, dynamic>>> search(String query);
 

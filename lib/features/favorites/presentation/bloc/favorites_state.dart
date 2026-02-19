@@ -12,7 +12,7 @@ class FavoritesInitial extends FavoritesState {}
 class FavoritesLoading extends FavoritesState {}
 
 class FavoritesLoaded extends FavoritesState {
-  final List<int> favorites;
+  final List<FavoriteAyah> favorites;
 
   const FavoritesLoaded(this.favorites);
 

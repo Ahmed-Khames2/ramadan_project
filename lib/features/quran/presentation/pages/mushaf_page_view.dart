@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/continuous_mushaf_widget.dart';
+import 'package:ramadan_project/core/widgets/error_dialog.dart';
+import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
+import 'package:ramadan_project/core/widgets/common_widgets.dart';
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
@@ -29,6 +33,8 @@ class _MushafPageViewState extends State<MushafPageView> {
   late Future<void> _initFuture;
   late PageController _portraitController;
   static const int _totalPages = 604;
+  bool _showControls = true;
+  Timer? _hideTimer;
 
   @override
   void initState() {
@@ -39,6 +45,7 @@ class _MushafPageViewState extends State<MushafPageView> {
     _portraitController = PageController(
       initialPage: _portraitIndexForPage(_currentPage),
     );
+    _resetHideTimer();
   }
 
   Future<void> _initialize() async {
@@ -57,26 +64,82 @@ class _MushafPageViewState extends State<MushafPageView> {
         prefs.setBool('mushaf_instruction_shown', true);
       });
     }
+
+    // Preload initial page's surah tafsir
+    final initialSurah = quran.getPageData(_currentPage).first['surah'] as int;
+    context.read<QuranRepository>().preloadTafsir(initialSurah);
+  }
+
+  void _resetHideTimer() {
+    _cancelHideTimer();
+    _hideTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && _showControls) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _cancelHideTimer() {
+    _hideTimer?.cancel();
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (_showControls) {
+      _resetHideTimer();
+    } else {
+      _cancelHideTimer();
+    }
   }
 
   void _showMushafInstruction() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'يمكنك الضغط على أي آية لعرض التفسير وسماع التلاوة',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: AppTheme.primaryEmerald),
+            SizedBox(width: 12),
+            Text(
+              'تعلم الاستخدام',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        backgroundColor: AppTheme.primaryEmerald,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        content: const Text(
+          'يمكنك الضغط على أي آية لعرض التفسير وسماع التلاوة بصوت القارئ المفضل لديك.',
+          textAlign: TextAlign.right,
+          style: TextStyle(fontFamily: 'Cairo', fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'حسناً',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryEmerald,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   void dispose() {
+    _cancelHideTimer();
     WakelockPlus.disable();
     _portraitController.dispose();
     super.dispose();
@@ -127,16 +190,26 @@ class _MushafPageViewState extends State<MushafPageView> {
                     children: [
                       const Text("A", style: TextStyle(fontSize: 14)),
                       Expanded(
-                        child: Slider(
-                          value: _fontScale,
-                          min: 0.8,
-                          max: 2.5,
-                          divisions: 17,
-                          activeColor: const Color(0xFFFFD700),
-                          onChanged: (value) {
-                            setModalState(() => _fontScale = value);
-                            _updateFontScale(value);
-                          },
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: AppTheme.primaryEmerald,
+                            inactiveTrackColor: AppTheme.primaryEmerald
+                                .withOpacity(0.2),
+                            thumbColor: AppTheme.primaryEmerald,
+                            overlayColor: AppTheme.primaryEmerald.withOpacity(
+                              0.12,
+                            ),
+                          ),
+                          child: Slider(
+                            value: _fontScale,
+                            min: 0.8,
+                            max: 2.5,
+                            divisions: 17,
+                            onChanged: (value) {
+                              setModalState(() => _fontScale = value);
+                              _updateFontScale(value);
+                            },
+                          ),
                         ),
                       ),
                       const Text("A", style: TextStyle(fontSize: 28)),
@@ -183,73 +256,350 @@ class _MushafPageViewState extends State<MushafPageView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          quran.getSurahNameArabic(
-            quran.getPageData(_currentPage).first['surah'] as int,
-          ),
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 20,
-            color: Color(0xFFFFD700),
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _showSettings,
-            icon: const Icon(Icons.format_size, color: Color(0xFFFFD700)),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: FutureBuilder(
-            future: _initFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text("خطأ في تحميل البيانات: ${snapshot.error}"),
-                );
-              }
+    return BlocListener<AudioBloc, AudioState>(
+      listener: (context, state) {
+        if (state.status == AudioStatus.error && state.errorMessage != null) {
+          ErrorDialog.show(context, message: state.errorMessage!);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: DecorativeBackground(
+          child: Stack(
+            children: [
+              // Content
+              GestureDetector(
+                onTap: _toggleControls,
+                behavior: HitTestBehavior.opaque,
+                child: SafeArea(
+                  bottom: false,
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: FutureBuilder(
+                      future: _initFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primaryEmerald,
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(
+                              "خطأ في تحميل البيانات: ${snapshot.error}",
+                            ),
+                          );
+                        }
 
-              return Directionality(
-                textDirection: TextDirection.rtl,
-                child: PageView.builder(
-                  key: ValueKey('portrait_${widget.initialPage}'),
-                  controller: _portraitController,
-                  itemCount: _totalPages,
-                  reverse: false,
-                  onPageChanged: (index) {
-                    _currentPage = _pageForPortraitIndex(index);
-                    setState(() {}); // Update title
-                    if (widget.shouldSaveProgress) {
-                      _saveBookmark(_currentPage);
-                    }
-                    widget.onPageChanged?.call(_currentPage);
-                  },
-                  itemBuilder: (context, index) {
-                    return ContinuousMushafPageWidget(
-                      pageNumber: _pageForPortraitIndex(index),
-                      fontScale: _fontScale,
-                    );
-                  },
+                        return Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: PageView.builder(
+                            key: ValueKey('portrait_${widget.initialPage}'),
+                            controller: _portraitController,
+                            itemCount: _totalPages,
+                            reverse: false,
+                            onPageChanged: (index) {
+                              _currentPage = _pageForPortraitIndex(index);
+                              setState(() {}); // Update title
+
+                              // Preload tafsir for the new surah
+                              final currentSurah =
+                                  quran.getPageData(_currentPage).first['surah']
+                                      as int;
+                              context.read<QuranRepository>().preloadTafsir(
+                                currentSurah,
+                              );
+
+                              if (widget.shouldSaveProgress) {
+                                _saveBookmark(_currentPage);
+                              }
+                              widget.onPageChanged?.call(_currentPage);
+                            },
+                            itemBuilder: (context, index) {
+                              return ContinuousMushafPageWidget(
+                                pageNumber: _pageForPortraitIndex(index),
+                                fontScale: _fontScale,
+                                onShowControls: () {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (mounted && !_showControls) {
+                                      setState(() => _showControls = true);
+                                    }
+                                    _resetHideTimer();
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              );
-            },
+              ),
+              // Top AppBar
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                top: _showControls ? 0 : -100,
+                left: 0,
+                right: 0,
+                child: AppBar(
+                  title: const Text(
+                    'المصحف الشريف',
+                    style: TextStyle(
+                      fontFamily: 'UthmanTaha',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  centerTitle: true,
+                  backgroundColor: AppTheme.primaryEmerald,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  actions: [
+                    IconButton(
+                      onPressed: _showSettings,
+                      icon: const Icon(Icons.format_size),
+                    ),
+                  ],
+                ),
+              ),
+              // Bottom Audio Bar
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                bottom: _showControls ? 0 : -120,
+                left: 0,
+                right: 0,
+                child: _buildBottomAudioBar(theme),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildBottomAudioBar(ThemeData theme) {
+    return BlocBuilder<AudioBloc, AudioState>(
+      builder: (context, state) {
+        if (state.status == AudioStatus.initial) return const SizedBox.shrink();
+
+        final isPlaying = state.status == AudioStatus.playing;
+        final isBuffering = state.status == AudioStatus.loading;
+        final currentPosition = state.position;
+        final totalDuration = state.duration;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryEmerald,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Minimal Handle
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Progress Slider
+                Row(
+                  children: [
+                    Text(
+                      _formatDuration(currentPosition),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 7,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 14,
+                          ),
+                          activeTrackColor: AppTheme.accentGold,
+                          inactiveTrackColor: Colors.white24,
+                          thumbColor: AppTheme.accentGold,
+                          overlayColor: AppTheme.accentGold.withOpacity(0.2),
+                        ),
+                        child: Slider(
+                          value: currentPosition.inMilliseconds
+                              .toDouble()
+                              .clamp(
+                                0.0,
+                                totalDuration.inMilliseconds.toDouble() > 0
+                                    ? totalDuration.inMilliseconds.toDouble()
+                                    : 1.0,
+                              ),
+                          max: totalDuration.inMilliseconds.toDouble() > 0
+                              ? totalDuration.inMilliseconds.toDouble()
+                              : 1.0,
+                          onChanged: (value) {
+                            context.read<AudioBloc>().add(
+                              AudioSeek(Duration(milliseconds: value.toInt())),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatDuration(totalDuration),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ],
+                ),
+                // Main Controls
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Stop/Close
+                    _buildCompactIconButton(
+                      icon: Icons.close_rounded,
+                      onPressed: () =>
+                          context.read<AudioBloc>().add(const AudioStop()),
+                      tooltip: 'إغلاق',
+                    ),
+                    // Skip Previous
+                    _buildCompactIconButton(
+                      icon: Icons.skip_previous_rounded,
+                      onPressed: () => context.read<AudioBloc>().add(
+                        const AudioSkipPrevious(),
+                      ),
+                      tooltip: 'الآية السابقة',
+                    ),
+                    // Play/Pause Center
+                    IconButton(
+                      onPressed: () {
+                        if (isPlaying) {
+                          context.read<AudioBloc>().add(const AudioPause());
+                        } else if (state.status == AudioStatus.paused) {
+                          context.read<AudioBloc>().add(const AudioResume());
+                        } else if (state.lastAyah != null) {
+                          context.read<AudioBloc>().add(
+                            AudioPlayAyah(state.lastAyah!),
+                          );
+                        }
+                      },
+                      iconSize: 56,
+                      icon: isBuffering
+                          ? const SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: AppTheme.accentGold,
+                              ),
+                            )
+                          : Icon(
+                              isPlaying
+                                  ? Icons.pause_circle_filled_rounded
+                                  : Icons.play_circle_filled_rounded,
+                              color: Colors.white,
+                            ),
+                    ),
+                    // Skip Next
+                    _buildCompactIconButton(
+                      icon: Icons.skip_next_rounded,
+                      onPressed: () =>
+                          context.read<AudioBloc>().add(const AudioSkipNext()),
+                      tooltip: 'الآية التالية',
+                    ),
+                    // Repeat Toggle
+                    _buildCompactIconButton(
+                      icon: state.repeatOne
+                          ? Icons.repeat_one_rounded
+                          : Icons.repeat_rounded,
+                      onPressed: () {
+                        context.read<AudioBloc>().add(
+                          AudioRepeatModeChanged(!state.repeatOne),
+                        );
+                      },
+                      color: state.repeatOne
+                          ? AppTheme.accentGold
+                          : Colors.white70,
+                      tooltip: 'تكرار',
+                    ),
+                  ],
+                ),
+                // Current Info Small
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    (state.currentAyah ?? state.lastAyah) != null
+                        ? '${state.selectedReciter.arabicName} | الآية ${state.currentAyah ?? state.lastAyah}'
+                        : 'جاهز للاستماع',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    String? tooltip,
+    Color color = Colors.white70,
+  }) {
+    return Tooltip(
+      message: tooltip ?? '',
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Icon(icon, color: color, size: 28),
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
   }
 }

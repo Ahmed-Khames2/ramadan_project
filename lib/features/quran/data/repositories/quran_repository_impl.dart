@@ -216,6 +216,13 @@ class QuranRepositoryImpl implements QuranRepository {
   }
 
   @override
+  Future<void> preloadTafsir(int surahNumber) async {
+    if (!_tafsirCache.containsKey(surahNumber)) {
+      await _loadTafsirJson(surahNumber);
+    }
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> search(String query) async {
     if (query.trim().isEmpty) return [];
     if (!_isSearchCacheInitialized) await _initializeSearchCache();

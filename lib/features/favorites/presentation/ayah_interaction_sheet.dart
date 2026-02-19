@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:share_plus/share_plus.dart';
 import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 
 class AyahInteractionSheet extends StatelessWidget {
@@ -70,7 +71,21 @@ class AyahInteractionSheet extends StatelessWidget {
                       color: isFavorite ? Colors.red : Colors.grey,
                     ),
                     onPressed: () {
-                      context.read<FavoritesBloc>().add(ToggleFavorite(ayahId));
+                      context.read<FavoritesBloc>().add(
+                        ToggleFavorite(
+                          Ayah(
+                            surahNumber: surahNumber,
+                            ayahNumber: ayahNumber,
+                            globalAyahNumber: ayahId,
+                            text: quran.getVerse(surahNumber, ayahNumber),
+                            pageNumber: quran.getPageNumber(
+                              surahNumber,
+                              ayahNumber,
+                            ),
+                            surahName: quran.getSurahNameArabic(surahNumber),
+                          ),
+                        ),
+                      );
                     },
                   );
                 },

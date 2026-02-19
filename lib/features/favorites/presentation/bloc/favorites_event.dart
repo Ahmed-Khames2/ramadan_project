@@ -10,10 +10,10 @@ abstract class FavoritesEvent extends Equatable {
 class LoadFavorites extends FavoritesEvent {}
 
 class ToggleFavorite extends FavoritesEvent {
-  final int ayahId;
+  final Ayah ayah;
 
-  const ToggleFavorite(this.ayahId);
+  const ToggleFavorite(this.ayah);
 
   @override
-  List<Object?> get props => [ayahId];
+  List<Object?> get props => [ayah];
 }

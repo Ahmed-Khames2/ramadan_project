@@ -176,7 +176,7 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) =>
-                FavoritesBloc(repository: quranRepository)
+                FavoritesBloc(repository: favoritesRepository)
                   ..add(LoadFavorites()),
           ),
           BlocProvider(

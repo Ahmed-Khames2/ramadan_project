@@ -22,4 +22,8 @@ abstract class AudioRepository {
   Future<void> cancelDownload(int ayahNumber);
   Stream<double> getDownloadProgress(int ayahNumber);
   Stream<Map<int, double>> get downloadProgressStream;
+
+  Future<void> setLoopMode(bool repeatOne);
+  Future<bool> seekToNext();
+  Future<bool> seekToPrevious();
 }

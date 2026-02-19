@@ -103,3 +103,18 @@ class _AudioDownloadProgressChanged extends AudioEvent {
   @override
   List<Object?> get props => [progress];
 }
+
+class AudioRepeatModeChanged extends AudioEvent {
+  final bool repeatOne;
+  const AudioRepeatModeChanged(this.repeatOne);
+  @override
+  List<Object?> get props => [repeatOne];
+}
+
+class AudioSkipNext extends AudioEvent {
+  const AudioSkipNext();
+}
+
+class AudioSkipPrevious extends AudioEvent {
+  const AudioSkipPrevious();
+}
