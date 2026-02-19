@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 import 'package:share_plus/share_plus.dart';
 import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
@@ -52,7 +52,8 @@ class AyahInteractionSheet extends StatelessWidget {
             children: [
               Text(
                 '${quran.getSurahNameArabic(surahNumber)} : $ayahNumber',
-                style: GoogleFonts.amiri(
+                style: TextStyle(
+                  fontFamily: 'UthmanTaha',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF1B5E20),
@@ -90,7 +91,7 @@ class AyahInteractionSheet extends StatelessWidget {
               children: [
                 Text(
                   'التفسير (الميسر)',
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF2E7D32),
@@ -108,7 +109,11 @@ class AyahInteractionSheet extends StatelessWidget {
                     }
                     return Text(
                       snapshot.data ?? 'تعذر تحميل التفسير',
-                      style: GoogleFonts.amiri(fontSize: 16, height: 1.6),
+                      style: TextStyle(
+                        fontFamily: 'UthmanTaha',
+                        fontSize: 16,
+                        height: 1.6,
+                      ),
                       textAlign: TextAlign.justify,
                       textDirection: TextDirection.rtl,
                     );
