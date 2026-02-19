@@ -62,3 +62,5 @@ class UpdateKhatmahProgress extends KhatamEvent {
   @override
   List<Object> get props => [page];
 }
+
+class DeleteKhatmahPlan extends KhatamEvent {}

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
@@ -50,11 +50,11 @@ class SurahTile extends StatelessWidget {
                       children: [
                         Text(
                           surah.nameArabic,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'UthmanTaha',
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textDark,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -66,7 +66,7 @@ class SurahTile extends StatelessWidget {
                       children: [
                         Text(
                           '${surah.ayahCount} آيات',
-                          style: GoogleFonts.cairo(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.textGrey,
                           ),
@@ -83,7 +83,7 @@ class SurahTile extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           _getJuzText(),
-                          style: GoogleFonts.cairo(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.primaryEmerald,
                             fontWeight: FontWeight.w600,
@@ -143,7 +143,7 @@ class SurahTile extends StatelessWidget {
           ),
         Text(
           '${surah.number}',
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: isLastRead

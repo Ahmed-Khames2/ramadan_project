@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
 import 'package:ramadan_project/features/audio/presentation/widgets/ayah_audio_control.dart';
 import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
@@ -19,8 +20,11 @@ class QuranPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(color: Color(0xFFFFFDF5)),
+      decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
       child: Column(
         children: [
           // Header
@@ -32,23 +36,33 @@ class QuranPageWidget extends StatelessWidget {
                 Container(
                   height: 1,
                   width: 40,
-                  color: const Color(0xFFC5A059).withOpacity(0.5),
+                  color:
+                      (isDark
+                              ? theme.colorScheme.secondary
+                              : const Color(0xFFC5A059))
+                          .withOpacity(0.5),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     'الصفحة $pageNumber',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'UthmanTaha',
                       fontSize: 14,
-                      color: Color(0xFF1B5E20),
+                      color: isDark
+                          ? theme.colorScheme.secondary
+                          : const Color(0xFF1B5E20),
                     ),
                   ),
                 ),
                 Container(
                   height: 1,
                   width: 40,
-                  color: const Color(0xFFC5A059).withOpacity(0.5),
+                  color:
+                      (isDark
+                              ? theme.colorScheme.secondary
+                              : const Color(0xFFC5A059))
+                          .withOpacity(0.5),
                 ),
               ],
             ),
@@ -59,8 +73,11 @@ class QuranPageWidget extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: ayahs.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(height: 32, thickness: 0.5),
+              separatorBuilder: (context, index) => Divider(
+                height: 32,
+                thickness: 0.5,
+                color: isDark ? Colors.white.withOpacity(0.1) : null,
+              ),
               itemBuilder: (context, index) {
                 final ayah = ayahs[index];
                 return _buildAyahItem(context, ayah);
@@ -73,6 +90,9 @@ class QuranPageWidget extends StatelessWidget {
   }
 
   Widget _buildAyahItem(BuildContext context, Ayah ayah) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocBuilder<AudioBloc, AudioState>(
       buildWhen: (previous, current) =>
           previous.currentAyah == ayah.globalAyahNumber ||
@@ -84,10 +104,12 @@ class QuranPageWidget extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: isPlaying
               ? BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: isDark
+                      ? AppTheme.primaryEmerald.withOpacity(0.15)
+                      : const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF1B5E20).withOpacity(0.2),
+                    color: AppTheme.primaryEmerald.withOpacity(0.3),
                   ),
                 )
               : null,
@@ -99,11 +121,13 @@ class QuranPageWidget extends StatelessWidget {
                 textDirection: TextDirection.rtl,
                 child: Text(
                   ayah.text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'UthmanTaha',
                     fontSize: 22,
                     height: 1.8,
-                    color: Color(0xFF1A1A1A),
+                    color: isDark
+                        ? theme.colorScheme.onSurface
+                        : const Color(0xFF1A1A1A),
                   ),
                   textAlign: TextAlign.justify,
                 ),
@@ -115,38 +139,43 @@ class QuranPageWidget extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Play Button (Leading the row from LTR perspective, or trailing in RTL?)
-                  // Let's put text on right (RTL), controls on left (RTL) -> which is visual left.
-                  // But Row starts from right in RTL.
-
-                  // Metadata
                   VerseOrnament(
                     ayahNumber: ayah.ayahNumber,
                     size: 28,
                     color: isPlaying
-                        ? const Color(0xFF1B5E20)
-                        : const Color(0xFFC5A059),
+                        ? AppTheme.primaryEmerald
+                        : (isDark
+                              ? theme.colorScheme.secondary
+                              : const Color(0xFFC5A059)),
                   ),
 
                   const Expanded(child: SizedBox()), // Spacer
                   // Audio Control
-                  // Explicitly visible container
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? theme.colorScheme.surface : Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.grey.shade200,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           "استماع",
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? theme.colorScheme.onSurface.withOpacity(0.6)
+                                : Colors.grey,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         SizedBox(

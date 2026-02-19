@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 
 class AyahTextWidget extends StatelessWidget {
@@ -18,6 +18,8 @@ class AyahTextWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final ayahText = quran.getVerse(
       surahNumber,
       ayahNumber,
@@ -32,13 +34,15 @@ class AyahTextWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF2E7D32).withOpacity(0.1)
-              : Colors.white,
+              ? const Color(0xFF2E7D32).withOpacity(0.12)
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF2E7D32)
-                : Colors.grey.withOpacity(0.2),
+                : (isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.2)),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -63,12 +67,12 @@ class AyahTextWidget extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D32).withOpacity(0.1),
+                    color: const Color(0xFF2E7D32).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '$ayahNumber',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF2E7D32),
@@ -87,17 +91,21 @@ class AyahTextWidget extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: ayahText,
-                      style: GoogleFonts.amiri(
+                      style: TextStyle(
+                        fontFamily: 'UthmanTaha',
                         fontSize: 24,
                         height: 1.8,
-                        color: Colors.black87,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     TextSpan(
                       text: ' \u06DD$ayahNumber ',
-                      style: GoogleFonts.amiri(
+                      style: TextStyle(
+                        fontFamily: 'UthmanTaha',
                         fontSize: 20,
-                        color: const Color(0xFF2E7D32),
+                        color: isDark
+                            ? theme.colorScheme.secondary
+                            : const Color(0xFF2E7D32),
                       ),
                     ),
                   ],

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/domain/entities/surah_info.dart';
-import 'package:ramadan_project/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
 import 'package:ramadan_project/presentation/widgets/custom_search_bar.dart';
 import '../widgets/index/surah_tile.dart';
@@ -240,7 +239,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
               icon: const Icon(Icons.history_edu, color: Colors.white),
               label: Text(
                 'متابعة القراءة: $_lastReadSurahName',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -341,6 +340,9 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   }
 
   Widget _buildSurahList() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ScrollablePositionedList.builder(
       padding: const EdgeInsets.all(AppTheme.spacing4),
       itemCount: _displayList.length,
@@ -351,39 +353,42 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         if (item is int) {
           // It's a Juz Header
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Row(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
               children: [
-                Expanded(
-                  child: Divider(color: AppTheme.accentGold.withOpacity(0.5)),
-                ),
+                const OrnamentalDivider(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 20,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryEmerald.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: isDark
+                          ? theme.colorScheme.secondary.withOpacity(0.12)
+                          : AppTheme.primaryEmerald.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppTheme.primaryEmerald.withOpacity(0.2),
+                        color: isDark
+                            ? theme.colorScheme.secondary.withOpacity(0.2)
+                            : AppTheme.primaryEmerald.withOpacity(0.15),
                       ),
                     ),
                     child: Text(
                       'الجزء $item',
-                      style: GoogleFonts.cairo(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryEmerald,
+                        color: isDark
+                            ? theme.colorScheme.secondary
+                            : AppTheme.primaryEmerald,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Divider(color: AppTheme.accentGold.withOpacity(0.5)),
-                ),
+                const OrnamentalDivider(),
               ],
             ),
           );
@@ -416,7 +421,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
             const SizedBox(height: 24),
             Text(
               'لا توجد نتائج',
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryEmerald,
@@ -426,7 +431,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
             Text(
               'لا توجد نتائج للبحث عن "$query"',
               textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(fontSize: 14, color: AppTheme.textGrey),
+              style: TextStyle(fontSize: 14, color: AppTheme.textGrey),
             ),
           ],
         ),

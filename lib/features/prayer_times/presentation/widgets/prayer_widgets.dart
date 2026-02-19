@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart' as intl;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
@@ -47,7 +47,9 @@ class PrayerHeader extends StatelessWidget {
                 fontFamily: 'UthmanTaha',
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.secondary
+                    : AppTheme.primaryEmerald,
               ),
             ),
           ],
@@ -55,15 +57,18 @@ class PrayerHeader extends StatelessWidget {
         const SizedBox(height: AppTheme.spacing2),
         Text(
           hijriDate,
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppTheme.accentGold,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
         Text(
           gregorianDate,
-          style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textGrey),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
         ),
         const SizedBox(height: AppTheme.spacing3),
         const CompactGovernorateSelector(),
@@ -78,10 +83,12 @@ class CompactGovernorateSelector extends StatefulWidget {
   const CompactGovernorateSelector({super.key});
 
   @override
-  State<CompactGovernorateSelector> createState() => _CompactGovernorateSelectorState();
+  State<CompactGovernorateSelector> createState() =>
+      _CompactGovernorateSelectorState();
 }
 
-class _CompactGovernorateSelectorState extends State<CompactGovernorateSelector> {
+class _CompactGovernorateSelectorState
+    extends State<CompactGovernorateSelector> {
   Governorate? _selectedGovernorate;
   List<Governorate> _governorates = [];
 
@@ -126,10 +133,10 @@ class _CompactGovernorateSelectorState extends State<CompactGovernorateSelector>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.accentGold.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -137,21 +144,18 @@ class _CompactGovernorateSelectorState extends State<CompactGovernorateSelector>
         child: DropdownButton<Governorate>(
           value: _selectedGovernorate,
           isDense: true,
-          icon: const Icon(
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: AppTheme.accentGold,
+            color: Theme.of(context).colorScheme.secondary,
             size: 18,
           ),
-          style: GoogleFonts.cairo(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           items: _governorates.map((gov) {
-            return DropdownMenuItem(
-              value: gov,
-              child: Text(gov.nameArabic),
-            );
+            return DropdownMenuItem(value: gov, child: Text(gov.nameArabic));
           }).toList(),
           onChanged: (gov) {
             if (gov != null) {
@@ -172,9 +176,9 @@ class PrayerSettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(AppTheme.spacing6),
       child: BlocBuilder<PrayerBloc, PrayerState>(
@@ -190,10 +194,10 @@ class PrayerSettingsSheet extends StatelessWidget {
                 children: [
                   Text(
                     'إعدادات التنبيهات',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   IconButton(
@@ -206,11 +210,11 @@ class PrayerSettingsSheet extends StatelessWidget {
               SwitchListTile(
                 title: Text(
                   'تفعيل تنبيهات الصلاة',
-                  style: GoogleFonts.cairo(fontSize: 16),
+                  style: TextStyle(fontSize: 16),
                 ),
                 subtitle: Text(
                   'سوف تتلقى تنبيها قبل كل صلاة',
-                  style: GoogleFonts.cairo(fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
                 value: state.notificationsEnabled,
                 activeColor: AppTheme.primaryEmerald,
@@ -229,7 +233,7 @@ class PrayerSettingsSheet extends StatelessWidget {
                   children: [
                     Text(
                       'وقت التنبيه قبل الصلاة',
-                      style: GoogleFonts.cairo(fontSize: 16),
+                      style: TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     DropdownButton<int>(
@@ -242,7 +246,7 @@ class PrayerSettingsSheet extends StatelessWidget {
                             mins == 0
                                 ? 'في وقت الصلاة'
                                 : '$mins دقائق قبل الصلاة',
-                            style: GoogleFonts.cairo(fontSize: 14),
+                            style: TextStyle(fontSize: 14),
                           ),
                         );
                       }).toList(),
@@ -299,10 +303,10 @@ class GovernorateSelector extends StatelessWidget {
                 value: gov,
                 child: Text(
                   gov.nameArabic,
-                  style: GoogleFonts.cairo(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               );
@@ -377,7 +381,7 @@ class CurrentPrayerCard extends StatelessWidget {
                   children: [
                     Text(
                       'الصلاة القادمة: ${next.nameArabic}',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
                         fontWeight: FontWeight.w500,
@@ -386,7 +390,7 @@ class CurrentPrayerCard extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacing2),
                     Text(
                       intl.DateFormat.jm().format(next.time),
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.accentGold,
@@ -404,10 +408,7 @@ class CurrentPrayerCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'متبقي $hours ساعة و $minutes دقيقة',
-                          style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            color: Colors.white70,
-                          ),
+                          style: TextStyle(fontSize: 13, color: Colors.white70),
                         ),
                       ],
                     ),
@@ -442,13 +443,17 @@ class PrayerTimeRow extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isCurrent
-            ? AppTheme.accentGold.withOpacity(0.12)
-            : AppTheme.surfaceWhite,
+            ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.primaryEmerald.withOpacity(0.2)
+                  : AppTheme.primaryEmerald.withOpacity(0.08))
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isCurrent
-              ? AppTheme.accentGold
-              : AppTheme.accentGold.withOpacity(0.1),
+              ? AppTheme.primaryEmerald
+              : (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withOpacity(0.1)
+                    : AppTheme.primaryEmerald.withOpacity(0.1)),
           width: isCurrent ? 1.5 : 1,
         ),
       ),
@@ -457,32 +462,33 @@ class PrayerTimeRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isCurrent ? AppTheme.accentGold : AppTheme.primaryEmerald)
-                  .withOpacity(0.1),
+              color: AppTheme.primaryEmerald.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getIconForPrayer(prayer.nameEnglish),
               size: 20,
-              color: isCurrent ? AppTheme.accentGold : AppTheme.primaryEmerald,
+              color: AppTheme.primaryEmerald,
             ),
           ),
           const SizedBox(width: AppTheme.spacing4),
           Text(
             prayer.nameArabic,
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
-              color: AppTheme.textDark,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const Spacer(),
           Text(
             intl.DateFormat.jm().format(prayer.time),
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: isCurrent ? AppTheme.accentGold : AppTheme.textGrey,
+              color: isCurrent
+                  ? AppTheme.primaryEmerald
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:intl/intl.dart' as intl;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
@@ -47,7 +47,7 @@ class KhatmahHistoryPage extends StatelessWidget {
                                   const SizedBox(height: AppTheme.spacing3),
                               itemBuilder: (context, index) {
                                 final entry = history[index];
-                                return _buildHistoryItem(entry);
+                                return _buildHistoryItem(context, entry);
                               },
                             ),
                     ),
@@ -86,7 +86,7 @@ class KhatmahHistoryPage extends StatelessWidget {
             children: [
               Text(
                 'سجل الختمات',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryEmerald,
@@ -95,9 +95,11 @@ class KhatmahHistoryPage extends StatelessWidget {
               ),
               Text(
                 'إنجازاتك السابقة الموثقة بالتواريخ',
-                style: GoogleFonts.cairo(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textGrey,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                   height: 1.2,
                 ),
               ),
@@ -121,23 +123,25 @@ class KhatmahHistoryPage extends StatelessWidget {
           const SizedBox(height: AppTheme.spacing4),
           Text(
             'لا يوجد سجل ختمات حتى الآن',
-            style: GoogleFonts.cairo(fontSize: 18, color: AppTheme.textGrey),
+            style: TextStyle(fontSize: 18, color: AppTheme.textGrey),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryItem(dynamic entry) {
+  Widget _buildHistoryItem(BuildContext context, dynamic entry) {
     final dateFormat = intl.DateFormat('yyyy/MM/dd', 'ar');
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.03,
+            ),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -177,23 +181,25 @@ class KhatmahHistoryPage extends StatelessWidget {
                     children: [
                       Text(
                         entry.title,
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: AppTheme.textDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'تمت في ${dateFormat.format(entry.completionDate)}',
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.textGrey,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                         ),
                       ),
                       Text(
                         'الإنجاز: خلال ${entry.totalDays} يوماً',
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.primaryEmerald,

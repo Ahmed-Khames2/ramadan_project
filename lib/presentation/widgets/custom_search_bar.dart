@@ -41,22 +41,28 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isFocused
               ? AppTheme.accentGold
-              : AppTheme.accentGold.withOpacity(0.1),
+              : (isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : AppTheme.accentGold.withOpacity(0.1)),
           width: _isFocused ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: _isFocused
                 ? AppTheme.accentGold.withOpacity(0.15)
-                : Colors.black.withOpacity(0.04),
+                : (isDark
+                      ? Colors.black.withOpacity(0.2)
+                      : Colors.black.withOpacity(0.04)),
             blurRadius: _isFocused ? 12 : 8,
             offset: const Offset(0, 4),
           ),
@@ -68,8 +74,8 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         onChanged: widget.onChanged,
         textDirection: TextDirection.rtl,
         textAlign: TextAlign.right,
-        style: const TextStyle(
-          color: AppTheme.textDark,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
           fontSize: 16,
           fontFamily: 'Cairo',
         ),

@@ -38,25 +38,35 @@ class PageHeaderWidget extends StatelessWidget {
             ),
           ),
 
-          // Decorative line spacer
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Divider(
-                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                color:
+                    (theme.brightness == Brightness.dark
+                            ? const Color(0xFFC5A028)
+                            : const Color(0xFFD4AF37))
+                        .withOpacity(0.3),
                 thickness: 1,
               ),
             ),
           ),
 
-          // Juz Number
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFD4AF37).withOpacity(0.1),
+              color:
+                  (theme.brightness == Brightness.dark
+                          ? const Color(0xFFC5A028)
+                          : const Color(0xFFD4AF37))
+                      .withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0xFFD4AF37).withOpacity(0.2),
+                color:
+                    (theme.brightness == Brightness.dark
+                            ? const Color(0xFFC5A028)
+                            : const Color(0xFFD4AF37))
+                        .withOpacity(0.2),
               ),
             ),
             child: Text(
@@ -64,7 +74,9 @@ class PageHeaderWidget extends StatelessWidget {
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontFamily: 'UthmanTaha',
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFB88A2F),
+                color: theme.brightness == Brightness.dark
+                    ? const Color(0xFFE4BC4B)
+                    : const Color(0xFFB88A2F),
               ),
             ),
           ),

@@ -113,6 +113,9 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   Timer? _refreshTimer;
 
   static const String _kGovernorateKey = 'selected_governorate';
+  static const String _kLastLatKey = 'last_latitude';
+  static const String _kLastLngKey = 'last_longitude';
+  static const String _kLastCityKey = 'last_city_name';
 
   PrayerBloc({required this.repository, required this.prefs})
     : super(_createInitialState(repository)) {
@@ -128,7 +131,11 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
 
   static PrayerState _createInitialState(PrayerRepository repository) {
     final governorates = repository.getGovernorates();
-    final defaultGov = governorates.first; // Cairo
+    // Explicitly use Cairo as the default
+    final defaultGov = governorates.firstWhere(
+      (g) => g.nameEnglish == 'Cairo',
+      orElse: () => governorates.first,
+    );
     final defaultPrayerTimes = repository.getPrayerTimes(
       defaultGov,
       DateTime.now(),
@@ -145,72 +152,122 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     LoadPrayerData event,
     Emitter<PrayerState> emit,
   ) async {
-    // 1. Initial state is already PrayerLoaded with default data.
-    // So we don't need to emit anything here to "start" the UI.
-    // The UI will already be showing Cairo data.
-
     final governorates = repository.getGovernorates();
-    final defaultGov = governorates.first; // Cairo
+    final defaultGov = governorates.firstWhere(
+      (g) => g.nameEnglish == 'Cairo',
+      orElse: () => governorates.first,
+    );
 
-    // 2. Check for Saved City or Location in Background
     try {
       final savedGovName = prefs.getString(_kGovernorateKey);
 
       if (savedGovName != null && savedGovName != 'Current Location') {
-        // User has manually selected a city before
+        // 1. User has manually selected a city
         final selectedGov = governorates.firstWhere(
           (g) => g.nameEnglish == savedGovName,
           orElse: () => defaultGov,
         );
 
-        if (selectedGov.nameEnglish != defaultGov.nameEnglish) {
-          final prayerTimes = repository.getPrayerTimes(
-            selectedGov,
-            DateTime.now(),
-          );
-          emit(
-            (state as PrayerLoaded).copyWith(
-              selectedGovernorate: selectedGov,
-              prayerTimes: prayerTimes,
-              lastUpdated: DateTime.now(),
-            ),
-          );
-        }
+        final prayerTimes = repository.getPrayerTimes(
+          selectedGov,
+          DateTime.now(),
+        );
+        emit(
+          (state as PrayerLoaded).copyWith(
+            selectedGovernorate: selectedGov,
+            prayerTimes: prayerTimes,
+            lastUpdated: DateTime.now(),
+          ),
+        );
       } else {
-        // No saved city, try to get location
+        // 2. No saved city or "Current Location" is preferred
+        // Try to get fresh location, but don't block too long
         final position = await _locationService.determinePosition();
 
         if (position != null) {
-          // Location found! Use coordinates
-          final prayerTimes = repository.getPrayerTimesByCoordinates(
+          await _updateLocationState(
             position.latitude,
             position.longitude,
-            DateTime.now(),
+            emit,
           );
+        } else {
+          // 3. Fallback to Last Known Cached Location
+          final lastLat = prefs.getDouble(_kLastLatKey);
+          final lastLng = prefs.getDouble(_kLastLngKey);
+          final lastCity = prefs.getString(_kLastCityKey);
 
-          final cityName = await _locationService.getCityFromCoordinates(
-            position.latitude,
-            position.longitude,
-          );
-
-          final locationGov = Governorate(
-            nameArabic: cityName ?? 'موقعي الحالي',
-            nameEnglish: 'Current Location',
-            latitude: position.latitude,
-            longitude: position.longitude,
-          );
-
-          emit(
-            (state as PrayerLoaded).copyWith(
-              selectedGovernorate: locationGov,
-              prayerTimes: prayerTimes,
-              lastUpdated: DateTime.now(),
-            ),
-          );
+          if (lastLat != null && lastLng != null) {
+            final prayerTimes = repository.getPrayerTimesByCoordinates(
+              lastLat,
+              lastLng,
+              DateTime.now(),
+            );
+            final locationGov = Governorate(
+              nameArabic: lastCity ?? 'موقعي السابق',
+              nameEnglish: 'Current Location',
+              latitude: lastLat,
+              longitude: lastLng,
+            );
+            emit(
+              (state as PrayerLoaded).copyWith(
+                selectedGovernorate: locationGov,
+                prayerTimes: prayerTimes,
+                lastUpdated: DateTime.now(),
+              ),
+            );
+          } else {
+            // 4. Ultimate Fallback to Cairo
+            final prayerTimes = repository.getPrayerTimes(
+              defaultGov,
+              DateTime.now(),
+            );
+            emit(
+              (state as PrayerLoaded).copyWith(
+                selectedGovernorate: defaultGov,
+                prayerTimes: prayerTimes,
+                lastUpdated: DateTime.now(),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
-      // Silent error - keep showing default data
+      // Silent fallback
+    }
+  }
+
+  Future<void> _updateLocationState(
+    double lat,
+    double lng,
+    Emitter<PrayerState> emit,
+  ) async {
+    final prayerTimes = repository.getPrayerTimesByCoordinates(
+      lat,
+      lng,
+      DateTime.now(),
+    );
+    final cityName = await _locationService.getCityFromCoordinates(lat, lng);
+
+    // Save to cache
+    await prefs.setDouble(_kLastLatKey, lat);
+    await prefs.setDouble(_kLastLngKey, lng);
+    if (cityName != null) await prefs.setString(_kLastCityKey, cityName);
+
+    final locationGov = Governorate(
+      nameArabic: cityName ?? 'موقعي الحالي',
+      nameEnglish: 'Current Location',
+      latitude: lat,
+      longitude: lng,
+    );
+
+    if (state is PrayerLoaded) {
+      emit(
+        (state as PrayerLoaded).copyWith(
+          selectedGovernorate: locationGov,
+          prayerTimes: prayerTimes,
+          lastUpdated: DateTime.now(),
+        ),
+      );
     }
   }
 
@@ -234,35 +291,36 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           final position = await _locationService.determinePosition();
 
           if (position != null) {
-            final prayerTimes = repository.getPrayerTimesByCoordinates(
+            await _updateLocationState(
               position.latitude,
               position.longitude,
-              DateTime.now(),
-            );
-
-            final cityName = await _locationService.getCityFromCoordinates(
-              position.latitude,
-              position.longitude,
-            );
-
-            final locationGov = Governorate(
-              nameArabic: cityName ?? 'موقعي الحالي',
-              nameEnglish: 'Current Location',
-              latitude: position.latitude,
-              longitude: position.longitude,
-            );
-
-            emit(
-              currentState.copyWith(
-                selectedGovernorate: locationGov,
-                prayerTimes: prayerTimes,
-                lastUpdated: DateTime.now(),
-              ),
+              emit,
             );
           } else {
-            // If location fails, stick with Cairo (default) but maybe update name?
-            // Or just error? Let's fallback to Cairo but keep selection?
-            // For now, let's just do nothing or show error.
+            // Handle failure or denial
+            final lastLat = prefs.getDouble(_kLastLatKey);
+            final lastLng = prefs.getDouble(_kLastLngKey);
+
+            if (lastLat != null && lastLng != null) {
+              await _updateLocationState(lastLat, lastLng, emit);
+            } else {
+              // Redirect to Cairo if absolutely nothing works
+              final cairo = currentState.governorates.firstWhere(
+                (g) => g.nameEnglish == 'Cairo',
+                orElse: () => currentState.governorates.first,
+              );
+              final prayerTimes = repository.getPrayerTimes(
+                cairo,
+                DateTime.now(),
+              );
+              emit(
+                currentState.copyWith(
+                  selectedGovernorate: cairo,
+                  prayerTimes: prayerTimes,
+                  lastUpdated: DateTime.now(),
+                ),
+              );
+            }
           }
         } else {
           // Normal city selection
