@@ -16,9 +16,7 @@ class BottomAudioPlayer extends StatelessWidget {
           previous.duration != current.duration,
       builder: (context, state) {
         // Only show if playing or paused (i.e., audio session active)
-        // If initial or stop, hide it? Or maybe always show if user selected a reciter?
-        // Let's show it if available.
-        if (state.status == AudioStatus.initial && state.currentAyah == null) {
+        if (state.currentAyah == null) {
           return const SizedBox.shrink();
         }
 
@@ -83,16 +81,17 @@ class BottomAudioPlayer extends StatelessWidget {
                   // Controls
                   IconButton(
                     onPressed: () {
-                      // Previous (Logic complex without playlist)
-                      // Just seek -10s?
-                      context.read<AudioBloc>().add(
-                        AudioSeek(state.position - const Duration(seconds: 10)),
-                      );
+                      context.read<AudioBloc>().add(const AudioSkipPrevious());
                     },
-                    icon: const Icon(Icons.replay_10, color: Colors.white),
+                    icon: const Icon(
+                      Icons.skip_previous_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'الآية السابقة',
                   ),
 
                   Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
@@ -111,7 +110,10 @@ class BottomAudioPlayer extends StatelessWidget {
                           ? const SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF1B5E20),
+                              ),
                             )
                           : Icon(
                               isPlaying ? Icons.pause : Icons.play_arrow,
@@ -122,11 +124,13 @@ class BottomAudioPlayer extends StatelessWidget {
 
                   IconButton(
                     onPressed: () {
-                      context.read<AudioBloc>().add(
-                        AudioSeek(state.position + const Duration(seconds: 10)),
-                      );
+                      context.read<AudioBloc>().add(const AudioSkipNext());
                     },
-                    icon: const Icon(Icons.forward_10, color: Colors.white),
+                    icon: const Icon(
+                      Icons.skip_next_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'الآية التالية',
                   ),
                 ],
               ),

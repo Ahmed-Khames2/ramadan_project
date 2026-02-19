@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:ramadan_project/core/constants/reciters.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/reciter_repository.dart';
-
-// Trigger analysis refresh
 
 part 'audio_event.dart';
 part 'audio_state.dart';
@@ -39,6 +38,8 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     on<AudioReciterChanged>(_onReciterChanged);
     on<AudioDownloadAyah>(_onDownloadAyah);
     on<AudioCancelDownload>(_onCancelDownload);
+    on<AudioSkipNext>(_onSkipNext);
+    on<AudioSkipPrevious>(_onSkipPrevious);
 
     // Internal events
     on<_AudioPositionChanged>(
@@ -69,8 +70,8 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     _durationSubscription = _audioRepository.durationStream.listen(
       (dur) => add(_AudioDurationChanged(dur)),
     );
-    _playerStateSubscription = _audioRepository.isPlayingStream.listen(
-      (isPlaying) => add(_AudioPlayerStateChanged(isPlaying)),
+    _playerStateSubscription = _audioRepository.playerStateStream.listen(
+      (playerState) => add(_AudioPlayerStateChanged(playerState)),
     );
     _currentAyahSubscription = _audioRepository.currentAyahStream.listen(
       (ayah) => add(_AudioCurrentAyahChanged(ayah)),
@@ -83,7 +84,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioPlayAyah event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(status: AudioStatus.loading, errorMessage: null));
+    emit(state.copyWith(errorMessage: null));
     try {
       await _audioRepository.playAyah(event.ayahNumber, state.selectedReciter);
     } catch (e) {
@@ -97,7 +98,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioPlayRange event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(status: AudioStatus.loading, errorMessage: null));
+    emit(state.copyWith(errorMessage: null));
     try {
       await _audioRepository.playRange(
         event.ayahNumbers,
@@ -187,15 +188,39 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     await _audioRepository.cancelDownload(event.ayahNumber);
   }
 
+  void _onSkipNext(AudioSkipNext event, Emitter<AudioState> emit) {
+    if (state.currentAyah != null && state.currentAyah! < 6236) {
+      add(AudioPlayAyah(state.currentAyah! + 1));
+    }
+  }
+
+  void _onSkipPrevious(AudioSkipPrevious event, Emitter<AudioState> emit) {
+    if (state.currentAyah != null && state.currentAyah! > 1) {
+      add(AudioPlayAyah(state.currentAyah! - 1));
+    }
+  }
+
   void _onPlayerStateChanged(
     _AudioPlayerStateChanged event,
     Emitter<AudioState> emit,
   ) {
-    emit(
-      state.copyWith(
-        status: event.isPlaying ? AudioStatus.playing : AudioStatus.paused,
-      ),
-    );
+    final playerState = event.playerState;
+    final isPlaying = playerState.playing;
+    final processingState = playerState.processingState;
+
+    AudioStatus status;
+    if (processingState == ProcessingState.loading ||
+        processingState == ProcessingState.buffering) {
+      status = AudioStatus.loading;
+    } else if (isPlaying) {
+      status = AudioStatus.playing;
+    } else if (processingState == ProcessingState.completed) {
+      status = AudioStatus.initial;
+    } else {
+      status = AudioStatus.paused;
+    }
+
+    emit(state.copyWith(status: status));
   }
 
   @override

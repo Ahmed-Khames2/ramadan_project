@@ -62,6 +62,14 @@ class AudioReciterChanged extends AudioEvent {
   List<Object?> get props => [reciter];
 }
 
+class AudioSkipNext extends AudioEvent {
+  const AudioSkipNext();
+}
+
+class AudioSkipPrevious extends AudioEvent {
+  const AudioSkipPrevious();
+}
+
 class AudioDownloadAyah extends AudioEvent {
   final int ayahNumber;
   const AudioDownloadAyah(this.ayahNumber);
@@ -88,8 +96,8 @@ class _AudioDurationChanged extends AudioEvent {
 }
 
 class _AudioPlayerStateChanged extends AudioEvent {
-  final bool isPlaying;
-  const _AudioPlayerStateChanged(this.isPlaying);
+  final PlayerState playerState;
+  const _AudioPlayerStateChanged(this.playerState);
 }
 
 class _AudioCurrentAyahChanged extends AudioEvent {
