@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/ramadan_worship/domain/entities/worship_task.dart';
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
@@ -13,7 +13,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.warmBeige,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('عباداتي في رمضان'),
         backgroundColor: AppTheme.primaryEmerald,
@@ -40,13 +40,13 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
               children: [
                 _buildHeader(context, state),
                 const SizedBox(height: 20),
-                _buildSectionTitle('الصلوات الخمس'),
+                _buildSectionTitle(context, 'الصلوات الخمس'),
                 ...progress.tasks
                     .where((t) => t.type == WorshipTaskType.prayer)
                     .map((t) => _buildTaskItem(context, t)),
 
                 const SizedBox(height: 16),
-                _buildSectionTitle('نوافل وقيام'),
+                _buildSectionTitle(context, 'نوافل وقيام'),
                 ...progress.tasks
                     .where(
                       (t) =>
@@ -60,7 +60,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                     .map((t) => _buildTaskItem(context, t)),
 
                 const SizedBox(height: 16),
-                _buildSectionTitle('الأذكار والدعاء'),
+                _buildSectionTitle(context, 'الأذكار والدعاء'),
                 ...progress.tasks
                     .where(
                       (t) => [
@@ -72,7 +72,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                     .map((t) => _buildTaskItem(context, t)),
 
                 const SizedBox(height: 16),
-                _buildSectionTitle('أوراد يومية'),
+                _buildSectionTitle(context, 'أوراد يومية'),
                 ...progress.tasks
                     .where((t) => t.type == WorshipTaskType.count)
                     .map((t) => _buildTaskItem(context, t)),
@@ -119,10 +119,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                 children: [
                   Text(
                     "سلسلة الإنجاز",
-                    style: GoogleFonts.cairo(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Row(
                     children: [
@@ -133,7 +130,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         "${state.currentStreak} يوم",
-                        style: GoogleFonts.cairo(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -166,7 +163,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     "ما شاء الله! يوم مكتمل 🌙",
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -179,15 +176,15 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, right: 4),
       child: Text(
         title,
-        style: GoogleFonts.cairo(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppTheme.primaryEmerald,
+          color: Theme.of(context).primaryColor,
         ),
       ),
     );

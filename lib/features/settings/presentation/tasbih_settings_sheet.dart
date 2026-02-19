@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ramadan_project/presentation/blocs/tasbih_bloc.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
@@ -9,10 +9,13 @@ class TasbihSettingsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       padding: const EdgeInsets.all(AppTheme.spacing6),
       child: BlocBuilder<TasbihBloc, TasbihState>(
@@ -26,10 +29,10 @@ class TasbihSettingsSheet extends StatelessWidget {
                 children: [
                   Text(
                     'إعدادات المسبحة',
-                    style: GoogleFonts.cairo(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   IconButton(
@@ -42,7 +45,10 @@ class TasbihSettingsSheet extends StatelessWidget {
 
               Text(
                 'عدد التسبيحات',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -61,17 +67,17 @@ class TasbihSettingsSheet extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.primaryEmerald
-                              : AppTheme.primaryEmerald.withOpacity(0.05),
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.primary.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(
                           child: Text(
                             '$count',
-                            style: GoogleFonts.cairo(
+                            style: TextStyle(
                               color: isSelected
                                   ? Colors.white
-                                  : AppTheme.primaryEmerald,
+                                  : theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -85,7 +91,10 @@ class TasbihSettingsSheet extends StatelessWidget {
               const SizedBox(height: AppTheme.spacing6),
               Text(
                 'نوع المادة',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -119,7 +128,7 @@ class TasbihSettingsSheet extends StatelessWidget {
                       state,
                       'marble',
                       'رخام',
-                      const Color(0xFFE0E0E0),
+                      isDark ? Colors.grey[400]! : const Color(0xFFE0E0E0),
                     ),
                   ],
                 ),
@@ -140,6 +149,7 @@ class TasbihSettingsSheet extends StatelessWidget {
     String name,
     Color color,
   ) {
+    final theme = Theme.of(context);
     final isSelected = state.material == id;
     return GestureDetector(
       onTap: () => context.read<TasbihBloc>().add(
@@ -150,11 +160,11 @@ class TasbihSettingsSheet extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryEmerald.withOpacity(0.1)
+              ? theme.colorScheme.primary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: isSelected
-              ? Border.all(color: AppTheme.primaryEmerald, width: 2)
+              ? Border.all(color: theme.colorScheme.primary, width: 2)
               : null,
         ),
         child: Column(
@@ -175,7 +185,14 @@ class TasbihSettingsSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(name, style: GoogleFonts.cairo(fontSize: 12)),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),

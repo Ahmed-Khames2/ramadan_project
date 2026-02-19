@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
+
 class SurahHeader extends StatelessWidget {
   final String surahName;
   final String revelationType;
@@ -17,6 +18,8 @@ class SurahHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         vertical: AppTheme.spacing6,
@@ -26,17 +29,20 @@ class SurahHeader extends StatelessWidget {
       child: Column(
         children: [
           // Upper Ornament
-          const OrnamentalDivider(width: 80),
+          OrnamentalDivider(
+            width: 80,
+            color: theme.colorScheme.secondary.withOpacity(0.5),
+          ),
           const SizedBox(height: AppTheme.spacing4),
 
           // Surah Name (Arabic)
           Text(
             surahName,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'UthmanTaha',
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryEmerald,
+              color: theme.colorScheme.primary,
             ),
           ),
 
@@ -47,6 +53,7 @@ class SurahHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildMetaItem(
+                context,
                 revelationType.toLowerCase().contains('mecc')
                     ? 'مكية'
                     : 'مدنية',
@@ -60,10 +67,16 @@ class SurahHeader extends StatelessWidget {
                 ),
                 child: Text(
                   '•',
-                  style: TextStyle(color: AppTheme.accentGold.withOpacity(0.4)),
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary.withOpacity(0.4),
+                  ),
                 ),
               ),
-              _buildMetaItem('$ayahCount آية', Icons.format_list_numbered_rtl),
+              _buildMetaItem(
+                context,
+                '$ayahCount آية',
+                Icons.format_list_numbered_rtl,
+              ),
             ],
           ),
 
@@ -71,27 +84,28 @@ class SurahHeader extends StatelessWidget {
           // Lower Ornament
           OrnamentalDivider(
             width: 80,
-            color: AppTheme.accentGold.withOpacity(0.3),
+            color: theme.colorScheme.secondary.withOpacity(0.3),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMetaItem(String text, IconData icon) {
+  Widget _buildMetaItem(BuildContext context, String text, IconData icon) {
+    final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppTheme.accentGold),
+        Icon(icon, size: 14, color: theme.colorScheme.secondary),
         const SizedBox(width: AppTheme.spacing2),
         Padding(
           padding: const EdgeInsets.only(top: 2),
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Cairo',
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textGrey,
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ),

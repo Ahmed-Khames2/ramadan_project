@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
@@ -68,7 +68,7 @@ class SearchResultTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       result['subtitle'],
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.textGrey,
                         fontWeight: FontWeight.w600,

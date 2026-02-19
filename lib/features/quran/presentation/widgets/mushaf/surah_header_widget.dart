@@ -24,6 +24,12 @@ class SurahHeaderWidget extends StatelessWidget {
             'assets/images/surah_name_banner.svg',
             width: MediaQuery.of(context).size.width * 0.85 * scale,
             fit: BoxFit.contain,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFC5A028)
+                  : const Color(0xFFD4AF37),
+              BlendMode.srcIn,
+            ),
           ),
           // The Surah Name overlay
           Padding(
@@ -35,7 +41,7 @@ class SurahHeaderWidget extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'UthmanTaha',
                 fontSize: (28 * scale).clamp(22, 42),
-                color: const Color(0xFF111111),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 shadows: [
                   Shadow(

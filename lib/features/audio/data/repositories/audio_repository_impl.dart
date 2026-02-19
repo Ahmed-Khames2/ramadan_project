@@ -1,12 +1,13 @@
-import 'dart:async';
 import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:rxdart/rxdart.dart';
-
 
 class AudioRepositoryImpl implements AudioRepository {
   final AudioPlayer _audioPlayer;
@@ -41,16 +42,38 @@ class AudioRepositoryImpl implements AudioRepository {
   Future<void> playAyah(int ayahNumber, Reciter reciter) async {
     print('AudioRepo: playAyah($ayahNumber, ${reciter.id})'); // DEBUG LOG
     try {
-      final localPath = await _getLocalFilePath(ayahNumber, reciter);
-      final file = File(localPath);
-
-      if (await file.exists()) {
-        print('AudioRepo: Playing from local file: $localPath'); // DEBUG LOG
-        await _audioPlayer.setFilePath(localPath);
-      } else {
+      if (kIsWeb) {
         final url = _getAudioUrl(ayahNumber, reciter);
-        print('AudioRepo: Playing from URL: $url'); // DEBUG LOG
+        print('AudioRepo: Playing from URL (Web): $url');
         await _audioPlayer.setUrl(url);
+      } else {
+        final localPath = await _getLocalFilePath(ayahNumber, reciter);
+        final file = File(localPath);
+
+        if (await file.exists()) {
+          print('AudioRepo: Playing from local file: $localPath');
+          await _audioPlayer.setFilePath(localPath);
+        } else {
+          // Check connectivity before trying to stream
+          final connectivityResult = await Connectivity().checkConnectivity();
+          final isOffline = connectivityResult.contains(
+            ConnectivityResult.none,
+          );
+
+          if (isOffline) {
+            throw Exception(
+              "لا يوجد اتصال بالإنترنت ولم يتم تحميل هذه الآية مسبقاً.",
+            );
+          }
+
+          final url = _getAudioUrl(ayahNumber, reciter);
+          print('AudioRepo: Playing from URL with Persistent Caching: $url');
+          final source = LockCachingAudioSource(
+            Uri.parse(url),
+            cacheFile: File(localPath),
+          );
+          await _audioPlayer.setAudioSource(source);
+        }
       }
 
       _currentAyahController.add(ayahNumber);
@@ -73,15 +96,34 @@ class AudioRepositoryImpl implements AudioRepository {
     try {
       final List<AudioSource> sources = [];
       for (final ayah in ayahNumbers) {
-        final localPath = await _getLocalFilePath(ayah, reciter);
-        final file = File(localPath);
-
-        if (await file.exists()) {
-          sources.add(AudioSource.file(localPath, tag: ayah));
-        } else {
+        if (kIsWeb) {
           sources.add(
             AudioSource.uri(Uri.parse(_getAudioUrl(ayah, reciter)), tag: ayah),
           );
+        } else {
+          final localPath = await _getLocalFilePath(ayah, reciter);
+          final file = File(localPath);
+
+          if (await file.exists()) {
+            sources.add(AudioSource.file(localPath, tag: ayah));
+          } else {
+            // Check connectivity for ranges too
+            final connectivityResult = await Connectivity().checkConnectivity();
+            if (connectivityResult.contains(ConnectivityResult.none)) {
+              throw Exception(
+                "لا يوجد اتصال بالإنترنت لبعض الآيات في القائمة.",
+              );
+            }
+
+            final url = _getAudioUrl(ayah, reciter);
+            sources.add(
+              LockCachingAudioSource(
+                Uri.parse(url),
+                cacheFile: File(localPath),
+                tag: ayah,
+              ),
+            );
+          }
         }
       }
 
@@ -128,7 +170,7 @@ class AudioRepositoryImpl implements AudioRepository {
 
   @override
   Future<void> downloadAyah(int ayahNumber, Reciter reciter) async {
-    if (_cancelTokens.containsKey(ayahNumber)) return;
+    if (kIsWeb || _cancelTokens.containsKey(ayahNumber)) return;
 
     final url = _getAudioUrl(ayahNumber, reciter);
     final savePath = await _getLocalFilePath(ayahNumber, reciter);
@@ -168,6 +210,7 @@ class AudioRepositoryImpl implements AudioRepository {
 
   @override
   Future<bool> isAyahDownloaded(int ayahNumber, Reciter reciter) async {
+    if (kIsWeb) return false;
     final path = await _getLocalFilePath(ayahNumber, reciter);
     return File(path).exists();
   }
@@ -199,6 +242,7 @@ class AudioRepositoryImpl implements AudioRepository {
   }
 
   Future<String> _getLocalFilePath(int ayahNumber, Reciter reciter) async {
+    if (kIsWeb) return '';
     final dir = await getApplicationDocumentsDirectory();
     final audioDir = Directory('${dir.path}/audio/${reciter.id}');
     if (!await audioDir.exists()) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
@@ -46,19 +46,16 @@ class JuzTile extends StatelessWidget {
                   children: [
                     Text(
                       'الصفحة $juzStartPage',
-                      style: GoogleFonts.cairo(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'يبدأ من $firstSurahName',
-                      style: GoogleFonts.cairo(
-                        fontSize: 12,
-                        color: AppTheme.textGrey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppTheme.textGrey),
                     ),
                   ],
                 ),
@@ -88,13 +85,10 @@ class JuzTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'الجزء',
-            style: GoogleFonts.cairo(fontSize: 10, color: Colors.white70),
-          ),
+          Text('الجزء', style: TextStyle(fontSize: 10, color: Colors.white70)),
           Text(
             '$juzNumber',
-            style: GoogleFonts.cairo(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
