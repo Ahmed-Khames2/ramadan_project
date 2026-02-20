@@ -510,6 +510,7 @@ class _MushafPageViewState extends State<MushafPageView> {
                         onPressed: () {
                           context.read<AudioBloc>().add(
                             AudioRepeatModeChanged(!state.repeatOne),
+                            // test
                           );
                         },
                         size: 20,
