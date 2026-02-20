@@ -30,8 +30,10 @@ class SurahTile extends StatelessWidget {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  MushafPageView(initialPage: initialPage ?? surah.startPage),
+              builder: (context) => MushafPageView(
+                initialPage: initialPage ?? surah.startPage,
+                initialSurah: surah.number,
+              ),
             ),
           );
           if (onReturn != null) onReturn!();

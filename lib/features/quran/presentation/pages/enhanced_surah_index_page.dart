@@ -197,7 +197,12 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                       return _buildEmptySearchState(state.query, theme);
                     }
                     return ListView.builder(
-                      padding: const EdgeInsets.all(AppTheme.spacing4),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppTheme.spacing4,
+                        AppTheme.spacing4,
+                        AppTheme.spacing4,
+                        110, // Added padding for floating navbar
+                      ),
                       itemCount: state.results.length,
                       itemBuilder: (context, index) => SearchResultTile(
                         result: state.results[index],
@@ -215,13 +220,28 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
       ),
 
       floatingActionButton: _lastReadPage != null
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        MushafPageView(initialPage: _lastReadPage!),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 90), // Lift above navbar
+              child: FloatingActionButton.extended(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MushafPageView(
+                        initialPage: _lastReadPage!,
+                        initialSurah: _lastReadSurah,
+                      ),
+                    ),
+                  );
+                  _loadProgress(); // Refresh on return
+                },
+                backgroundColor: AppTheme.primaryEmerald,
+                icon: const Icon(Icons.history_edu, color: Colors.white),
+                label: Text(
+                  'متابعة القراءة: $_lastReadSurahName',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 );
                 _loadProgress(); // Refresh on return
@@ -335,7 +355,12 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return ScrollablePositionedList.builder(
-      padding: const EdgeInsets.all(AppTheme.spacing4),
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spacing4,
+        AppTheme.spacing4,
+        AppTheme.spacing4,
+        110, // Added padding for floating navbar
+      ),
       itemCount: _displayList.length,
       itemScrollController: _itemScrollController,
       itemPositionsListener: _itemPositionsListener,

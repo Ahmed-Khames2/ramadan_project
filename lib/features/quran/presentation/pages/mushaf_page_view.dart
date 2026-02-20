@@ -13,12 +13,16 @@ import 'package:ramadan_project/core/widgets/common_widgets.dart';
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
+  final int? initialSurah;
+  final int? initialAyah;
   final bool shouldSaveProgress;
   final ValueChanged<int>? onPageChanged;
 
   const MushafPageView({
     super.key,
     this.initialPage = 1,
+    this.initialSurah,
+    this.initialAyah,
     this.shouldSaveProgress = true,
     this.onPageChanged,
   });
@@ -156,78 +160,6 @@ class _MushafPageViewState extends State<MushafPageView> {
     await prefs.setDouble('mushaf_font_scale', scale);
   }
 
-  void _showSettings() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.text_fields, size: 28),
-                      const SizedBox(width: 12),
-                      Text(
-                        "حجم الخط",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    children: [
-                      const Text("A", style: TextStyle(fontSize: 14)),
-                      Expanded(
-                        child: SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: AppTheme.primaryEmerald,
-                            inactiveTrackColor: AppTheme.primaryEmerald
-                                .withOpacity(0.2),
-                            thumbColor: AppTheme.primaryEmerald,
-                            overlayColor: AppTheme.primaryEmerald.withOpacity(
-                              0.12,
-                            ),
-                          ),
-                          child: Slider(
-                            value: _fontScale,
-                            min: 0.8,
-                            max: 2.5,
-                            divisions: 17,
-                            onChanged: (value) {
-                              setModalState(() => _fontScale = value);
-                              _updateFontScale(value);
-                            },
-                          ),
-                        ),
-                      ),
-                      const Text("A", style: TextStyle(fontSize: 28)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   Future<void> _saveBookmark(int page) async {
     try {
       // Get page data to find the first Ayah and its details
@@ -325,6 +257,8 @@ class _MushafPageViewState extends State<MushafPageView> {
                               return ContinuousMushafPageWidget(
                                 pageNumber: _pageForPortraitIndex(index),
                                 fontScale: _fontScale,
+                                initialSurah: widget.initialSurah,
+                                initialAyah: widget.initialAyah,
                                 onShowControls: () {
                                   WidgetsBinding.instance.addPostFrameCallback((
                                     _,
@@ -350,22 +284,13 @@ class _MushafPageViewState extends State<MushafPageView> {
                   ),
                 ),
               ),
-              // Top AppBar
+              // Top Floating Back Button
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
-                top: _showControls ? 0 : -100,
-                left: 0,
-                right: 0,
-                child: AppBar(
-                  title: const Text(
-                    'المصحف الشريف',
-                    style: TextStyle(
-                      fontFamily: 'UthmanTaha',
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  centerTitle: true,
+                top: _showControls ? 40 : -60,
+                right: 20,
+                child: FloatingActionButton.small(
+                  onPressed: () => Navigator.of(context).pop(),
                   backgroundColor: AppTheme.primaryEmerald,
                   foregroundColor: Colors.white,
                   elevation: 4,
@@ -374,17 +299,43 @@ class _MushafPageViewState extends State<MushafPageView> {
                     IconButton(
                       onPressed: _showSettings,
                       icon: const Icon(Icons.format_size),
+                  child: const Icon(Icons.arrow_forward_ios_rounded),
+                ),
+              ),
+              // Floating Zoom Controls
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                right: _showControls ? 20 : -60,
+                top: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'zoom_in',
+                      onPressed: () =>
+                          _updateFontScale((_fontScale + 0.1).clamp(0.8, 2.5)),
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryEmerald,
+                      elevation: 4,
+                      child: const Icon(Icons.add_rounded),
+                    ),
+                    const SizedBox(height: 12),
+                    FloatingActionButton.small(
+                      heroTag: 'zoom_out',
+                      onPressed: () =>
+                          _updateFontScale((_fontScale - 0.1).clamp(0.8, 2.5)),
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryEmerald,
+                      elevation: 4,
+                      child: const Icon(Icons.remove_rounded),
                     ),
                   ],
                 ),
               ),
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
-                bottom: _showControls
-                    ? 0
-                    : -200, // Increased offset for full height
-                left: 0,
-                right: 0,
+                bottom: _showControls ? 30 : -250,
+                left: 20,
+                right: 20,
                 child: _buildBottomAudioBar(theme),
               ),
             ],
@@ -406,185 +357,150 @@ class _MushafPageViewState extends State<MushafPageView> {
         final currentPosition = state.position;
         final totalDuration = state.duration;
 
-        return Container(
+        return Material(
+          color: Colors.transparent,
           child: Listener(
             onPointerDown: (_) => _resetHideTimer(),
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.primaryEmerald,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ), // Normal top-only rounded corners
+                color: AppTheme.primaryEmerald.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, -5),
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Removed Handle for cleaner look
-                    // Progress Slider
-                    Row(
-                      children: [
-                        Text(
-                          _formatDuration(currentPosition),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontFamily: 'Cairo',
-                          ),
-                        ),
-                        Expanded(
-                          child: SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              trackHeight: 3,
-                              thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 7,
-                              ),
-                              overlayShape: const RoundSliderOverlayShape(
-                                overlayRadius: 14,
-                              ),
-                              activeTrackColor: AppTheme.accentGold,
-                              inactiveTrackColor: Colors.white24,
-                              thumbColor: AppTheme.accentGold,
-                              overlayColor: AppTheme.accentGold.withOpacity(
-                                0.2,
-                              ),
-                            ),
-                            child: Slider(
-                              value: currentPosition.inMilliseconds
-                                  .toDouble()
-                                  .clamp(
-                                    0.0,
-                                    totalDuration.inMilliseconds.toDouble() > 0
-                                        ? totalDuration.inMilliseconds
-                                              .toDouble()
-                                        : 1.0,
-                                  ),
-                              max: totalDuration.inMilliseconds.toDouble() > 0
-                                  ? totalDuration.inMilliseconds.toDouble()
-                                  : 1.0,
-                              onChanged: (value) {
-                                context.read<AudioBloc>().add(
-                                  AudioSeek(
-                                    Duration(milliseconds: value.toInt()),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        Text(
-                          _formatDuration(totalDuration),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontFamily: 'Cairo',
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Main Controls
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Stop/Close
-                        // _buildCompactIconButton(
-                        //   icon: Icons.close_rounded,
-                        //   onPressed: () =>
-                        //       context.read<AudioBloc>().add(const AudioStop()),
-                        //   tooltip: 'إغلاق',
-                        // ),
-                        // Skip Previous
-                        SizedBox(width: 20),
-                        _buildCompactIconButton(
-                          icon: Icons.skip_previous_rounded,
-                          onPressed: () => context.read<AudioBloc>().add(
-                            const AudioSkipPrevious(),
-                          ),
-                          tooltip: 'الآية السابقة',
-                        ),
-                        // Play/Pause Center
-                        IconButton(
-                          onPressed: () {
-                            if (isPlaying) {
-                              context.read<AudioBloc>().add(const AudioPause());
-                            } else if (state.status == AudioStatus.paused) {
-                              context.read<AudioBloc>().add(
-                                const AudioResume(),
-                              );
-                            } else if (state.lastAyah != null) {
-                              context.read<AudioBloc>().add(
-                                AudioPlayAyah(state.lastAyah!),
-                              );
-                            }
-                          },
-                          iconSize: 56,
-                          icon: isBuffering
-                              ? const SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    color: AppTheme.accentGold,
-                                  ),
-                                )
-                              : Icon(
-                                  isPlaying
-                                      ? Icons.pause_circle_filled_rounded
-                                      : Icons.play_circle_filled_rounded,
-                                  color: Colors.white,
-                                ),
-                        ),
-                        // Skip Next
-                        _buildCompactIconButton(
-                          icon: Icons.skip_next_rounded,
-                          onPressed: () => context.read<AudioBloc>().add(
-                            const AudioSkipNext(),
-                          ),
-                          tooltip: 'الآية التالية',
-                        ),
-                        // Repeat Toggle
-                        _buildCompactIconButton(
-                          icon: state.repeatOne
-                              ? Icons.repeat_one_rounded
-                              : Icons.repeat_rounded,
-                          onPressed: () {
-                            context.read<AudioBloc>().add(
-                              AudioRepeatModeChanged(!state.repeatOne),
-                            );
-                          },
-                          color: state.repeatOne
-                              ? AppTheme.accentGold
-                              : Colors.white70,
-                          tooltip: 'تكرار',
-                        ),
-                      ],
-                    ),
-                    // Current Info Small
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        (state.currentAyah ?? state.lastAyah) != null
-                            ? '${state.selectedReciter.arabicName} '
-                            : 'جاهز للاستماع',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Progress Slider
+                  Row(
+                    children: [
+                      Text(
+                        _formatDuration(currentPosition),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
                           fontFamily: 'Cairo',
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 2,
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 5,
+                            ),
+                            activeTrackColor: AppTheme.accentGold,
+                            inactiveTrackColor: Colors.white24,
+                            thumbColor: AppTheme.accentGold,
+                          ),
+                          child: Slider(
+                            value: currentPosition.inMilliseconds
+                                .toDouble()
+                                .clamp(
+                                  0.0,
+                                  totalDuration.inMilliseconds.toDouble() > 0
+                                      ? totalDuration.inMilliseconds.toDouble()
+                                      : 1.0,
+                                ),
+                            max: totalDuration.inMilliseconds.toDouble() > 0
+                                ? totalDuration.inMilliseconds.toDouble()
+                                : 1.0,
+                            onChanged: (value) {
+                              context.read<AudioBloc>().add(
+                                AudioSeek(
+                                  Duration(milliseconds: value.toInt()),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _formatDuration(totalDuration),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildCompactIconButton(
+                        icon: state.repeatOne
+                            ? Icons.repeat_one_rounded
+                            : Icons.repeat_rounded,
+                        onPressed: () {
+                          context.read<AudioBloc>().add(
+                            AudioRepeatModeChanged(!state.repeatOne),
+                          );
+                        },
+                        size: 20,
+                        color: state.repeatOne
+                            ? AppTheme.accentGold
+                            : Colors.white70,
+                      ),
+                      _buildCompactIconButton(
+                        icon: Icons.skip_previous_rounded,
+                        onPressed: () => context.read<AudioBloc>().add(
+                          const AudioSkipPrevious(),
+                        ),
+                        size: 24,
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          if (isPlaying) {
+                            context.read<AudioBloc>().add(const AudioPause());
+                          } else if (state.status == AudioStatus.paused) {
+                            context.read<AudioBloc>().add(const AudioResume());
+                          } else if (state.lastAyah != null) {
+                            context.read<AudioBloc>().add(
+                              AudioPlayAyah(state.lastAyah!),
+                            );
+                          }
+                        },
+                        iconSize: 42,
+                        icon: isBuffering
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.accentGold,
+                                ),
+                              )
+                            : Icon(
+                                isPlaying
+                                    ? Icons.pause_circle_filled_rounded
+                                    : Icons.play_circle_filled_rounded,
+                                color: Colors.white,
+                              ),
+                      ),
+                      _buildCompactIconButton(
+                        icon: Icons.skip_next_rounded,
+                        onPressed: () => context.read<AudioBloc>().add(
+                          const AudioSkipNext(),
+                        ),
+                        size: 24,
+                      ),
+                      _buildCompactIconButton(
+                        icon: Icons.close_rounded,
+                        onPressed: () =>
+                            context.read<AudioBloc>().add(const AudioStop()),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -598,6 +514,7 @@ class _MushafPageViewState extends State<MushafPageView> {
     required VoidCallback onPressed,
     String? tooltip,
     Color color = Colors.white70,
+    double size = 28,
   }) {
     return Tooltip(
       message: tooltip ?? '',
@@ -605,8 +522,8 @@ class _MushafPageViewState extends State<MushafPageView> {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Icon(icon, color: color, size: 28),
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: color, size: size),
         ),
       ),
     );
