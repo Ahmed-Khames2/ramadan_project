@@ -315,7 +315,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryEmerald,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -338,15 +338,22 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildEventCard(CalendarEvent event) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryEmerald.withOpacity(0.1)),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.05)
+              : theme.colorScheme.primary.withOpacity(0.1),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -364,7 +371,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryEmerald.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -388,7 +395,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       Text(
                         event.description,
                         style: TextStyle(
-                          color: AppTheme.textGrey,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
                           fontSize: 13,
                         ),
                         maxLines: 1,
@@ -397,10 +404,10 @@ class _CalendarPageState extends State<CalendarPage> {
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppTheme.accentGold,
+                  color: AppTheme.accentGold.withOpacity(0.8),
                 ),
               ],
             ),
@@ -457,7 +464,7 @@ class _CalendarPageState extends State<CalendarPage> {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryEmerald,
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -483,7 +490,7 @@ class _CalendarPageState extends State<CalendarPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
-              color: AppTheme.textDark,
+              color: theme.colorScheme.onSurface,
               height: 1.6,
             ),
           ),
@@ -494,14 +501,14 @@ class _CalendarPageState extends State<CalendarPage> {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryEmerald,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
               ),
-              child: Text(
+              child: const Text(
                 'تم',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),

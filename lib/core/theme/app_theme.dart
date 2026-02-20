@@ -58,7 +58,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceWhite.withValues(alpha: 0.15),
+        fillColor: Colors.black.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -74,7 +74,7 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        hintStyle: const TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: textGrey),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(color: textDark, fontWeight: FontWeight.bold),
@@ -142,7 +142,7 @@ class AppTheme {
             width: 1.5,
           ),
         ),
-        hintStyle: const TextStyle(color: Colors.white60),
+        hintStyle: const TextStyle(color: Colors.white38),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(color: textLight, fontWeight: FontWeight.bold),

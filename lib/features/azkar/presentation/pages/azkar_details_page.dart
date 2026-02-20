@@ -97,13 +97,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: Icon(
-              Icons.close_rounded,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          const IslamicBackButton(isInAppBar: false),
           Expanded(
             child: Text(
               widget.azkarItem.title,

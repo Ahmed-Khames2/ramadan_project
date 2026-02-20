@@ -28,6 +28,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
         return Scaffold(
           appBar: AppBar(
+            leading: const IslamicBackButton(),
             title: const Text(
               'المفضلة',
               style: TextStyle(
@@ -212,7 +213,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 18,
+                    ),
                     label: const Text(
                       'اذهب للآية',
                       style: TextStyle(fontSize: 13),

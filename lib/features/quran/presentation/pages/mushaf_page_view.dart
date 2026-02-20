@@ -369,10 +369,7 @@ class _MushafPageViewState extends State<MushafPageView> {
                   backgroundColor: AppTheme.primaryEmerald,
                   foregroundColor: Colors.white,
                   elevation: 4,
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                  leading: const IslamicBackButton(),
                   actions: [
                     IconButton(
                       onPressed: _showSettings,

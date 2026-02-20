@@ -161,20 +161,10 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'فهرس القرآن',
-          style: TextStyle(
-            fontFamily: 'UthmanTaha',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: AppTheme.primaryEmerald,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('فهرس القرآن'),
         actions: [
           IconButton(
             icon: const Icon(Icons.favorite_rounded),
@@ -189,22 +179,22 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
       body: DecorativeBackground(
         child: Column(
           children: [
-            _buildSearchSection(),
+            _buildSearchSection(theme),
             if (_searchController.text.isEmpty) _buildFilters(),
             Expanded(
               child: BlocBuilder<SearchBloc, SearchState>(
                 builder: (context, state) {
                   if (state is SearchLoading) {
-                    return const Center(
+                    return Center(
                       child: CircularProgressIndicator(
-                        color: AppTheme.primaryEmerald,
+                        color: theme.colorScheme.primary,
                       ),
                     );
                   }
 
                   if (state is SearchLoaded && state.query.trim().isNotEmpty) {
                     if (state.results.isEmpty) {
-                      return _buildEmptySearchState(state.query);
+                      return _buildEmptySearchState(state.query, theme);
                     }
                     return ListView.builder(
                       padding: const EdgeInsets.all(AppTheme.spacing4),
@@ -236,11 +226,11 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                 );
                 _loadProgress(); // Refresh on return
               },
-              backgroundColor: AppTheme.primaryEmerald,
+              backgroundColor: theme.colorScheme.primary,
               icon: const Icon(Icons.history_edu, color: Colors.white),
               label: Text(
                 'متابعة القراءة: $_lastReadSurahName',
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -250,7 +240,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     );
   }
 
-  Widget _buildSearchSection() {
+  Widget _buildSearchSection(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppTheme.spacing4,
@@ -258,9 +248,9 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         AppTheme.spacing4,
         AppTheme.spacing4,
       ),
-      decoration: const BoxDecoration(
-        color: AppTheme.primaryEmerald,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppTheme.spacing8),
           bottomRight: Radius.circular(AppTheme.spacing8),
         ),
@@ -367,13 +357,13 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? theme.colorScheme.secondary.withOpacity(0.12)
-                          : AppTheme.primaryEmerald.withOpacity(0.08),
+                          ? theme.colorScheme.secondary.withValues(alpha: 0.12)
+                          : theme.colorScheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark
-                            ? theme.colorScheme.secondary.withOpacity(0.2)
-                            : AppTheme.primaryEmerald.withOpacity(0.15),
+                            ? theme.colorScheme.secondary.withValues(alpha: 0.2)
+                            : theme.colorScheme.primary.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Text(
@@ -383,7 +373,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                         fontWeight: FontWeight.bold,
                         color: isDark
                             ? theme.colorScheme.secondary
-                            : AppTheme.primaryEmerald,
+                            : theme.colorScheme.primary,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -407,7 +397,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     );
   }
 
-  Widget _buildEmptySearchState(String query) {
+  Widget _buildEmptySearchState(String query, ThemeData theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40.0),
@@ -417,7 +407,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
             Icon(
               Icons.search_off_rounded,
               size: 80,
-              color: AppTheme.accentGold.withOpacity(0.3),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 24),
             Text(
@@ -425,14 +415,14 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'لا توجد نتائج للبحث عن "$query"',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppTheme.textGrey),
+              style: const TextStyle(fontSize: 14, color: AppTheme.textGrey),
             ),
           ],
         ),

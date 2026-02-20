@@ -150,21 +150,23 @@ class _NavBarItem extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
-              size: 26,
+              color: isSelected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.6),
+              size: 24,
             ),
-            if (isSelected) ...[
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Cairo',
-                ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontFamily: 'Cairo',
               ),
-            ],
+            ),
           ],
         ),
       ),

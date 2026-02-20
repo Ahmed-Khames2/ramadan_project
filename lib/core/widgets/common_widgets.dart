@@ -231,17 +231,28 @@ class DecorativeBackground extends StatelessWidget {
 class IslamicBackButton extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? color;
+  final bool isInAppBar;
 
-  const IslamicBackButton({super.key, this.onTap, this.color});
+  const IslamicBackButton({
+    super.key,
+    this.onTap,
+    this.color,
+    this.isInAppBar = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final defaultColor = isInAppBar ? Colors.white : theme.colorScheme.primary;
+
     return IconButton(
-      onPressed: onTap ?? () => Navigator.pop(context),
+      onPressed: onTap ?? () => Navigator.maybePop(context),
       icon: Icon(
         Icons.arrow_back_ios_new_rounded,
-        color: color ?? AppTheme.primaryEmerald,
+        size: 20,
+        color: color ?? defaultColor,
       ),
+      tooltip: 'رجوع',
     );
   }
 }

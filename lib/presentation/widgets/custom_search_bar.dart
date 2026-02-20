@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class CustomSearchBar extends StatefulWidget {
   final TextEditingController controller;
@@ -50,19 +49,19 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isFocused
-              ? AppTheme.accentGold
+              ? theme.colorScheme.secondary
               : (isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : AppTheme.accentGold.withOpacity(0.1)),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : theme.colorScheme.secondary.withValues(alpha: 0.1)),
           width: _isFocused ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: _isFocused
-                ? AppTheme.accentGold.withOpacity(0.15)
+                ? theme.colorScheme.secondary.withValues(alpha: 0.15)
                 : (isDark
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.04)),
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.04)),
             blurRadius: _isFocused ? 12 : 8,
             offset: const Offset(0, 4),
           ),
@@ -81,11 +80,13 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         ),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: TextStyle(color: AppTheme.textGrey.withOpacity(0.6)),
+          hintStyle: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
           prefixIcon: widget.controller.text.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.close_rounded, size: 20),
-                  color: AppTheme.textGrey,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   onPressed: () {
                     widget.controller.clear();
                     widget.onClear();
@@ -93,7 +94,9 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                 )
               : Icon(
                   Icons.search_rounded,
-                  color: _isFocused ? AppTheme.accentGold : AppTheme.textGrey,
+                  color: _isFocused
+                      ? theme.colorScheme.secondary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16,

@@ -40,7 +40,7 @@ class SurahTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              _buildNumberIcon(),
+              _buildNumberIcon(context),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -66,7 +66,7 @@ class SurahTile extends StatelessWidget {
                       children: [
                         Text(
                           '${surah.ayahCount} آيات',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textGrey,
                           ),
@@ -85,7 +85,7 @@ class SurahTile extends StatelessWidget {
                           _getJuzText(),
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.primaryEmerald,
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -117,7 +117,8 @@ class SurahTile extends StatelessWidget {
     }
   }
 
-  Widget _buildNumberIcon() {
+  Widget _buildNumberIcon(BuildContext context) {
+    final theme = Theme.of(context);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -125,8 +126,8 @@ class SurahTile extends StatelessWidget {
           Icons.star_outline_rounded,
           size: 48,
           color: isLastRead
-              ? AppTheme.primaryEmerald
-              : AppTheme.accentGold.withOpacity(0.3),
+              ? theme.colorScheme.primary
+              : theme.colorScheme.secondary.withValues(alpha: 0.3),
         ),
         if (isLastRead)
           Positioned(
@@ -134,8 +135,8 @@ class SurahTile extends StatelessWidget {
             right: 0,
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryEmerald,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.bookmark, size: 10, color: Colors.white),
@@ -146,9 +147,7 @@ class SurahTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isLastRead
-                ? AppTheme.primaryEmerald
-                : AppTheme.primaryEmerald,
+            color: theme.colorScheme.primary,
           ),
         ),
       ],
