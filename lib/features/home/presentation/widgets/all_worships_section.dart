@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart'; // For IslamicCard
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 import 'package:ramadan_project/features/azkar/presentation/pages/azkar_categories_page.dart';
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
@@ -76,12 +78,17 @@ class AllWorshipsSection extends StatelessWidget {
                 title: 'القرآن الكريم',
                 icon: FontAwesomeIcons.bookQuran,
                 color: AppTheme.primaryEmerald,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EnhancedSurahIndexPage(),
-                  ),
-                ),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EnhancedSurahIndexPage(),
+                    ),
+                  );
+                  if (context.mounted) {
+                    context.read<SearchBloc>().add(ClearSearch());
+                  }
+                },
               ),
               _buildFeatureCard(
                 context,

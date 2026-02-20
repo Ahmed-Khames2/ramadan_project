@@ -14,10 +14,12 @@ class MainNavigationPage extends StatefulWidget {
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
+  final GlobalKey<EnhancedSurahIndexPageState> _quranKey =
+      GlobalKey<EnhancedSurahIndexPageState>();
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = [
     const HomeDashboardPage(),
-    const EnhancedSurahIndexPage(),
+    EnhancedSurahIndexPage(key: _quranKey),
     const KhatmahDashboardPage(),
     const SettingsPage(),
   ];
@@ -38,6 +40,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           return;
         }
         if (_currentIndex != 0) {
+          if (_currentIndex == 1) {
+            _quranKey.currentState?.clearSearch();
+          }
           setState(() {
             _currentIndex = 0;
           });
@@ -48,6 +53,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         title: _titles[_currentIndex],
         currentIndex: _currentIndex,
         onTabSelected: (index) {
+          if (_currentIndex == 1 && index != 1) {
+            _quranKey.currentState?.clearSearch();
+          }
           setState(() {
             _currentIndex = index;
           });

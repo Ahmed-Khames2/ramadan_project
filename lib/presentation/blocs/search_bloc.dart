@@ -16,11 +16,13 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final QuranRepository repository;
 
   SearchBloc({required this.repository}) : super(SearchInitial()) {
-    on<SearchQueryChanged>(
-      _onSearchQueryChanged,
-      transformer: debounce(_debounceDuration),
-    );
-    on<ClearSearch>(_onClearSearch);
+    on<SearchEvent>((event, emit) async {
+      if (event is SearchQueryChanged) {
+        await _onSearchQueryChanged(event, emit);
+      } else if (event is ClearSearch) {
+        _onClearSearch(event, emit);
+      }
+    }, transformer: debounce(_debounceDuration));
   }
 
   Future<void> _onSearchQueryChanged(

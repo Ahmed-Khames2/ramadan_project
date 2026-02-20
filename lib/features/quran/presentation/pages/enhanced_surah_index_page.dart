@@ -20,10 +20,10 @@ class EnhancedSurahIndexPage extends StatefulWidget {
   const EnhancedSurahIndexPage({super.key});
 
   @override
-  State<EnhancedSurahIndexPage> createState() => _EnhancedSurahIndexPageState();
+  State<EnhancedSurahIndexPage> createState() => EnhancedSurahIndexPageState();
 }
 
-class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
+class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   final TextEditingController _searchController = TextEditingController();
   final ItemScrollController _itemScrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener =
@@ -130,15 +130,6 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_searchController.text.isNotEmpty) {
-      _searchController.clear();
-      context.read<SearchBloc>().add(ClearSearch());
-    }
-  }
-
   List<SurahInfo> _getSurahList() {
     return List.generate(114, (index) {
       final surahNumber = index + 1;
@@ -157,6 +148,14 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void clearSearch() {
+    _searchController.clear();
+    context.read<SearchBloc>().add(ClearSearch());
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -207,6 +206,7 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                       itemBuilder: (context, index) => SearchResultTile(
                         result: state.results[index],
                         query: state.query,
+                        onReturn: _loadProgress,
                       ),
                     );
                   }
@@ -243,16 +243,6 @@ class _EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
-                );
-                _loadProgress(); // Refresh on return
-              },
-              backgroundColor: theme.colorScheme.primary,
-              icon: const Icon(Icons.history_edu, color: Colors.white),
-              label: Text(
-                'متابعة القراءة: $_lastReadSurahName',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             )

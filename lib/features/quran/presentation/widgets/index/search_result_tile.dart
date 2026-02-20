@@ -8,11 +8,13 @@ import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_vi
 class SearchResultTile extends StatelessWidget {
   final Map<String, dynamic> result;
   final String query;
+  final VoidCallback? onReturn;
 
   const SearchResultTile({
     super.key,
     required this.result,
     required this.query,
+    this.onReturn,
   });
 
   @override
@@ -23,14 +25,14 @@ class SearchResultTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: IslamicCard(
         padding: EdgeInsets.zero,
-        onTap: () {
+        onTap: () async {
           final page =
               result['page'] ??
               quran.getPageNumber(
                 result['surahNumber'],
                 result['ayahNumber'] ?? 1,
               );
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => MushafPageView(
@@ -40,6 +42,7 @@ class SearchResultTile extends StatelessWidget {
               ),
             ),
           );
+          onReturn?.call();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -121,8 +124,9 @@ class SearchResultTile extends StatelessWidget {
         TextSpan(
           text: text.substring(range.start, range.end),
           style: style.copyWith(
-            backgroundColor: AppTheme.accentGold.withOpacity(0.2),
+            backgroundColor: AppTheme.accentGold.withValues(alpha: 0.2),
             color: AppTheme.primaryEmerald,
+            fontWeight: FontWeight.bold,
           ),
         ),
       );

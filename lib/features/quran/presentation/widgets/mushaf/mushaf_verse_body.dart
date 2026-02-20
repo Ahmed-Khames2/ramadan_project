@@ -40,23 +40,53 @@ class MushafVerseBody extends StatefulWidget {
 
 class _MushafVerseBodyState extends State<MushafVerseBody> {
   final GlobalKey _headerKey = GlobalKey();
-  final GlobalKey _ayahKey = GlobalKey();
   final GlobalKey _tutorialKey = GlobalKey();
+  final Map<int, GlobalKey> _ayahKeyMap = {}; // Map globalAyahNumber to key
   final ScreenshotController _screenshotController = ScreenshotController();
   List<TargetFocus> targets = [];
 
   @override
   void initState() {
     super.initState();
+    // Pre-populate keys for all ayahs on the page to ensure they are available for scrolling
+    for (final ayah in widget.page.ayahs) {
+      final isFirstAyah =
+          ayah.globalAyahNumber == widget.page.ayahs.first.globalAyahNumber;
+      _ayahKeyMap[ayah.globalAyahNumber] = isFirstAyah
+          ? _tutorialKey
+          : GlobalKey();
+    }
+
     if (widget.initialSurah != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final targetKey = (widget.initialAyah != null) ? _ayahKey : _headerKey;
-        if (targetKey.currentContext != null) {
+        GlobalKey? targetKey;
+
+        // Priority 1: Current playing ayah if it's on this page
+        final audioState = context.read<AudioBloc>().state;
+        if (audioState.currentAyah != null &&
+            _ayahKeyMap.containsKey(audioState.currentAyah)) {
+          targetKey = _ayahKeyMap[audioState.currentAyah];
+        }
+        // Priority 2: Initial ayah/surah from navigation
+        else if (widget.initialAyah != null && widget.initialSurah != null) {
+          final globalId = _getGlobalId(
+            widget.initialSurah!,
+            widget.initialAyah!,
+          );
+          targetKey = _ayahKeyMap[globalId];
+        }
+        // Priority 3: Surah header
+        else if (widget.initialSurah != null) {
+          targetKey = _headerKey;
+        }
+
+        if (targetKey != null && targetKey.currentContext != null) {
           Scrollable.ensureVisible(
             targetKey.currentContext!,
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOut,
+            alignment: 0.5, // Center on screen
           );
         }
       });
@@ -605,6 +635,12 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
       final List<Widget> ayahWidgets = [];
 
       for (final ayah in surahAyahs) {
+        final isFirstAyah =
+            ayah.globalAyahNumber == widget.page.ayahs.first.globalAyahNumber;
+
+        // Keys are now pre-populated in initState
+        final ayahKey = _ayahKeyMap[ayah.globalAyahNumber]!;
+
         ayahWidgets.add(
           BlocBuilder<AudioBloc, AudioState>(
             buildWhen: (previous, current) =>
@@ -617,55 +653,51 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                 onLongPress: () => _showAyahDetails(ayah),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
-                  key:
-                      ayah.globalAyahNumber ==
-                          widget.page.ayahs.first.globalAyahNumber
-                      ? _tutorialKey
-                      : null,
+                  key: isFirstAyah ? _tutorialKey : ayahKey,
                   duration: const Duration(milliseconds: 400),
                   padding: const EdgeInsets.symmetric(
                     vertical: 6,
-                    horizontal: 8,
+                    horizontal: 10,
                   ),
                   decoration: BoxDecoration(
                     color: isPlayingItem
-                        ? AppTheme.accentGold.withOpacity(0.2)
+                        ? AppTheme.accentGold.withValues(alpha: 0.15)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: isPlayingItem
-                        ? [
-                            BoxShadow(
-                              color: AppTheme.accentGold.withOpacity(0.25),
-                              blurRadius: 30,
-                              spreadRadius: 8,
-                            ),
-                            BoxShadow(
-                              color: AppTheme.accentGold.withOpacity(0.15),
-                              blurRadius: 15,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : [],
+                    borderRadius: BorderRadius.circular(12),
+                    border: isPlayingItem
+                        ? Border.all(
+                            color: AppTheme.accentGold.withValues(alpha: 0.3),
+                            width: 1,
+                          )
+                        : null,
                   ),
-                  child: Directionality(
+                  child: RichText(
+                    textAlign: TextAlign.justify,
                     textDirection: TextDirection.rtl,
-                    child: RichText(
-                      textAlign: TextAlign.right,
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${ayah.text.trim()}\u2060',
-                            style: baseTextStyle,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: ayah.text,
+                          style: baseTextStyle.copyWith(
+                            backgroundColor: isPlayingItem
+                                ? AppTheme.accentGold.withValues(alpha: 0.1)
+                                : null,
                           ),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
+                        ),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: AyahSymbol(
                               ayahNumber: ayah.ayahNumber,
+                              color: isPlayingItem
+                                  ? AppTheme.accentGold
+                                  : AppTheme.primaryEmerald,
                               scale: widget.scale,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -736,13 +768,29 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
     }
     flushSurah();
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: surahWidgets,
+    return BlocListener<AudioBloc, AudioState>(
+      listenWhen: (previous, current) =>
+          previous.currentAyah != current.currentAyah &&
+          current.currentAyah != null,
+      listener: (context, state) {
+        final targetKey = _ayahKeyMap[state.currentAyah];
+        if (targetKey != null && targetKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            targetKey.currentContext!,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+            alignment: 0.5,
+          );
+        }
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: surahWidgets,
+          ),
         ),
       ),
     );
@@ -752,6 +800,14 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
     final words = text.split(' ');
     if (words.length <= 5) return text;
     return '${words.take(5).join(' ')}...';
+  }
+
+  int _getGlobalId(int surah, int ayah) {
+    int currentGlobal = 0;
+    for (int s = 1; s < surah; s++) {
+      currentGlobal += quran.getVerseCount(s);
+    }
+    return currentGlobal + ayah;
   }
 }
 

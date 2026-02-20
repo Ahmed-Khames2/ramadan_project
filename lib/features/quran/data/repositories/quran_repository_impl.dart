@@ -457,7 +457,7 @@ class QuranRepositoryImpl implements QuranRepository {
             results.add({
               'type': 'ayah',
               'surahNumber': s,
-              'verseNumber': v,
+              'ayahNumber': v,
               'text': quran.getVerse(s, v, verseEndSymbol: false),
               'subtitle': '${quran.getSurahNameArabic(s)} : $v',
             });

@@ -188,6 +188,19 @@ class _MushafPageViewState extends State<MushafPageView> {
 
   int _pageForPortraitIndex(int index) => index + 1;
 
+  int _getPageFromGlobalId(int globalId) {
+    int currentGlobal = 0;
+    for (int s = 1; s <= 114; s++) {
+      int vCount = quran.getVerseCount(s);
+      if (currentGlobal + vCount >= globalId) {
+        int v = globalId - currentGlobal;
+        return quran.getPageNumber(s, v);
+      }
+      currentGlobal += vCount;
+    }
+    return 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -229,54 +242,79 @@ class _MushafPageViewState extends State<MushafPageView> {
                           );
                         }
 
-                        return Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: PageView.builder(
-                            key: ValueKey('portrait_${widget.initialPage}'),
-                            controller: _portraitController,
-                            itemCount: _totalPages,
-                            reverse: false,
-                            onPageChanged: (index) {
-                              _currentPage = _pageForPortraitIndex(index);
-                              setState(() {}); // Update title
+                        return BlocListener<AudioBloc, AudioState>(
+                          listenWhen: (previous, current) =>
+                              previous.currentAyah != current.currentAyah &&
+                              current.currentAyah != null &&
+                              current.status == AudioStatus.playing,
+                          listener: (context, state) {
+                            final audioPage = _getPageFromGlobalId(
+                              state.currentAyah!,
+                            );
 
-                              // Preload tafsir for the new surah
-                              final currentSurah =
-                                  quran.getPageData(_currentPage).first['surah']
-                                      as int;
-                              context.read<QuranRepository>().preloadTafsir(
-                                currentSurah,
-                              );
-
-                              if (widget.shouldSaveProgress) {
-                                _saveBookmark(_currentPage);
+                            if (audioPage != _currentPage) {
+                              // Only auto-flip if it's the next page or within reasonable range
+                              if ((audioPage - _currentPage).abs() <= 1) {
+                                _portraitController.animateToPage(
+                                  _portraitIndexForPage(audioPage),
+                                  duration: const Duration(milliseconds: 800),
+                                  curve: Curves.easeInOut,
+                                );
                               }
-                              widget.onPageChanged?.call(_currentPage);
-                            },
-                            itemBuilder: (context, index) {
-                              return ContinuousMushafPageWidget(
-                                pageNumber: _pageForPortraitIndex(index),
-                                fontScale: _fontScale,
-                                initialSurah: widget.initialSurah,
-                                initialAyah: widget.initialAyah,
-                                onShowControls: () {
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted && !_showControls) {
-                                      setState(() => _showControls = true);
+                            }
+                          },
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: PageView.builder(
+                              key: ValueKey('portrait_${widget.initialPage}'),
+                              controller: _portraitController,
+                              itemCount: _totalPages,
+                              reverse: false,
+                              onPageChanged: (index) {
+                                _currentPage = _pageForPortraitIndex(index);
+                                setState(() {}); // Update title
+
+                                // Preload tafsir for the new surah
+                                final currentSurah =
+                                    quran
+                                            .getPageData(_currentPage)
+                                            .first['surah']
+                                        as int;
+                                context.read<QuranRepository>().preloadTafsir(
+                                  currentSurah,
+                                );
+
+                                if (widget.shouldSaveProgress) {
+                                  _saveBookmark(_currentPage);
+                                }
+                                widget.onPageChanged?.call(_currentPage);
+                              },
+                              itemBuilder: (context, index) {
+                                return ContinuousMushafPageWidget(
+                                  pageNumber: _pageForPortraitIndex(index),
+                                  fontScale: _fontScale,
+                                  initialSurah: widget.initialSurah,
+                                  initialAyah: widget.initialAyah,
+                                  onShowControls: () {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          if (mounted && !_showControls) {
+                                            setState(
+                                              () => _showControls = true,
+                                            );
+                                          }
+                                          _resetHideTimer();
+                                        });
+                                  },
+                                  onHideControls: () {
+                                    if (mounted && _showControls) {
+                                      setState(() => _showControls = false);
+                                      _cancelHideTimer();
                                     }
-                                    _resetHideTimer();
-                                  });
-                                },
-                                onHideControls: () {
-                                  if (mounted && _showControls) {
-                                    setState(() => _showControls = false);
-                                    _cancelHideTimer();
-                                  }
-                                },
-                              );
-                            },
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         );
                       },
@@ -291,15 +329,23 @@ class _MushafPageViewState extends State<MushafPageView> {
                 right: 20,
                 child: FloatingActionButton.small(
                   onPressed: () => Navigator.of(context).pop(),
-                  backgroundColor: AppTheme.primaryEmerald,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.brightness == Brightness.dark
+                      ? theme.colorScheme.surface
+                      : Colors.white,
+                  foregroundColor: AppTheme.primaryEmerald,
                   elevation: 4,
-                  leading: const IslamicBackButton(),
-                  actions: [
-                    IconButton(
-                      onPressed: _showSettings,
-                      icon: const Icon(Icons.format_size),
-                  child: const Icon(Icons.arrow_forward_ios_rounded),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: theme.brightness == Brightness.dark
+                        ? BorderSide(
+                            color: AppTheme.primaryEmerald.withValues(
+                              alpha: 0.3,
+                            ),
+                            width: 1,
+                          )
+                        : BorderSide.none,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded),
                 ),
               ),
               // Floating Zoom Controls
@@ -313,7 +359,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                       heroTag: 'zoom_in',
                       onPressed: () =>
                           _updateFontScale((_fontScale + 0.1).clamp(0.8, 2.5)),
-                      backgroundColor: Colors.white,
+                      backgroundColor: theme.brightness == Brightness.dark
+                          ? theme.colorScheme.surface
+                          : Colors.white,
                       foregroundColor: AppTheme.primaryEmerald,
                       elevation: 4,
                       child: const Icon(Icons.add_rounded),
@@ -323,7 +371,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                       heroTag: 'zoom_out',
                       onPressed: () =>
                           _updateFontScale((_fontScale - 0.1).clamp(0.8, 2.5)),
-                      backgroundColor: Colors.white,
+                      backgroundColor: theme.brightness == Brightness.dark
+                          ? theme.colorScheme.surface
+                          : Colors.white,
                       foregroundColor: AppTheme.primaryEmerald,
                       elevation: 4,
                       child: const Icon(Icons.remove_rounded),
@@ -363,15 +413,33 @@ class _MushafPageViewState extends State<MushafPageView> {
             onPointerDown: (_) => _resetHideTimer(),
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.primaryEmerald.withOpacity(0.95),
+                gradient: LinearGradient(
+                  colors: theme.brightness == Brightness.dark
+                      ? [
+                          theme.colorScheme.surface.withValues(alpha: 0.98),
+                          theme.colorScheme.surface.withValues(alpha: 0.92),
+                        ]
+                      : [
+                          AppTheme.primaryEmerald.withValues(alpha: 0.95),
+                          AppTheme.primaryEmerald.withValues(alpha: 0.85),
+                        ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
                 ],
+                border: Border.all(
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : AppTheme.accentGold.withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
@@ -450,9 +518,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                             : Colors.white70,
                       ),
                       _buildCompactIconButton(
-                        icon: Icons.skip_previous_rounded,
+                        icon: Icons.skip_next_rounded,
                         onPressed: () => context.read<AudioBloc>().add(
-                          const AudioSkipPrevious(),
+                          const AudioSkipNext(),
                         ),
                         size: 24,
                       ),
@@ -486,9 +554,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                               ),
                       ),
                       _buildCompactIconButton(
-                        icon: Icons.skip_next_rounded,
+                        icon: Icons.skip_previous_rounded,
                         onPressed: () => context.read<AudioBloc>().add(
-                          const AudioSkipNext(),
+                          const AudioSkipPrevious(),
                         ),
                         size: 24,
                       ),

@@ -5,8 +5,14 @@ import '../../utils/arabic_digits_ext.dart';
 class AyahSymbol extends StatelessWidget {
   final int ayahNumber;
   final double scale;
+  final Color? color;
 
-  const AyahSymbol({super.key, required this.ayahNumber, required this.scale});
+  const AyahSymbol({
+    super.key,
+    required this.ayahNumber,
+    required this.scale,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +28,8 @@ class AyahSymbol extends StatelessWidget {
               'assets/images/ayah_frame.svg',
               width: 32 * scale,
               height: 32 * scale,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFFD4AF37),
+              colorFilter: ColorFilter.mode(
+                color ?? const Color(0xFFD4AF37),
                 BlendMode.srcIn,
               ),
             ),

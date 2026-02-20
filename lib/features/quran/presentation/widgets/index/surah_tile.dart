@@ -120,28 +120,32 @@ class SurahTile extends StatelessWidget {
   }
 
   Widget _buildNumberIcon(BuildContext context) {
-    final theme = Theme.of(context);
     return Stack(
       alignment: Alignment.center,
       children: [
         Icon(
-          Icons.star_outline_rounded,
+          Icons.star_rounded,
           size: 48,
           color: isLastRead
-              ? theme.colorScheme.primary
-              : theme.colorScheme.secondary.withValues(alpha: 0.3),
+              ? AppTheme.accentGold.withValues(alpha: 0.9)
+              : AppTheme.primaryEmerald.withValues(alpha: 0.1),
         ),
         if (isLastRead)
           Positioned(
-            top: 0,
-            right: 0,
+            top: 2,
+            right: 2,
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryEmerald,
                 shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
               ),
-              child: const Icon(Icons.bookmark, size: 10, color: Colors.white),
+              child: const Icon(
+                Icons.bookmark_rounded,
+                size: 10,
+                color: Colors.white,
+              ),
             ),
           ),
         Text(
@@ -149,7 +153,10 @@ class SurahTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+            fontFamily: 'Cairo',
+            color: isLastRead
+                ? AppTheme.primaryEmerald
+                : AppTheme.primaryEmerald.withValues(alpha: 0.7),
           ),
         ),
       ],
