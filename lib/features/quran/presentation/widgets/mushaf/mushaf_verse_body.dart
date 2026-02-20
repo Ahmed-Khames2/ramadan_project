@@ -332,7 +332,8 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
               final isPlayingItem = state.currentAyah == ayah.globalAyahNumber;
 
               return GestureDetector(
-                onTap: () => _showAyahDetails(ayah),
+                onTap: () => _playAyah(ayah),
+                onLongPress: () => _showAyahDetails(ayah),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),

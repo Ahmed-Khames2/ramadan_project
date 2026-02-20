@@ -100,6 +100,13 @@ class AudioRepositoryImpl implements AudioRepository {
 
       _currentAyahController.add(ayahNumber);
 
+      _currentAyahController.add(ayahNumber);
+
+      // Stop previous playback to ensure clean state
+      if (_audioPlayer.playing) {
+        await _audioPlayer.stop();
+      }
+
       // DO NOT await play() as it blocks until audio finishes.
       // We want to return immediately so BLoC can update state to 'playing'.
       _audioPlayer.play();

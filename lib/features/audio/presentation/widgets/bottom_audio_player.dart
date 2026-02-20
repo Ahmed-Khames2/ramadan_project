@@ -24,7 +24,6 @@ class BottomAudioPlayer extends StatelessWidget {
         }
 
         final isPlaying = state.status == AudioStatus.playing;
-        final isBuffering = state.status == AudioStatus.loading;
 
         return Container(
           decoration: BoxDecoration(
@@ -128,25 +127,10 @@ class BottomAudioPlayer extends StatelessWidget {
                           }
                         }
                       },
-                      icon: isBuffering
-                          ? SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(
-                                        0xFF1B5E20,
-                                      ), // Dark green on white
-                              ),
-                            )
-                          : Icon(
-                              isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1B5E20),
-                            ),
+                      icon: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: isDark ? Colors.white : const Color(0xFF1B5E20),
+                      ),
                     ),
                   ),
 
