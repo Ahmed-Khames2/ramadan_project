@@ -42,11 +42,7 @@ class PageHeaderWidget extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Divider(
-                color:
-                    (theme.brightness == Brightness.dark
-                            ? const Color(0xFFC5A028)
-                            : const Color(0xFFD4AF37))
-                        .withOpacity(0.3),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.3),
                 thickness: 1,
               ),
             ),
@@ -55,18 +51,10 @@ class PageHeaderWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color:
-                  (theme.brightness == Brightness.dark
-                          ? const Color(0xFFC5A028)
-                          : const Color(0xFFD4AF37))
-                      .withOpacity(0.1),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color:
-                    (theme.brightness == Brightness.dark
-                            ? const Color(0xFFC5A028)
-                            : const Color(0xFFD4AF37))
-                        .withOpacity(0.2),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.2),
               ),
             ),
             child: Text(
@@ -74,9 +62,7 @@ class PageHeaderWidget extends StatelessWidget {
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontFamily: 'UthmanTaha',
                 fontWeight: FontWeight.bold,
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0xFFE4BC4B)
-                    : const Color(0xFFB88A2F),
+                color: theme.colorScheme.secondary,
               ),
             ),
           ),
