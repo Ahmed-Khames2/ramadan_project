@@ -12,16 +12,25 @@ import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class MushafVerseBody extends StatefulWidget {
   final QuranPage page;
   final double scale;
+  final int? initialSurah;
+  final int? initialAyah;
   final VoidCallback? onShowControls;
 
   const MushafVerseBody({
     super.key,
     required this.page,
-    required this.scale,
+    this.scale = 1.0,
+    this.initialSurah,
+    this.initialAyah,
     this.onShowControls,
   });
 
@@ -30,6 +39,197 @@ class MushafVerseBody extends StatefulWidget {
 }
 
 class _MushafVerseBodyState extends State<MushafVerseBody> {
+  final GlobalKey _headerKey = GlobalKey();
+  final GlobalKey _ayahKey = GlobalKey();
+  final GlobalKey _tutorialKey = GlobalKey();
+  final ScreenshotController _screenshotController = ScreenshotController();
+  List<TargetFocus> targets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSurah != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final targetKey = (widget.initialAyah != null) ? _ayahKey : _headerKey;
+        if (targetKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            targetKey.currentContext!,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+    _checkAndShowTutorial();
+  }
+
+  Future<void> _checkAndShowTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool shown = prefs.getBool('ayah_details_tutorial_shown') ?? false;
+
+    if (!shown) {
+      // Delay to allow widgets to render
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+
+        // Ensure the tutorial target is visible
+        if (_tutorialKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            _tutorialKey.currentContext!,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        }
+
+        _initTutorialTargets();
+        _showTutorial();
+      });
+    }
+  }
+
+  void _initTutorialTargets() {
+    targets.clear();
+    targets.add(
+      TargetFocus(
+        identify: "ayah_details_tutorial",
+        keyTarget: _tutorialKey,
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.touch_app_rounded,
+                    color: AppTheme.accentGold,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "اضغط ضغطة مطولة على الآية לרؤية التفسير والمشاركة",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => controller.next(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentGold,
+                      foregroundColor: AppTheme.primaryEmerald,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "فهمت",
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+      ),
+    );
+
+    // Step 2: Scroll Down Tutorial
+    targets.add(
+      TargetFocus(
+        identify: "scroll_down_tutorial",
+        keyTarget:
+            _headerKey, // Pointing generally to the top area or just use a full screen overlay if possible
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.keyboard_double_arrow_down_rounded,
+                    color: AppTheme.accentGold,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "اسحب للأسفل لتكملة القراءة",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => controller.next(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentGold,
+                      foregroundColor: AppTheme.primaryEmerald,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "ابدأ القراءة",
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+        shape: ShapeLightFocus.RRect,
+      ),
+    );
+  }
+
+  void _showTutorial() {
+    TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppTheme.primaryEmerald,
+      textSkip: "تخطي",
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () {
+        _markTutorialAsShown();
+      },
+      onSkip: () {
+        _markTutorialAsShown();
+        return true;
+      },
+    ).show(context: context);
+  }
+
+  Future<void> _markTutorialAsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('ayah_details_tutorial_shown', true);
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -62,6 +262,87 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
       context.read<AudioBloc>().add(AudioPlayRange(globalIds));
       Navigator.of(context).pop(); // Close bubble after starting
     }
+  }
+
+  Future<void> _shareAyahAsImage(Ayah ayah) async {
+    // Generate the image from a separate widget to have full control over the look
+    final image = await _screenshotController.captureFromWidget(
+      Container(
+        padding: const EdgeInsets.all(30),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryEmerald,
+              AppTheme.primaryEmerald.withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Decorative Header
+            Icon(
+              Icons.format_quote_rounded,
+              color: AppTheme.accentGold,
+              size: 40,
+            ),
+            const SizedBox(height: 20),
+            // Ayah Text
+            Text(
+              ayah.text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
+                fontSize: 28,
+                height: 1.8,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 30),
+            // Divider
+            Container(
+              width: 100,
+              height: 2,
+              color: AppTheme.accentGold.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 20),
+            // Reference
+            Text(
+              "سورة ${ayah.surahName} - آية ${ayah.ayahNumber}",
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.accentGold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "تطبيق زاد المؤمن",
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 12,
+                color: Colors.white60,
+              ),
+            ),
+          ],
+        ),
+      ),
+      delay: const Duration(milliseconds: 100),
+    );
+
+    final directory = await getTemporaryDirectory();
+    final imagePath = await File(
+      '${directory.path}/ayah_${ayah.globalAyahNumber}.png',
+    ).create();
+    await imagePath.writeAsBytes(image);
+
+    await Share.shareXFiles(
+      [XFile(imagePath.path)],
+      text: "قال تعالى: ${ayah.text} [${ayah.surahName} - ${ayah.ayahNumber}]",
+    );
   }
 
   void _showAyahDetails(Ayah ayah) {
@@ -171,87 +452,86 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                     ),
                     const SizedBox(height: 24),
                     // Action Buttons Row (Scrollable)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: [
-                          // Play Single
-                          _buildActionButton(
-                            icon: Icons.play_arrow_rounded,
-                            label: "تلاوة",
-                            onTap: () {
-                              _playAyah(ayah);
-                              Navigator.pop(context);
-                            },
+                    Stack(
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
                           ),
-                          // Auto Play
-                          _buildActionButton(
-                            icon: Icons.playlist_play_rounded,
-                            label: "تتابع",
-                            onTap: () => _autoPlayFrom(ayah),
-                          ),
-                          // Favorite
-                          BlocBuilder<FavoritesBloc, FavoritesState>(
-                            builder: (context, state) {
-                              final isFav =
-                                  state is FavoritesLoaded &&
-                                  state.favorites.any(
-                                    (f) =>
-                                        f.globalAyahNumber ==
-                                        ayah.globalAyahNumber,
-                                  );
-                              return _buildActionButton(
-                                icon: isFav
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                iconColor: isFav ? Colors.red : null,
-                                label: "المفضلة",
+                          child: Row(
+                            children: [
+                              // Play Ayah
+                              _buildActionButton(
+                                icon: Icons.play_arrow_rounded,
+                                label: "تشغيل",
                                 onTap: () {
-                                  context.read<FavoritesBloc>().add(
-                                    ToggleFavorite(ayah),
+                                  _playAyah(ayah);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              // Auto Play
+                              _buildActionButton(
+                                icon: Icons.playlist_play_rounded,
+                                label: "تتابع",
+                                onTap: () => _autoPlayFrom(ayah),
+                              ),
+                              // Favorite
+                              BlocBuilder<FavoritesBloc, FavoritesState>(
+                                builder: (context, state) {
+                                  final isFav =
+                                      state is FavoritesLoaded &&
+                                      state.favorites.any(
+                                        (f) =>
+                                            f.globalAyahNumber ==
+                                            ayah.globalAyahNumber,
+                                      );
+                                  return _buildActionButton(
+                                    icon: isFav
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    iconColor: isFav ? Colors.red : null,
+                                    label: "المفضلة",
+                                    onTap: () {
+                                      context.read<FavoritesBloc>().add(
+                                        ToggleFavorite(ayah),
+                                      );
+                                    },
                                   );
                                 },
-                              );
-                            },
+                              ),
+                              // Image Share
+                              _buildActionButton(
+                                icon: Icons.image_rounded,
+                                label: "صورة",
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _shareAyahAsImage(ayah);
+                                },
+                              ),
+                              // Share Text
+                              _buildActionButton(
+                                icon: Icons.share_rounded,
+                                label: "نص",
+                                onTap: () {
+                                  Share.share(
+                                    "${ayah.text}\n\n[${ayah.surahName} - آية ${ayah.ayahNumber}]",
+                                  );
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
                           ),
-                          // Copy
-                          // _buildActionButton(
-                          //   icon: Icons.copy_rounded,
-                          //   label: "نسخ",
-                          //   onTap: () async {
-                          //     await Clipboard.setData(
-                          //       ClipboardData(text: ayah.text),
-                          //     );
-                          //     if (context.mounted) {
-                          //       Navigator.pop(context);
-                          //       ScaffoldMessenger.of(context).showSnackBar(
-                          //         const SnackBar(
-                          //           content: Text(
-                          //             'تم نسخ الآية الكريمة',
-                          //             textAlign: TextAlign.center,
-                          //             style: TextStyle(fontFamily: 'Cairo'),
-                          //           ),
-                          //           backgroundColor: AppTheme.primaryEmerald,
-                          //           duration: Duration(seconds: 1),
-                          //         ),
-                          //       );
-                          //     }
-                          //   },
-                          // ),
-                          // Share
-                          _buildActionButton(
-                            icon: Icons.share_rounded,
-                            label: "مشاركة",
-                            onTap: () {
-                              Share.share(
-                                "${ayah.text}\n\n[${ayah.surahName} - آية ${ayah.ayahNumber}]",
-                              );
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
+                        ),
+                        // Scroll Indicator for the horizontal row
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: _HorizontalScrollHint(),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -337,6 +617,11 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                 onLongPress: () => _showAyahDetails(ayah),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
+                  key:
+                      ayah.globalAyahNumber ==
+                          widget.page.ayahs.first.globalAyahNumber
+                      ? _tutorialKey
+                      : null,
                   duration: const Duration(milliseconds: 400),
                   padding: const EdgeInsets.symmetric(
                     vertical: 6,
@@ -403,7 +688,15 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
           children: [
             if (shouldShowBanner) ...[
               const SizedBox(height: 16),
-              SurahHeaderWidget(surahNumber: surahNum, scale: widget.scale),
+              SurahHeaderWidget(
+                key:
+                    widget.initialSurah == surahNum &&
+                        widget.initialAyah == null
+                    ? _headerKey
+                    : null,
+                surahNumber: surahNum,
+                scale: widget.scale,
+              ),
             ],
             if (isNewSurah && surahNum != 1 && surahNum != 9)
               BasmalaWidget(scale: widget.scale),
@@ -459,5 +752,57 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
     final words = text.split(' ');
     if (words.length <= 5) return text;
     return '${words.take(5).join(' ')}...';
+  }
+}
+
+class _HorizontalScrollHint extends StatefulWidget {
+  @override
+  State<_HorizontalScrollHint> createState() => _HorizontalScrollHintState();
+}
+
+class _HorizontalScrollHintState extends State<_HorizontalScrollHint>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.transparent,
+              Theme.of(context).cardColor.withValues(alpha: 0.8),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+        ),
+        child: const Icon(
+          Icons.chevron_left_rounded,
+          color: AppTheme.accentGold,
+          size: 24,
+        ),
+      ),
+    );
   }
 }

@@ -6,10 +6,13 @@ import 'package:ramadan_project/features/quran/domain/repositories/quran_reposit
 import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'mushaf/mushaf_verse_body.dart';
 import 'mushaf/mushaf_page_frame.dart';
+import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
   final double fontScale;
+  final int? initialSurah;
+  final int? initialAyah;
   final VoidCallback? onShowControls;
   final VoidCallback? onHideControls;
 
@@ -17,6 +20,8 @@ class ContinuousMushafPageWidget extends StatefulWidget {
     super.key,
     required this.pageNumber,
     this.fontScale = 1.0,
+    this.initialSurah,
+    this.initialAyah,
     this.onShowControls,
     this.onHideControls,
   });
@@ -31,11 +36,21 @@ class _ContinuousMushafPageWidgetState
   late Future<QuranPage> _pageData;
   QuranPage? _cachedPage;
   final ScrollController _scrollController = ScrollController();
+  bool _showScrollHint = true;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.offset > 50 && _showScrollHint) {
+      setState(() {
+        _showScrollHint = false;
+      });
+    }
   }
 
   @override
@@ -122,34 +137,123 @@ class _ContinuousMushafPageWidgetState
 
     return MushafPageFrame(
       page: page,
-      child: Scrollbar(
-        controller: _scrollController,
-        thumbVisibility: true,
-        thickness: 4,
-        radius: const Radius.circular(10),
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is UserScrollNotification) {
-              if (notification.direction != ScrollDirection.idle) {
-                widget.onHideControls?.call();
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          scrollbarTheme: ScrollbarThemeData(
+            thumbColor: WidgetStateProperty.all(
+              AppTheme.accentGold.withOpacity(0.6),
+            ),
+            thickness: WidgetStateProperty.all(6),
+            radius: const Radius.circular(10),
+            mainAxisMargin: 40,
+            crossAxisMargin: 2,
+          ),
+        ),
+        child: Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          interactive: true,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is UserScrollNotification) {
+                if (notification.direction != ScrollDirection.idle) {
+                  widget.onHideControls?.call();
+                }
               }
-            }
-            return false;
-          },
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            // السماح بالسكرول العمودي
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: MushafVerseBody(
-                page: page,
-                scale: contentScale,
-                onShowControls: widget.onShowControls,
-              ),
+              return false;
+            },
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    child: MushafVerseBody(
+                      page: page,
+                      scale: contentScale,
+                      initialSurah: widget.initialSurah,
+                      initialAyah: widget.initialAyah,
+                      onShowControls: widget.onShowControls,
+                    ),
+                  ),
+                ),
+                if (_showScrollHint)
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: _ScrollHint(),
+                  ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ScrollHint extends StatefulWidget {
+  @override
+  State<_ScrollHint> createState() => _ScrollHintState();
+}
+
+class _ScrollHintState extends State<_ScrollHint>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: 0,
+      end: 15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _animation.value),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "اسحب للأسفل",
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 12,
+                  color: AppTheme.accentGold.withOpacity(0.8),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AppTheme.accentGold.withOpacity(0.8),
+                size: 30,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

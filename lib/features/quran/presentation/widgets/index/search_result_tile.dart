@@ -33,7 +33,11 @@ class SearchResultTile extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MushafPageView(initialPage: page),
+              builder: (context) => MushafPageView(
+                initialPage: page,
+                initialSurah: result['surahNumber'],
+                initialAyah: isSurah ? null : result['ayahNumber'],
+              ),
             ),
           );
         },
@@ -52,16 +56,16 @@ class SearchResultTile extends StatelessWidget {
                       result['text'],
                       query,
                       isSurah
-                          ? const TextStyle(
+                          ? TextStyle(
                               fontFamily: 'UthmanTaha',
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                             )
-                          : const TextStyle(
+                          : TextStyle(
                               fontFamily: 'UthmanTaha',
                               fontSize: 18,
-                              color: AppTheme.textDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                               height: 1.6,
                             ),
                     ),

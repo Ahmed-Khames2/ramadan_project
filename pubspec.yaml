@@ -66,6 +66,8 @@ dependencies:
   flutter_compass: ^0.8.0
   connectivity_plus: ^6.1.1
   url_launcher: ^6.3.1
+  screenshot: ^3.0.0
+  tutorial_coach_mark: any
 
 dev_dependencies:
   flutter_test:
