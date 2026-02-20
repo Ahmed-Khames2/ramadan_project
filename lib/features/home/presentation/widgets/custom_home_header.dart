@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:intl/intl.dart';
-import 'package:hijri/hijri_calendar.dart';
+import 'package:ramadan_project/core/utils/hijri_utils.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/governorate.dart';
@@ -13,13 +13,8 @@ class CustomHomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Hijri Date
-    HijriCalendar.setLocal('ar');
-    // Hikri Date Correction: Subtract 1 day to match local sighting
-    final hijriDate = HijriCalendar.fromDate(
-      DateTime.now().subtract(const Duration(days: 1)),
-    );
-    final hijriString =
-        '${hijriDate.hDay} ${hijriDate.longMonthName} ${hijriDate.hYear}';
+    final hijriDate = HijriUtils.getAdjustedHijri(DateTime.now());
+    final hijriString = HijriUtils.formatHijri(hijriDate);
 
     // Gregorian Date
     final now = DateTime.now();

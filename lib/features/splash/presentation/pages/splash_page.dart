@@ -176,6 +176,26 @@ class _SplashPageState extends State<SplashPage>
               ),
             ),
           ),
+
+          // Memorial Text
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: const Text(
+                'صدقة جارية عن روح والد أحمد خميس',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

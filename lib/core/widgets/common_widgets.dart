@@ -7,6 +7,7 @@ class IslamicCard extends StatelessWidget {
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
   final double? borderRadius;
+  final Color? color;
 
   const IslamicCard({
     super.key,
@@ -14,6 +15,7 @@ class IslamicCard extends StatelessWidget {
     this.onTap,
     this.padding,
     this.borderRadius,
+    this.color,
   });
 
   @override
@@ -21,7 +23,7 @@ class IslamicCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
+        color: color ?? Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(borderRadius ?? 20),
         border: Border.all(
           color: isDark
@@ -221,6 +223,24 @@ class DecorativeBackground extends StatelessWidget {
             ),
           child,
         ],
+      ),
+    );
+  }
+}
+
+class IslamicBackButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  final Color? color;
+
+  const IslamicBackButton({super.key, this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap ?? () => Navigator.pop(context),
+      icon: Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: color ?? AppTheme.primaryEmerald,
       ),
     );
   }

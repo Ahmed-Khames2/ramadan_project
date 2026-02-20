@@ -201,13 +201,7 @@ class _TasbihPageState extends State<TasbihPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          const IslamicBackButton(),
           Text(
             'المسبحة الإلكترونية',
             style: TextStyle(

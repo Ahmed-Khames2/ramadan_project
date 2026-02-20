@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:hijri/hijri_calendar.dart';
+import 'package:ramadan_project/core/utils/hijri_utils.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../domain/repositories/calendar_repository.dart';
 
@@ -108,7 +108,7 @@ class CalendarBloc extends Bloc<CalendarEvent_E, CalendarState> {
     DateTime day,
     List<CalendarEvent> events,
   ) {
-    final hDay = HijriCalendar.fromDate(day);
+    final hDay = HijriUtils.getAdjustedHijri(day);
 
     return events.where((event) {
       // Hijri-based matching (Religious events)
