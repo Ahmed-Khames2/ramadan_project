@@ -74,9 +74,12 @@ class _MushafPageViewState extends State<MushafPageView> {
     _cancelHideTimer();
     _hideTimer = Timer(const Duration(seconds: 4), () {
       if (mounted && _showControls) {
-        setState(() {
-          _showControls = false;
-        });
+        final audioState = context.read<AudioBloc>().state;
+        if (audioState.status == AudioStatus.playing) {
+          setState(() {
+            _showControls = false;
+          });
+        }
       }
     });
   }
@@ -332,6 +335,12 @@ class _MushafPageViewState extends State<MushafPageView> {
                                     _resetHideTimer();
                                   });
                                 },
+                                onHideControls: () {
+                                  if (mounted && _showControls) {
+                                    setState(() => _showControls = false);
+                                    _cancelHideTimer();
+                                  }
+                                },
                               );
                             },
                           ),
@@ -372,10 +381,11 @@ class _MushafPageViewState extends State<MushafPageView> {
                   ],
                 ),
               ),
-              // Bottom Audio Bar
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
-                bottom: _showControls ? 0 : -120,
+                bottom: _showControls
+                    ? 0
+                    : -200, // Increased offset for full height
                 left: 0,
                 right: 0,
                 child: _buildBottomAudioBar(theme),
@@ -390,7 +400,9 @@ class _MushafPageViewState extends State<MushafPageView> {
   Widget _buildBottomAudioBar(ThemeData theme) {
     return BlocBuilder<AudioBloc, AudioState>(
       builder: (context, state) {
-        if (state.status == AudioStatus.initial) return const SizedBox.shrink();
+        if (state.status == AudioStatus.initial && state.lastAyah == null) {
+          return const SizedBox.shrink();
+        }
 
         final isPlaying = state.status == AudioStatus.playing;
         final isBuffering = state.status == AudioStatus.loading;
@@ -398,178 +410,185 @@ class _MushafPageViewState extends State<MushafPageView> {
         final totalDuration = state.duration;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryEmerald,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Minimal Handle
-                Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
+          child: Listener(
+            onPointerDown: (_) => _resetHideTimer(),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.primaryEmerald,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ), // Normal top-only rounded corners
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
                   ),
-                ),
-                // Progress Slider
-                Row(
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      _formatDuration(currentPosition),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                    Expanded(
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 3,
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 7,
+                    // Removed Handle for cleaner look
+                    // Progress Slider
+                    Row(
+                      children: [
+                        Text(
+                          _formatDuration(currentPosition),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontFamily: 'Cairo',
                           ),
-                          overlayShape: const RoundSliderOverlayShape(
-                            overlayRadius: 14,
-                          ),
-                          activeTrackColor: AppTheme.accentGold,
-                          inactiveTrackColor: Colors.white24,
-                          thumbColor: AppTheme.accentGold,
-                          overlayColor: AppTheme.accentGold.withOpacity(0.2),
                         ),
-                        child: Slider(
-                          value: currentPosition.inMilliseconds
-                              .toDouble()
-                              .clamp(
-                                0.0,
-                                totalDuration.inMilliseconds.toDouble() > 0
-                                    ? totalDuration.inMilliseconds.toDouble()
-                                    : 1.0,
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 7,
                               ),
-                          max: totalDuration.inMilliseconds.toDouble() > 0
-                              ? totalDuration.inMilliseconds.toDouble()
-                              : 1.0,
-                          onChanged: (value) {
+                              overlayShape: const RoundSliderOverlayShape(
+                                overlayRadius: 14,
+                              ),
+                              activeTrackColor: AppTheme.accentGold,
+                              inactiveTrackColor: Colors.white24,
+                              thumbColor: AppTheme.accentGold,
+                              overlayColor: AppTheme.accentGold.withOpacity(
+                                0.2,
+                              ),
+                            ),
+                            child: Slider(
+                              value: currentPosition.inMilliseconds
+                                  .toDouble()
+                                  .clamp(
+                                    0.0,
+                                    totalDuration.inMilliseconds.toDouble() > 0
+                                        ? totalDuration.inMilliseconds
+                                              .toDouble()
+                                        : 1.0,
+                                  ),
+                              max: totalDuration.inMilliseconds.toDouble() > 0
+                                  ? totalDuration.inMilliseconds.toDouble()
+                                  : 1.0,
+                              onChanged: (value) {
+                                context.read<AudioBloc>().add(
+                                  AudioSeek(
+                                    Duration(milliseconds: value.toInt()),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _formatDuration(totalDuration),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Main Controls
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Stop/Close
+                        // _buildCompactIconButton(
+                        //   icon: Icons.close_rounded,
+                        //   onPressed: () =>
+                        //       context.read<AudioBloc>().add(const AudioStop()),
+                        //   tooltip: 'إغلاق',
+                        // ),
+                        // Skip Previous
+                        SizedBox(width: 20),
+                        _buildCompactIconButton(
+                          icon: Icons.skip_previous_rounded,
+                          onPressed: () => context.read<AudioBloc>().add(
+                            const AudioSkipPrevious(),
+                          ),
+                          tooltip: 'الآية السابقة',
+                        ),
+                        // Play/Pause Center
+                        IconButton(
+                          onPressed: () {
+                            if (isPlaying) {
+                              context.read<AudioBloc>().add(const AudioPause());
+                            } else if (state.status == AudioStatus.paused) {
+                              context.read<AudioBloc>().add(
+                                const AudioResume(),
+                              );
+                            } else if (state.lastAyah != null) {
+                              context.read<AudioBloc>().add(
+                                AudioPlayAyah(state.lastAyah!),
+                              );
+                            }
+                          },
+                          iconSize: 56,
+                          icon: isBuffering
+                              ? const SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: AppTheme.accentGold,
+                                  ),
+                                )
+                              : Icon(
+                                  isPlaying
+                                      ? Icons.pause_circle_filled_rounded
+                                      : Icons.play_circle_filled_rounded,
+                                  color: Colors.white,
+                                ),
+                        ),
+                        // Skip Next
+                        _buildCompactIconButton(
+                          icon: Icons.skip_next_rounded,
+                          onPressed: () => context.read<AudioBloc>().add(
+                            const AudioSkipNext(),
+                          ),
+                          tooltip: 'الآية التالية',
+                        ),
+                        // Repeat Toggle
+                        _buildCompactIconButton(
+                          icon: state.repeatOne
+                              ? Icons.repeat_one_rounded
+                              : Icons.repeat_rounded,
+                          onPressed: () {
                             context.read<AudioBloc>().add(
-                              AudioSeek(Duration(milliseconds: value.toInt())),
+                              AudioRepeatModeChanged(!state.repeatOne),
                             );
                           },
+                          color: state.repeatOne
+                              ? AppTheme.accentGold
+                              : Colors.white70,
+                          tooltip: 'تكرار',
+                        ),
+                      ],
+                    ),
+                    // Current Info Small
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        (state.currentAyah ?? state.lastAyah) != null
+                            ? '${state.selectedReciter.arabicName} '
+                            : 'جاهز للاستماع',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ),
-                    Text(
-                      _formatDuration(totalDuration),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
                   ],
                 ),
-                // Main Controls
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Stop/Close
-                    _buildCompactIconButton(
-                      icon: Icons.close_rounded,
-                      onPressed: () =>
-                          context.read<AudioBloc>().add(const AudioStop()),
-                      tooltip: 'إغلاق',
-                    ),
-                    // Skip Previous
-                    _buildCompactIconButton(
-                      icon: Icons.skip_previous_rounded,
-                      onPressed: () => context.read<AudioBloc>().add(
-                        const AudioSkipPrevious(),
-                      ),
-                      tooltip: 'الآية السابقة',
-                    ),
-                    // Play/Pause Center
-                    IconButton(
-                      onPressed: () {
-                        if (isPlaying) {
-                          context.read<AudioBloc>().add(const AudioPause());
-                        } else if (state.status == AudioStatus.paused) {
-                          context.read<AudioBloc>().add(const AudioResume());
-                        } else if (state.lastAyah != null) {
-                          context.read<AudioBloc>().add(
-                            AudioPlayAyah(state.lastAyah!),
-                          );
-                        }
-                      },
-                      iconSize: 56,
-                      icon: isBuffering
-                          ? const SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                color: AppTheme.accentGold,
-                              ),
-                            )
-                          : Icon(
-                              isPlaying
-                                  ? Icons.pause_circle_filled_rounded
-                                  : Icons.play_circle_filled_rounded,
-                              color: Colors.white,
-                            ),
-                    ),
-                    // Skip Next
-                    _buildCompactIconButton(
-                      icon: Icons.skip_next_rounded,
-                      onPressed: () =>
-                          context.read<AudioBloc>().add(const AudioSkipNext()),
-                      tooltip: 'الآية التالية',
-                    ),
-                    // Repeat Toggle
-                    _buildCompactIconButton(
-                      icon: state.repeatOne
-                          ? Icons.repeat_one_rounded
-                          : Icons.repeat_rounded,
-                      onPressed: () {
-                        context.read<AudioBloc>().add(
-                          AudioRepeatModeChanged(!state.repeatOne),
-                        );
-                      },
-                      color: state.repeatOne
-                          ? AppTheme.accentGold
-                          : Colors.white70,
-                      tooltip: 'تكرار',
-                    ),
-                  ],
-                ),
-                // Current Info Small
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    (state.currentAyah ?? state.lastAyah) != null
-                        ? '${state.selectedReciter.arabicName} | الآية ${state.currentAyah ?? state.lastAyah}'
-                        : 'جاهز للاستماع',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );

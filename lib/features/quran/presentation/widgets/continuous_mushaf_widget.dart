@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
@@ -10,12 +11,14 @@ class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
   final double fontScale;
   final VoidCallback? onShowControls;
+  final VoidCallback? onHideControls;
 
   const ContinuousMushafPageWidget({
     super.key,
     required this.pageNumber,
     this.fontScale = 1.0,
     this.onShowControls,
+    this.onHideControls,
   });
 
   @override
@@ -124,15 +127,25 @@ class _ContinuousMushafPageWidgetState
         thumbVisibility: true,
         thickness: 4,
         radius: const Radius.circular(10),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          // السماح بالسكرول العمودي
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: MushafVerseBody(
-              page: page,
-              scale: contentScale,
-              onShowControls: widget.onShowControls,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is UserScrollNotification) {
+              if (notification.direction != ScrollDirection.idle) {
+                widget.onHideControls?.call();
+              }
+            }
+            return false;
+          },
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            // السماح بالسكرول العمودي
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: MushafVerseBody(
+                page: page,
+                scale: contentScale,
+                onShowControls: widget.onShowControls,
+              ),
             ),
           ),
         ),

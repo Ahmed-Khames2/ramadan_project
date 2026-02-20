@@ -43,7 +43,7 @@ class ErrorDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              message,
+              _getSanitizedMessage(message),
               style: const TextStyle(fontSize: 16, height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -74,6 +74,45 @@ class ErrorDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getSanitizedMessage(String msg) {
+    // 1. Remove common prefixes
+    String sanitized = msg
+        .replaceAll(RegExp(r'Exception:\s*', caseSensitive: false), '')
+        .replaceAll(
+          RegExp(r'Failed to play audio:\s*', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(r'Missing Plugin Exception\(.*?\)', caseSensitive: false),
+          '',
+        );
+
+    // 2. Extract Arabic part
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]+');
+    if (sanitized.contains(arabicRegex)) {
+      if (msg.contains("لا يوجد اتصال بالإنترنت")) {
+        return "لا يوجد اتصال بالإنترنت ولم يتم تحميل هذه الآية مسبقاً.";
+      }
+
+      // Clean up lines that contain Arabic
+      final linesWithArabic = sanitized
+          .split('\n')
+          .where((line) => line.contains(arabicRegex))
+          .map((line) => line.trim());
+
+      if (linesWithArabic.isNotEmpty) {
+        return linesWithArabic.join(' ');
+      }
+    }
+
+    // 3. Fallback
+    if (!sanitized.contains(arabicRegex)) {
+      return "عذراً، حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+    }
+
+    return sanitized.trim();
   }
 
   static Future<void> show(

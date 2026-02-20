@@ -159,11 +159,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   favorite.text,
                   textAlign: TextAlign.center,
                   textDirection: TextDirection.rtl,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'UthmanTaha',
                     fontSize: 20,
                     height: 1.8,
-                    color: AppTheme.textDark,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),

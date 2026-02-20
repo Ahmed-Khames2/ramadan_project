@@ -120,7 +120,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                     const SizedBox(height: 12),
                     // Ayah Text
                     Text(
-                      ayah.text,
+                      _truncateAyah(ayah.text),
                       textAlign: TextAlign.right,
                       style: const TextStyle(
                         fontFamily: 'KFGQPCUthmanTahaNaskhRegular',
@@ -196,8 +196,10 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                             builder: (context, state) {
                               final isFav =
                                   state is FavoritesLoaded &&
-                                  state.favorites.contains(
-                                    ayah.globalAyahNumber,
+                                  state.favorites.any(
+                                    (f) =>
+                                        f.globalAyahNumber ==
+                                        ayah.globalAyahNumber,
                                   );
                               return _buildActionButton(
                                 icon: isFav
@@ -214,29 +216,29 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                             },
                           ),
                           // Copy
-                          _buildActionButton(
-                            icon: Icons.copy_rounded,
-                            label: "نسخ",
-                            onTap: () async {
-                              await Clipboard.setData(
-                                ClipboardData(text: ayah.text),
-                              );
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'تم نسخ الآية الكريمة',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontFamily: 'Cairo'),
-                                    ),
-                                    backgroundColor: AppTheme.primaryEmerald,
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                          // _buildActionButton(
+                          //   icon: Icons.copy_rounded,
+                          //   label: "نسخ",
+                          //   onTap: () async {
+                          //     await Clipboard.setData(
+                          //       ClipboardData(text: ayah.text),
+                          //     );
+                          //     if (context.mounted) {
+                          //       Navigator.pop(context);
+                          //       ScaffoldMessenger.of(context).showSnackBar(
+                          //         const SnackBar(
+                          //           content: Text(
+                          //             'تم نسخ الآية الكريمة',
+                          //             textAlign: TextAlign.center,
+                          //             style: TextStyle(fontFamily: 'Cairo'),
+                          //           ),
+                          //           backgroundColor: AppTheme.primaryEmerald,
+                          //           duration: Duration(seconds: 1),
+                          //         ),
+                          //       );
+                          //     }
+                          //   },
+                          // ),
                           // Share
                           _buildActionButton(
                             icon: Icons.share_rounded,
@@ -332,7 +334,6 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
               final isPlayingItem = state.currentAyah == ayah.globalAyahNumber;
 
               return GestureDetector(
-                onTap: () => _playAyah(ayah),
                 onLongPress: () => _showAyahDetails(ayah),
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
@@ -452,5 +453,11 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
         ),
       ),
     );
+  }
+
+  String _truncateAyah(String text) {
+    final words = text.split(' ');
+    if (words.length <= 5) return text;
+    return '${words.take(5).join(' ')}...';
   }
 }

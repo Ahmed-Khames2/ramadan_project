@@ -24,8 +24,9 @@ class _TasbihPageState extends State<TasbihPage>
 
   // To track bead passing
   int _lastBeadIndex = 0;
-  DateTime _lastTapTime = DateTime.now();
+  DateTime _lastTapTime = DateTime.now().subtract(const Duration(seconds: 1));
   bool _lockBeadPassDetection = false;
+  bool _sessionCounted = false;
 
   @override
   void initState() {
@@ -36,6 +37,31 @@ class _TasbihPageState extends State<TasbihPage>
       duration: const Duration(milliseconds: 2000),
     );
     _physicsController.addListener(_handlePhysicsUpdate);
+
+    // Show onboarding hint
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'اضغط على السبحة للبدء',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: AppTheme.primaryEmerald,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            margin: const EdgeInsets.fromLTRB(40, 0, 40, 100),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   void _handlePhysicsUpdate() {
@@ -115,23 +141,41 @@ class _TasbihPageState extends State<TasbihPage>
 
     if (currentIndex != _lastBeadIndex) {
       if (currentIndex > _lastBeadIndex) {
-        // Moving forward
-        _tasbihBloc.add(IncrementCount());
+        // Moving forward - Automated counting disabled as per user request
+        // _tasbihBloc.add(IncrementCount());
         HapticFeedback.selectionClick();
       }
       _lastBeadIndex = currentIndex;
     }
   }
 
+  void _onPanStart(DragStartDetails details) {
+    _sessionCounted = false;
+  }
+
   void _onPanUpdate(DragUpdateDetails details) {
-    // Determine if vertical or horizontal drag is better.
-    // Since it's a circle, let's use a combination or just X for simplicity now.
     _updateRotation(details.delta.dx / 120.0);
+    // Trigger count on first movement in any direction if not already counted via tap
+    if (!_sessionCounted && details.delta.distance > 0.1) {
+      _triggerCount();
+      _sessionCounted = true;
+    }
   }
 
   void _onPanEnd(DragEndDetails details) {
+    _sessionCounted = false;
     _velocity = details.velocity.pixelsPerSecond.dx / 1000.0;
     _physicsController.forward(from: 0.0);
+  }
+
+  void _triggerCount() {
+    final now = DateTime.now();
+    if (now.difference(_lastTapTime) < const Duration(milliseconds: 150)) {
+      return; // Debounce for very fast taps/glitches
+    }
+    _lastTapTime = now;
+    _tasbihBloc.add(IncrementCount());
+    HapticFeedback.mediumImpact();
   }
 
   @override
@@ -153,21 +197,21 @@ class _TasbihPageState extends State<TasbihPage>
             listener: (context, state) {
               if (state.rounds > 0) {
                 // Round completion feedback (Vibration removed)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'أتممت دورة كاملة بنجاح!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: AppTheme.primaryEmerald,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content: Text(
+                //       'أتممت دورة كاملة بنجاح!',
+                //       textAlign: TextAlign.center,
+                //       style: TextStyle(fontWeight: FontWeight.bold),
+                //     ),
+                //     backgroundColor: AppTheme.primaryEmerald,
+                //     behavior: SnackBarBehavior.floating,
+                //     duration: const Duration(seconds: 2),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //   ),
+                // );
               }
             },
             child: BlocBuilder<TasbihBloc, TasbihState>(
@@ -280,29 +324,21 @@ class _TasbihPageState extends State<TasbihPage>
     return Expanded(
       flex: 10,
       child: GestureDetector(
+        onPanStart: _onPanStart,
         onPanUpdate: _onPanUpdate,
         onPanEnd: _onPanEnd,
         onTapDown: (_) {
-          final now = DateTime.now();
-          if (now.difference(_lastTapTime) <
-              const Duration(milliseconds: 600)) {
-            return; // Debounce
+          if (!_sessionCounted) {
+            _triggerCount();
+            _sessionCounted = true;
+
+            setState(() {
+              _updateRotation(0.2); // Animate forward slightly on tap
+            });
           }
-          _lastTapTime = now;
-
-          // Lock automated detection briefly to avoid double-counting the tap animation
-          _lockBeadPassDetection = true;
-          _tasbihBloc.add(IncrementCount());
-          HapticFeedback.mediumImpact();
-
-          setState(() {
-            _updateRotation(0.2); // Animate forward slightly on tap
-          });
-
-          Future.delayed(const Duration(milliseconds: 300), () {
-            _lockBeadPassDetection = false;
-          });
         },
+        onTapUp: (_) => _sessionCounted = false,
+        onTapCancel: () => _sessionCounted = false,
         behavior: HitTestBehavior.opaque,
         child: Container(
           width: double.infinity,
