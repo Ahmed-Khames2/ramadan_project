@@ -188,7 +188,15 @@ class PrayerRepositoryImpl implements PrayerRepository {
     params.madhab = Madhab.shafi;
 
     final prayerTimes = PrayerTimes.today(coordinates, params);
-    final next = prayerTimes.nextPrayer();
+    var next = prayerTimes.nextPrayer();
+
+    // Handle non-obligatory times (like sunrise) or late night after Isha
+    if (next == Prayer.sunrise) {
+      next = Prayer.dhuhr;
+    }
+    if (next == Prayer.none) {
+      next = Prayer.fajr;
+    }
 
     return [
       PrayerTime(
@@ -235,7 +243,15 @@ class PrayerRepositoryImpl implements PrayerRepository {
     params.madhab = Madhab.shafi;
 
     final prayerTimes = PrayerTimes.today(coordinates, params);
-    final next = prayerTimes.nextPrayer();
+    var next = prayerTimes.nextPrayer();
+
+    // Handle non-obligatory times (like sunrise) or late night after Isha
+    if (next == Prayer.sunrise) {
+      next = Prayer.dhuhr;
+    }
+    if (next == Prayer.none) {
+      next = Prayer.fajr;
+    }
 
     return [
       PrayerTime(

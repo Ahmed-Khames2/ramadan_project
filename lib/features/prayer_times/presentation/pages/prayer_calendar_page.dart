@@ -5,6 +5,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/calendar_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:ramadan_project/core/utils/hijri_utils.dart';
 import 'package:hijri/hijri_calendar.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../data/repositories/calendar_repository_impl.dart';
@@ -68,39 +69,15 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  String _getArabicHijriMonth(int month) {
-    const months = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الآخر',
-      'جمادى الأولى',
-      'جمادى الآخرة',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
-    ];
-    return months[month - 1];
-  }
-
   Widget _buildHeader(BuildContext context, CalendarState state) {
-    final hijriDate = HijriCalendar.fromDate(state.focusedDay);
+    final hijriDate = HijriUtils.getAdjustedHijri(state.focusedDay);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.primaryEmerald,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          const IslamicBackButton(),
           Column(
             children: [
               Text(
@@ -115,7 +92,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${_getArabicHijriMonth(hijriDate.hMonth)} ${hijriDate.hYear}هـ',
+                    '${hijriDate.longMonthName} ${hijriDate.hYear}هـ',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -192,7 +169,7 @@ class _CalendarPageState extends State<CalendarPage> {
             selectedBuilder: (context, day, focusedDay) =>
                 _buildDayCell(day, isSelected: true, isToday: false),
             markerBuilder: (context, day, events) {
-              final hDay = HijriCalendar.fromDate(day);
+              final hDay = HijriUtils.getAdjustedHijri(day);
               final dayEvents = state.allEvents.where((e) {
                 if (e.hijriMonth != null && e.hijriDay != null) {
                   return e.hijriMonth == hDay.hMonth && e.hijriDay == hDay.hDay;
@@ -274,7 +251,7 @@ class _CalendarPageState extends State<CalendarPage> {
     required bool isSelected,
     required bool isToday,
   }) {
-    final hijriDate = HijriCalendar.fromDate(day);
+    final hijriDate = HijriUtils.getAdjustedHijri(day);
 
     return Container(
       margin: const EdgeInsets.all(6),

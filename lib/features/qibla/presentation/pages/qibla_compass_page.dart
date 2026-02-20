@@ -127,13 +127,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const IslamicBackButton(),
         title: Text(
           'اتجاه القبلة',
           style: TextStyle(

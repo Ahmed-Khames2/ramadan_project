@@ -109,13 +109,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
       child: Row(
         children: [
           if (widget.showBackButton) ...[
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppTheme.primaryEmerald,
-              ),
-            ),
+            const IslamicBackButton(),
             const SizedBox(width: 8),
           ],
           Expanded(

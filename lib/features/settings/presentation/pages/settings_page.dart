@@ -5,8 +5,8 @@ import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:ramadan_project/core/widgets/error_dialog.dart';
+import 'contact_us_page.dart';
+import 'dedication_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -114,23 +114,27 @@ class _SettingsPageState extends State<SettingsPage> {
                       'تواصل معنا',
                       'أرسل لنا اقتراحاتك أو استفساراتك',
                       Icons.mail_rounded,
-                      () async {
-                        final Uri emailUri = Uri(
-                          scheme: 'mailto',
-                          path: 'support@zadapp.com',
-                          query: 'subject=زاد - استفسار',
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ContactUsPage(),
+                          ),
                         );
-                        if (await canLaunchUrl(emailUri)) {
-                          await launchUrl(emailUri);
-                        } else {
-                          // Fallback or alert
-                          if (mounted) {
-                            ErrorDialog.show(
-                              context,
-                              message: 'لا يمكن فتح تطبيق البريد',
-                            );
-                          }
-                        }
+                      },
+                    ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    _buildActionTile(
+                      'إهداء (صدقة جارية)',
+                      'عن روح والد أحمد خميس',
+                      Icons.favorite_rounded,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DedicationPage(),
+                          ),
+                        );
                       },
                     ),
                   ],
