@@ -64,17 +64,26 @@ class AudioRepositoryImpl implements AudioRepository {
   Future<void> playAyah(int ayahNumber, Reciter reciter) async {
     print('AudioRepo: playAyah($ayahNumber, ${reciter.id})'); // DEBUG LOG
     try {
+      // 1. Stop previous playback and reset session to ensure a clean state,
+      // especially on Web where buffers might persist.
+      await _audioPlayer.stop();
+
       if (kIsWeb) {
         final url = _getAudioUrl(ayahNumber, reciter);
         print('AudioRepo: Playing from URL (Web): $url');
-        await _audioPlayer.setUrl(url);
+        // 2. Explicitly set initialPosition to Duration.zero
+        await _audioPlayer.setUrl(url, initialPosition: Duration.zero);
       } else {
         final localPath = await _getLocalFilePath(ayahNumber, reciter);
         final file = File(localPath);
 
         if (await file.exists()) {
           print('AudioRepo: Playing from local file: $localPath');
-          await _audioPlayer.setFilePath(localPath);
+          // 2. Explicitly set initialPosition to Duration.zero
+          await _audioPlayer.setFilePath(
+            localPath,
+            initialPosition: Duration.zero,
+          );
         } else {
           // Check connectivity before trying to stream
           final connectivityResult = await Connectivity().checkConnectivity();
@@ -94,18 +103,15 @@ class AudioRepositoryImpl implements AudioRepository {
             Uri.parse(url),
             cacheFile: File(localPath),
           );
-          await _audioPlayer.setAudioSource(source);
+          // 2. Explicitly set initialPosition to Duration.zero
+          await _audioPlayer.setAudioSource(
+            source,
+            initialPosition: Duration.zero,
+          );
         }
       }
 
       _currentAyahController.add(ayahNumber);
-
-      _currentAyahController.add(ayahNumber);
-
-      // Stop previous playback to ensure clean state
-      if (_audioPlayer.playing) {
-        await _audioPlayer.stop();
-      }
 
       // DO NOT await play() as it blocks until audio finishes.
       // We want to return immediately so BLoC can update state to 'playing'.
@@ -119,6 +125,9 @@ class AudioRepositoryImpl implements AudioRepository {
   @override
   Future<void> playRange(List<int> ayahNumbers, Reciter reciter) async {
     try {
+      // 1. Stop previous playback to clear internal state
+      await _audioPlayer.stop();
+
       final List<AudioSource> sources = [];
       for (final ayah in ayahNumbers) {
         if (kIsWeb) {
@@ -153,18 +162,19 @@ class AudioRepositoryImpl implements AudioRepository {
       }
 
       final playlist = ConcatenatingAudioSource(children: sources);
-      await _audioPlayer.setAudioSource(playlist);
+      // 2. Set initialPosition to start at the beginning of the FIRST ayah in the range
+      await _audioPlayer.setAudioSource(
+        playlist,
+        initialPosition: Duration.zero,
+      );
 
       // Handle current ayah updates for playlists
-      // This is better handled here since the list is specific to this call
+      // (Mapping index to actual ayah global number)
       final subscription = _audioPlayer.currentIndexStream.listen((index) {
         if (index != null && index < ayahNumbers.length) {
           _currentAyahController.add(ayahNumbers[index]);
         }
       });
-
-      // Ensure we clean up the subscription when audio stops/changes
-      // (Simplified: in a real app we might manage this subscription better)
 
       _audioPlayer.play();
     } catch (e) {
@@ -289,7 +299,11 @@ class AudioRepositoryImpl implements AudioRepository {
   @override
   Future<bool> seekToNext() async {
     if (_audioPlayer.hasNext) {
+      // For playlist traversal, we seek to next and IMMEDIATELY reset to 0
+      // just_audio does this automatically for track completion, but manual skip
+      // on Web sometimes needs an explicit nudge or initialPosition reset.
       await _audioPlayer.seekToNext();
+      await _audioPlayer.seek(Duration.zero);
       return true;
     }
     return false;
@@ -299,6 +313,7 @@ class AudioRepositoryImpl implements AudioRepository {
   Future<bool> seekToPrevious() async {
     if (_audioPlayer.hasPrevious) {
       await _audioPlayer.seekToPrevious();
+      await _audioPlayer.seek(Duration.zero);
       return true;
     }
     return false;
