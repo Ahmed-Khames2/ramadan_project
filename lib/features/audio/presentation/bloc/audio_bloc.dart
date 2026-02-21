@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:ramadan_project/core/constants/reciters.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/reciter_repository.dart';
@@ -92,57 +91,36 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioPlayAyah event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(errorMessage: null));
-    try {
-      await _audioRepository.playAyah(event.ayahNumber, state.selectedReciter);
-    } catch (e) {
-      emit(
-        state.copyWith(status: AudioStatus.error, errorMessage: e.toString()),
-      );
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   Future<void> _onPlayRange(
     AudioPlayRange event,
     Emitter<AudioState> emit,
   ) async {
-    emit(state.copyWith(errorMessage: null));
-    try {
-      await _audioRepository.playRange(
-        event.ayahNumbers,
-        state.selectedReciter,
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(status: AudioStatus.error, errorMessage: e.toString()),
-      );
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   Future<void> _onPlayPages(
     AudioPlayPages event,
     Emitter<AudioState> emit,
   ) async {
-    final List<int> ayahNumbers = [];
-    for (int p = event.startPage; p <= event.endPage; p++) {
-      final pageVerses = quran.getPageData(p);
-      for (final verse in pageVerses) {
-        final surah = verse['surah'] as int;
-        final ayah = verse['ayah'] as int;
-
-        // Calculate global ayah number
-        int global = 0;
-        for (int s = 1; s < surah; s++) {
-          global += quran.getVerseCount(s);
-        }
-        global += ayah;
-        ayahNumbers.add(global);
-      }
-    }
-
-    if (ayahNumbers.isNotEmpty) {
-      add(AudioPlayRange(ayahNumbers));
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   Future<void> _onPause(AudioPause event, Emitter<AudioState> emit) async {
@@ -165,28 +143,24 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     AudioReciterChanged event,
     Emitter<AudioState> emit,
   ) async {
-    await _reciterRepository.saveReciter(event.reciter);
-    emit(state.copyWith(selectedReciter: event.reciter));
-
-    // If playing, restart with new reciter
-    if (state.currentAyah != null && state.status == AudioStatus.playing) {
-      add(AudioPlayAyah(state.currentAyah!));
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   Future<void> _onDownloadAyah(
     AudioDownloadAyah event,
     Emitter<AudioState> emit,
   ) async {
-    try {
-      await _audioRepository.downloadAyah(
-        event.ayahNumber,
-        state.selectedReciter,
-      );
-    } catch (e) {
-      // Errors handled in repo mostly, but if it throws we catch here
-      emit(state.copyWith(errorMessage: "Download failed: $e"));
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   Future<void> _onCancelDownload(
@@ -197,15 +171,21 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
   }
 
   void _onSkipNext(AudioSkipNext event, Emitter<AudioState> emit) {
-    if (state.currentAyah != null && state.currentAyah! < 6236) {
-      add(AudioPlayAyah(state.currentAyah! + 1));
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   void _onSkipPrevious(AudioSkipPrevious event, Emitter<AudioState> emit) {
-    if (state.currentAyah != null && state.currentAyah! > 1) {
-      add(AudioPlayAyah(state.currentAyah! - 1));
-    }
+    emit(
+      state.copyWith(
+        status: AudioStatus.error,
+        errorMessage: "جاري العمل علي هذه",
+      ),
+    );
   }
 
   void _onPlayerStateChanged(
