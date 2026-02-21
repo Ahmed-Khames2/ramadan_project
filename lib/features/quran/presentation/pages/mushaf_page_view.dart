@@ -441,133 +441,60 @@ class _MushafPageViewState extends State<MushafPageView> {
                   width: 1,
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
                 children: [
-                  // Progress Slider
-                  Row(
-                    children: [
-                      Text(
-                        _formatDuration(currentPosition),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontFamily: 'Cairo',
-                        ),
-                      ),
-                      Expanded(
-                        child: SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            trackHeight: 2,
-                            thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 5,
-                            ),
-                            activeTrackColor: AppTheme.accentGold,
-                            inactiveTrackColor: Colors.white24,
-                            thumbColor: AppTheme.accentGold,
-                          ),
-                          child: Slider(
-                            value: currentPosition.inMilliseconds
-                                .toDouble()
-                                .clamp(
-                                  0.0,
-                                  totalDuration.inMilliseconds.toDouble() > 0
-                                      ? totalDuration.inMilliseconds.toDouble()
-                                      : 1.0,
-                                ),
-                            max: totalDuration.inMilliseconds.toDouble() > 0
-                                ? totalDuration.inMilliseconds.toDouble()
-                                : 1.0,
-                            onChanged: (value) {
-                              context.read<AudioBloc>().add(
-                                AudioSeek(
-                                  Duration(milliseconds: value.toInt()),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _formatDuration(totalDuration),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontFamily: 'Cairo',
-                        ),
-                      ),
-                    ],
+                  Text(
+                    _formatDuration(currentPosition),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
-                  // Controls
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildCompactIconButton(
-                        icon: state.repeatOne
-                            ? Icons.repeat_one_rounded
-                            : Icons.repeat_rounded,
-                        onPressed: () {
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 2,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 5,
+                        ),
+                        activeTrackColor: AppTheme.accentGold,
+                        inactiveTrackColor: Colors.white24,
+                        thumbColor: AppTheme.accentGold,
+                      ),
+                      child: Slider(
+                        value: currentPosition.inMilliseconds.toDouble().clamp(
+                          0.0,
+                          totalDuration.inMilliseconds.toDouble() > 0
+                              ? totalDuration.inMilliseconds.toDouble()
+                              : 1.0,
+                        ),
+                        max: totalDuration.inMilliseconds.toDouble() > 0
+                            ? totalDuration.inMilliseconds.toDouble()
+                            : 1.0,
+                        onChanged: (value) {
                           context.read<AudioBloc>().add(
-                            AudioRepeatModeChanged(!state.repeatOne),
-                            // test
+                            AudioSeek(Duration(milliseconds: value.toInt())),
                           );
                         },
-                        size: 20,
-                        color: state.repeatOne
-                            ? AppTheme.accentGold
-                            : Colors.white70,
                       ),
-                      _buildCompactIconButton(
-                        icon: Icons.skip_next_rounded,
-                        onPressed: () => context.read<AudioBloc>().add(
-                          const AudioSkipNext(),
-                        ),
-                        size: 24,
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          if (isPlaying) {
-                            context.read<AudioBloc>().add(const AudioPause());
-                          } else if (state.status == AudioStatus.paused) {
-                            context.read<AudioBloc>().add(const AudioResume());
-                          } else if (state.lastAyah != null) {
-                            context.read<AudioBloc>().add(
-                              AudioPlayAyah(state.lastAyah!),
-                            );
-                          }
-                        },
-                        iconSize: 42,
-                        icon: isBuffering
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppTheme.accentGold,
-                                ),
-                              )
-                            : Icon(
-                                isPlaying
-                                    ? Icons.pause_circle_filled_rounded
-                                    : Icons.play_circle_filled_rounded,
-                                color: Colors.white,
-                              ),
-                      ),
-                      _buildCompactIconButton(
-                        icon: Icons.skip_previous_rounded,
-                        onPressed: () => context.read<AudioBloc>().add(
-                          const AudioSkipPrevious(),
-                        ),
-                        size: 24,
-                      ),
-                      _buildCompactIconButton(
-                        icon: Icons.close_rounded,
-                        onPressed: () =>
-                            context.read<AudioBloc>().add(const AudioStop()),
-                        size: 20,
-                      ),
-                    ],
+                    ),
+                  ),
+                  Text(
+                    _formatDuration(totalDuration),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildCompactIconButton(
+                    icon: Icons.close_rounded,
+                    onPressed: () =>
+                        context.read<AudioBloc>().add(const AudioStop()),
+                    size: 20,
                   ),
                 ],
               ),
@@ -599,9 +526,9 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$twoDigitMinutes:$twoDigitSeconds";
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 }
