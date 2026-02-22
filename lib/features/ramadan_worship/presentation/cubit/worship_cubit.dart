@@ -110,9 +110,7 @@ class WorshipCubit extends Cubit<WorshipState> {
         emit(state.copyWith(dayProgress: updatedProgress));
         await repository.saveDayProgress(updatedProgress);
       }
-    } catch (e) {
-      print("Error adding custom task: $e");
-    }
+    } catch (e) {}
   }
 
   Future<void> removeCustomTask(WorshipTask task) async {
@@ -133,9 +131,7 @@ class WorshipCubit extends Cubit<WorshipState> {
       await _checkDailyCompletion(updatedProgress);
 
       await repository.saveDayProgress(updatedProgress);
-    } catch (e) {
-      print("Error removing custom task: $e");
-    }
+    } catch (e) {}
   }
 
   Future<void> toggleTask(String taskId) async {
@@ -165,7 +161,6 @@ class WorshipCubit extends Cubit<WorshipState> {
       }
     } catch (e) {
       // Revert or show error (for now just log)
-      print("Error toggling task: $e");
     }
   }
 
@@ -202,9 +197,7 @@ class WorshipCubit extends Cubit<WorshipState> {
         // Save
         await repository.saveDayProgress(state.dayProgress!);
       }
-    } catch (e) {
-      print("Error updating task progress: $e");
-    }
+    } catch (e) {}
   }
 
   Future<void> _checkDailyCompletion(DayProgress progress) async {

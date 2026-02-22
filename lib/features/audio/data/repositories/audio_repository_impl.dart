@@ -62,7 +62,6 @@ class AudioRepositoryImpl implements AudioRepository {
 
   @override
   Future<void> playAyah(int ayahNumber, Reciter reciter) async {
-    print('AudioRepo: playAyah($ayahNumber, ${reciter.id})'); // DEBUG LOG
     try {
       // 1. Stop previous playback and reset session to ensure a clean state,
       // especially on Web where buffers might persist.
@@ -70,7 +69,7 @@ class AudioRepositoryImpl implements AudioRepository {
 
       if (kIsWeb) {
         final url = _getAudioUrl(ayahNumber, reciter);
-        print('AudioRepo: Playing from URL (Web): $url');
+
         // 2. Explicitly set initialPosition to Duration.zero
         await _audioPlayer.setUrl(url, initialPosition: Duration.zero);
       } else {
@@ -78,7 +77,6 @@ class AudioRepositoryImpl implements AudioRepository {
         final file = File(localPath);
 
         if (await file.exists()) {
-          print('AudioRepo: Playing from local file: $localPath');
           // 2. Explicitly set initialPosition to Duration.zero
           await _audioPlayer.setFilePath(
             localPath,
@@ -98,7 +96,7 @@ class AudioRepositoryImpl implements AudioRepository {
           }
 
           final url = _getAudioUrl(ayahNumber, reciter);
-          print('AudioRepo: Playing from URL with Persistent Caching: $url');
+
           final source = LockCachingAudioSource(
             Uri.parse(url),
             cacheFile: File(localPath),
@@ -117,7 +115,6 @@ class AudioRepositoryImpl implements AudioRepository {
       // We want to return immediately so BLoC can update state to 'playing'.
       _audioPlayer.play();
     } catch (e) {
-      print('AudioRepo: Error playing audio: $e'); // DEBUG LOG
       throw Exception("Failed to play audio: $e");
     }
   }
