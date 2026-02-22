@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -49,7 +50,9 @@ void main() async {
   // Basic global error handling for user feedback
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    debugPrint('Global Error: ${details.exception}');
+    if (kDebugMode) {
+      debugPrint('Global Error: ${details.exception}');
+    }
   };
 
   // Initialize essential services

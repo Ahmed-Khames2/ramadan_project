@@ -10,7 +10,6 @@ class AyahAudioControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // DEBUG LOG: Remove before production
-    // print('AyahAudioControl: Building for ayah $ayahNumber');
 
     return BlocBuilder<AudioBloc, AudioState>(
       buildWhen: (previous, current) {
@@ -30,7 +29,6 @@ class AyahAudioControl extends StatelessWidget {
         final downloadProgress = state.downloadProgress[ayahNumber];
 
         // DEBUG LOG
-        // if (isPlaying) print('AyahAudioControl: $ayahNumber IS PLAYING');
 
         // This check needs to be async or derived from state.
         // We don't have isDownloaded in state map yet, only progress.
@@ -48,7 +46,6 @@ class AyahAudioControl extends StatelessWidget {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 onPressed: () {
-                  print('AyahAudioControl: Pressed $ayahNumber'); // DEBUG LOG
                   if (isPlaying) {
                     context.read<AudioBloc>().add(AudioPause());
                   } else if (state.currentAyah == ayahNumber &&

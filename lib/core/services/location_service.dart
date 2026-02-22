@@ -8,12 +8,9 @@ class LocationService {
   final Dio _dio = Dio();
 
   Future<Position?> determinePosition() async {
-    print('LocationService: Determine position started');
-
     // 1. Check Service Status
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      print('LocationService: Service not enabled');
       return null;
     }
 
@@ -22,39 +19,31 @@ class LocationService {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        print('LocationService: Permission denied');
         return null;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      print('LocationService: Permission denied forever');
       return null;
     }
 
     try {
-      // 3. Try Last Known Position first for speed
-      final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null) {
-        print('LocationService: Using last known position');
-        // Still try to get fresh position in background or return this for now
-        // For simplicity and matching user request for "doesn't get my location",
-        // we'll return lastKnown but also try fresh if it's very old?
-        // Let's just try fresh first with a short timeout, then fallback.
+      // 3. Try Last Known Position first for speed (not supported on Web)
+      if (!kIsWeb) {
+        final lastKnown = await Geolocator.getLastKnownPosition();
+        if (lastKnown != null) {
+          // Return last known, still proceed to get fresh below
+        }
       }
 
-      // 4. Check granted accuracy level
-      final accuracyStatus = await Geolocator.getLocationAccuracy();
-
-      // If user chose "Approximate", we MUST use medium or low accuracy
-      // High accuracy requests might fail on some devices with only coarse permission
-      final desiredAccuracy = (accuracyStatus == LocationAccuracyStatus.reduced)
-          ? LocationAccuracy.medium
-          : LocationAccuracy.high;
-
-      print(
-        'LocationService: Requesting position with accuracy: $desiredAccuracy',
-      );
+      // 4. On Web, skip accuracy check as it's not supported
+      LocationAccuracy desiredAccuracy = LocationAccuracy.high;
+      if (!kIsWeb) {
+        final accuracyStatus = await Geolocator.getLocationAccuracy();
+        desiredAccuracy = (accuracyStatus == LocationAccuracyStatus.reduced)
+            ? LocationAccuracy.medium
+            : LocationAccuracy.high;
+      }
 
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: desiredAccuracy,
@@ -62,18 +51,20 @@ class LocationService {
       ).timeout(
         const Duration(seconds: 16),
         onTimeout: () async {
-          print('LocationService: Current position timeout');
-          final pos = await Geolocator.getLastKnownPosition();
-          if (pos != null) return pos;
-          throw TimeoutException(
-            'Location request timed out and no last known position available',
-          );
+          // getLastKnownPosition is not supported on Web
+          if (!kIsWeb) {
+            final pos = await Geolocator.getLastKnownPosition();
+            if (pos != null) return pos;
+          }
+          throw TimeoutException('Location request timed out');
         },
       );
     } catch (e) {
-      print('LocationService Error: $e');
-      // Final fallback to last known
-      return await Geolocator.getLastKnownPosition();
+      // Final fallback to last known (mobile only)
+      if (!kIsWeb) {
+        return await Geolocator.getLastKnownPosition();
+      }
+      return null;
     }
   }
 
@@ -97,11 +88,7 @@ class LocationService {
             placemarks.first.subAdministrativeArea;
       }
     } catch (e) {
-      print('Geocoding Error: $e');
-      return await _getCityFromWeb(
-        lat,
-        lng,
-      ); // Fallback to web geocoding if mobile fails
+      return await _getCityFromWeb(lat, lng);
     }
     return null;
   }
@@ -116,12 +103,7 @@ class LocationService {
           'lon': lng,
           'accept-language': 'ar',
         },
-        options: Options(
-          headers: {
-            'User-Agent':
-                'RamadanProject/1.0', // Nominatim requires a User-Agent
-          },
-        ),
+        options: Options(headers: {'User-Agent': 'RamadanProject/1.0'}),
       );
 
       if (response.statusCode == 200) {
@@ -134,9 +116,7 @@ class LocationService {
               address['state'];
         }
       }
-    } catch (e) {
-      print('Web Geocoding Error: $e');
-    }
+    } catch (e) {}
     return null;
   }
 }
