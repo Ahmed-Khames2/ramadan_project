@@ -12,7 +12,8 @@ import 'package:ramadan_project/features/azkar/presentation/pages/tasbih_page.da
 import 'package:ramadan_project/features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import 'package:ramadan_project/features/qibla/presentation/pages/qibla_compass_page.dart';
 import 'package:ramadan_project/features/ramadan_worship/presentation/pages/ramadan_worship_tracker_page.dart';
-import 'package:ramadan_project/features/hadith/presentation/pages/hadith_list_page.dart';
+import 'package:ramadan_project/features/40_hadith/presentation/pages/hadith_list_page.dart';
+import 'package:ramadan_project/features/adhkar_virtues/presentation/pages/adhkar_virtue_list_page.dart';
 
 class AllWorshipsSection extends StatelessWidget {
   const AllWorshipsSection({super.key});
@@ -169,6 +170,18 @@ class AllWorshipsSection extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const HadithListPage(),
+                  ),
+                ),
+              ),
+              _buildFeatureCard(
+                context,
+                title: 'أذكار وفضائل',
+                icon: FontAwesomeIcons.lightbulb,
+                color: AppTheme.accentGold,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdhkarVirtueListPage(),
                   ),
                 ),
               ),

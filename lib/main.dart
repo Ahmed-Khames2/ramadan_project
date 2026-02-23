@@ -6,6 +6,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:ramadan_project/features/40_hadith/data/repositories/hadith_repository_impl.dart';
+import 'package:ramadan_project/features/40_hadith/data/sources/hadith_local_data_source.dart';
+import 'package:ramadan_project/features/40_hadith/domain/repositories/hadith_repository.dart';
+import 'package:ramadan_project/features/40_hadith/presentation/bloc/hadith_cubit.dart';
 import 'package:ramadan_project/presentation/blocs/search_bloc.dart';
 import 'package:ramadan_project/data/models/user_progress_model.dart';
 import 'package:ramadan_project/core/navigation/navigation_routes.dart';
@@ -42,10 +46,10 @@ import 'package:ramadan_project/features/ramadan_worship/domain/repositories/wor
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
-import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
-import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
-import 'package:ramadan_project/features/hadith/presentation/bloc/hadith_cubit.dart';
-import 'package:ramadan_project/features/hadith/domain/repositories/hadith_repository.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar_virtue_repository_impl.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
+import 'package:ramadan_project/features/adhkar_virtues/presentation/bloc/adhkar_virtue_cubit.dart';
+import 'package:ramadan_project/features/adhkar_virtues/domain/repositories/adhkar_virtue_repository.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -107,6 +111,10 @@ void main() async {
     localDataSource: HadithLocalDataSourceImpl(),
   );
 
+  final adhkarVirtueRepository = AdhkarVirtueRepositoryImpl(
+    localDataSource: AdhkarVirtueLocalDataSourceImpl(),
+  );
+
   // Initialization complete - remove splash screen
   FlutterNativeSplash.remove();
 
@@ -117,6 +125,7 @@ void main() async {
       favoritesRepository: favoritesRepository,
       worshipRepository: worshipRepository,
       hadithRepository: hadithRepository,
+      adhkarVirtueRepository: adhkarVirtueRepository,
       prefs: prefs,
     ),
   );
@@ -156,6 +165,7 @@ class MyApp extends StatelessWidget {
   final FavoritesRepository favoritesRepository;
   final WorshipRepository worshipRepository;
   final HadithRepository hadithRepository;
+  final AdhkarVirtueRepository adhkarVirtueRepository;
   final SharedPreferences prefs;
 
   const MyApp({
@@ -165,6 +175,7 @@ class MyApp extends StatelessWidget {
     required this.favoritesRepository,
     required this.worshipRepository,
     required this.hadithRepository,
+    required this.adhkarVirtueRepository,
     required this.prefs,
   });
 
@@ -177,6 +188,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: favoritesRepository),
         RepositoryProvider.value(value: worshipRepository),
         RepositoryProvider.value(value: hadithRepository),
+        RepositoryProvider.value(value: adhkarVirtueRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -218,6 +230,10 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => HadithCubit(repository: hadithRepository),
+          ),
+          BlocProvider(
+            create: (context) =>
+                AdhkarVirtueCubit(repository: adhkarVirtueRepository),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
         ],

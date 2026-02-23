@@ -24,6 +24,8 @@ import 'package:ramadan_project/features/ramadan_worship/data/repositories/worsh
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
 import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
 import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar_virtue_repository_impl.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
 
 import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
@@ -95,6 +97,10 @@ void main() {
       localDataSource: HadithLocalDataSourceImpl(),
     );
 
+    final adhkarVirtueRepository = AdhkarVirtueRepositoryImpl(
+      localDataSource: AdhkarVirtueLocalDataSourceImpl(),
+    );
+
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
@@ -106,6 +112,7 @@ void main() {
         favoritesRepository: favoritesRepository,
         worshipRepository: worshipRepository,
         hadithRepository: hadithRepository,
+        adhkarVirtueRepository: adhkarVirtueRepository,
         prefs: prefs,
       ),
     );
