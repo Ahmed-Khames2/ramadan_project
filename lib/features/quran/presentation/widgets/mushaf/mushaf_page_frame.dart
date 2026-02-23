@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'page_header_widget.dart';
 import 'page_footer_widget.dart';
@@ -7,110 +6,69 @@ import 'page_footer_widget.dart';
 class MushafPageFrame extends StatelessWidget {
   final Widget child;
   final QuranPage page;
+  final Color? backgroundColor;
+  final VoidCallback? onSearchTap;
+  final VoidCallback? onMenuTap;
+  final bool showHeader;
 
-  const MushafPageFrame({super.key, required this.child, required this.page});
+  const MushafPageFrame({
+    super.key,
+    required this.child,
+    required this.page,
+    this.backgroundColor,
+    this.onSearchTap,
+    this.onMenuTap,
+    this.showHeader = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bg = backgroundColor ?? theme.colorScheme.surface;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Stack(
+      color: bg,
+      child: Column(
         children: [
-          // Inner Double Border
-          Positioned.fill(
-            child: Container(
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color:
-                      (theme.brightness == Brightness.dark
-                              ? const Color(0xFFC5A028)
-                              : const Color(0xFFD4AF37))
-                          .withOpacity(0.5),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(12),
+          // ─── Header ────────────────────────────────────────────────
+          if (showHeader) ...[
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 8,
+                left: 12,
+                right: 12,
+                bottom: 4,
+              ),
+              child: PageHeaderWidget(
+                page: page,
+                onSearchTap: onSearchTap,
+                onMenuTap: onMenuTap,
               ),
             ),
-          ),
-          Positioned.fill(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  width: 1.0,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
+            // ─── Thin Divider ──────────────────────────────────────────
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              color: theme.colorScheme.onSurface.withOpacity(0.12),
+              indent: 16,
+              endIndent: 16,
             ),
+          ],
+          // ─── Main Content ─────────────────────────────────────────
+          Expanded(child: child),
+          // ─── Footer ───────────────────────────────────────────────
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: theme.colorScheme.onSurface.withOpacity(0.12),
+            indent: 16,
+            endIndent: 16,
           ),
-
-          // Corner Ornaments
-          _buildCorner(context, Alignment.topLeft, 0),
-          _buildCorner(context, Alignment.topRight, 90),
-          _buildCorner(context, Alignment.bottomRight, 180),
-          _buildCorner(context, Alignment.bottomLeft, 270),
-
-          // Main Content
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 20, left: 24, right: 24),
-                child: PageHeaderWidget(page: page),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  child: child,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: PageFooterWidget(pageNumber: page.pageNumber),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8, top: 2),
+            child: PageFooterWidget(pageNumber: page.pageNumber),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCorner(BuildContext context, Alignment alignment, double angle) {
-    return Align(
-      alignment: alignment,
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: RotationTransition(
-          turns: AlwaysStoppedAnimation(angle / 360),
-          child: SvgPicture.asset(
-            'assets/images/frame_corner.svg',
-            width: 40,
-            height: 40,
-            colorFilter: ColorFilter.mode(
-              Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFC5A028)
-                  : const Color(0xFFD4AF37),
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
       ),
     );
   }

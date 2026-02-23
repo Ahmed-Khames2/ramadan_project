@@ -105,42 +105,40 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.showBackButton) ...[
-            const IslamicBackButton(),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: widget.showBackButton
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'متابعة الختمة',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'نظم خطتك اليومية لختم القرآن الكريم',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                    height: 1.2,
-                  ),
-                ),
+          Row(
+            children: [
+              if (widget.showBackButton) ...[
+                const IslamicBackButton(),
+                const SizedBox(width: 8),
               ],
+              const Text(
+                'متابعة الختمة',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryEmerald,
+                  height: 1.2,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'نظم خطتك اليومية لختم القرآن الكريم',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textGrey.withValues(alpha: 0.7),
+              height: 1.2,
+              fontFamily: 'Cairo',
             ),
           ),
+          const SizedBox(height: 16),
+          const OrnamentalDivider(width: 40),
         ],
       ),
     );

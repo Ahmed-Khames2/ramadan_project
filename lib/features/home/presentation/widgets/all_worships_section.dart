@@ -82,7 +82,8 @@ class AllWorshipsSection extends StatelessWidget {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const EnhancedSurahIndexPage(),
+                      builder: (context) =>
+                          const EnhancedSurahIndexPage(showBackButton: true),
                     ),
                   );
                   if (context.mounted) {

@@ -206,15 +206,36 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
         ],
-        child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-          builder: (context, themeMode) {
+        child: BlocBuilder<ThemeModeCubit, AppThemeMode>(
+          builder: (context, appThemeMode) {
+            ThemeData theme;
+            ThemeData darkThemeData = AppTheme.darkTheme;
+            ThemeMode flutterThemeMode = ThemeMode.system;
+
+            switch (appThemeMode) {
+              case AppThemeMode.light:
+                theme = AppTheme.lightTheme;
+                flutterThemeMode = ThemeMode.light;
+                break;
+              case AppThemeMode.dark:
+                theme = AppTheme.lightTheme; // Standard light stays same
+                darkThemeData = AppTheme.darkTheme;
+                flutterThemeMode = ThemeMode.dark;
+                break;
+              case AppThemeMode.system:
+                theme = AppTheme.lightTheme;
+                darkThemeData = AppTheme.darkTheme;
+                flutterThemeMode = ThemeMode.system;
+                break;
+            }
+
             return MaterialApp(
               title: 'زاد',
               debugShowCheckedModeBanner: false,
               navigatorKey: NavigationRoutes.navigatorKey,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: themeMode,
+              theme: theme,
+              darkTheme: darkThemeData,
+              themeMode: flutterThemeMode,
               supportedLocales: const [Locale('ar')],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,

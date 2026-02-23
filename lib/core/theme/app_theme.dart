@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+enum AppThemeMode { light, dark, system }
+
 class AppTheme {
   // Brand Colors
   static const Color primaryEmerald = Color(0xFF1B5E20);
@@ -13,6 +15,11 @@ class AppTheme {
   static const Color textDark = Color(0xFF1A1A1A);
   static const Color textLight = Color(0xFFE0E0E0);
   static const Color textGrey = Color(0xFF616161); // Darkened for accessibility
+
+  // Mushaf Specific Colors
+  static const Color mushafBeige = Color(0xFFF7F2E7);
+  static const Color mushafNavy = Color(0xFF1A1A2E);
+  static const Color mushafNavyDeep = Color(0xFF16213E);
 
   // Spacing System (8 / 12 / 16 / 24)
   static const double spacing1 = 4.0;
@@ -150,6 +157,49 @@ class AppTheme {
         titleLarge: TextStyle(color: textLight, fontWeight: FontWeight.bold),
         bodyLarge: TextStyle(color: textLight),
         bodyMedium: TextStyle(color: textLight),
+      ),
+    );
+  }
+
+  static ThemeData get navyBlueTheme {
+    const Color navyBlue = Color(0xFF1A1A2E);
+    const Color deepNavy = Color(0xFF16213E);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'Cairo',
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryEmerald,
+        brightness: Brightness.dark,
+        primary: primaryEmerald,
+        secondary: accentGold,
+        surface: navyBlue,
+        onSurface: textLight,
+        onPrimary: Colors.white,
+      ),
+      scaffoldBackgroundColor: navyBlue,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: deepNavy,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: 'UthmanTaha',
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF2A2A4A),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
       ),
     );
   }

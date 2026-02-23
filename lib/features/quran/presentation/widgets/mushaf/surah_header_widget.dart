@@ -40,6 +40,10 @@ class SurahHeaderWidget extends StatelessWidget {
               quran.getSurahNameArabic(surahNumber),
               style: TextStyle(
                 fontFamily: 'UthmanTaha',
+                fontFamilyFallback: const [
+                  'KFGQPCUthmanTahaNaskhRegular',
+                  'Amiri',
+                ],
                 fontSize: (28 * scale).clamp(22, 42),
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,

@@ -101,7 +101,7 @@ class _ModernFloatingNavBar extends StatelessWidget {
             onTap: () => onTap(1),
           ),
           _NavBarItem(
-            icon: Icons.auto_graph_rounded,
+            icon: Icons.history_edu_rounded,
             label: 'الختمة',
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),

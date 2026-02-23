@@ -97,7 +97,7 @@ class SurahTile extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.arrow_back_ios,
+                Icons.arrow_forward_ios_rounded,
                 size: 16,
                 color: AppTheme.textGrey,
               ),
@@ -115,7 +115,7 @@ class SurahTile extends StatelessWidget {
     if (start == end) {
       return 'الجزء $start';
     } else {
-      return 'الأجزاء $start - ${end - 1}';
+      return 'الأجزاء $start - $end';
     }
   }
 

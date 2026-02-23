@@ -158,11 +158,23 @@ class QuranRepositoryImpl implements QuranRepository {
     // Force strict global ordering
     pageAyahs.sort((a, b) => a.globalAyahNumber.compareTo(b.globalAyahNumber));
 
+    // Determine all unique surahs on this page
+    final List<int> uniqueSurahs = [];
+    for (final ref in refs) {
+      if (!uniqueSurahs.contains(ref.surah)) {
+        uniqueSurahs.add(ref.surah);
+      }
+    }
+
+    final String multiSurahName = uniqueSurahs
+        .map((s) => quran.getSurahNameArabic(s))
+        .join(' - ');
+
     final firstRef = refs.first;
     return QuranPage(
       pageNumber: pageNumber,
       ayahs: pageAyahs,
-      surahName: quran.getSurahNameArabic(firstRef.surah),
+      surahName: multiSurahName,
       juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
     );
   }
@@ -317,13 +329,26 @@ class QuranRepositoryImpl implements QuranRepository {
   QuranPage? getPagePlaceholder(int pageNumber) {
     if (!_pageMap.containsKey(pageNumber)) return null;
     final refs = _pageMap[pageNumber]!;
+
+    // Identify all unique surahs for the placeholder
+    final List<int> uniqueSurahs = [];
+    for (final ref in refs) {
+      if (!uniqueSurahs.contains(ref.surah)) {
+        uniqueSurahs.add(ref.surah);
+      }
+    }
+
+    final String multiSurahName = uniqueSurahs
+        .map((s) => quran.getSurahNameArabic(s))
+        .join(' - ');
+
     final firstRef = refs.first;
 
     // Return page with metadata but empty contents for skeleton loading
     return QuranPage(
       pageNumber: pageNumber,
       ayahs: [],
-      surahName: quran.getSurahNameArabic(firstRef.surah),
+      surahName: multiSurahName,
       juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
     );
   }

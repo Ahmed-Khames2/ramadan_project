@@ -10,9 +10,10 @@ class AudioState extends Equatable {
   final Duration position;
   final Duration duration;
   final String? errorMessage;
-  final Map<int, double>
-  downloadProgress; // Map of Ayah number to progress 0.0-1.0
+  final Map<int, double> downloadProgress;
   final bool repeatOne;
+  final bool isOptimistic;
+  final List<int>? currentRange;
 
   const AudioState({
     this.status = AudioStatus.initial,
@@ -24,6 +25,8 @@ class AudioState extends Equatable {
     this.errorMessage,
     this.downloadProgress = const {},
     this.repeatOne = false,
+    this.isOptimistic = false,
+    this.currentRange,
   });
 
   AudioState copyWith({
@@ -36,7 +39,10 @@ class AudioState extends Equatable {
     String? errorMessage,
     Map<int, double>? downloadProgress,
     bool? repeatOne,
+    bool? isOptimistic,
+    List<int>? currentRange,
   }) {
+    // Standard copyWith pattern
     return AudioState(
       status: status ?? this.status,
       currentAyah: currentAyah ?? this.currentAyah,
@@ -44,16 +50,18 @@ class AudioState extends Equatable {
       selectedReciter: selectedReciter ?? this.selectedReciter,
       position: position ?? this.position,
       duration: duration ?? this.duration,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
       downloadProgress: downloadProgress ?? this.downloadProgress,
       repeatOne: repeatOne ?? this.repeatOne,
+      isOptimistic: isOptimistic ?? this.isOptimistic,
+      currentRange: currentRange ?? this.currentRange,
     );
   }
 
-  // Specific copyWith for nullable fields
+  // Specific copyWith for nullable fields to allow setting them to null
   AudioState copyWithNullable({
     AudioStatus? status,
-    int? Function()? currentAyah, // Function that returns int?
+    int? Function()? currentAyah,
     int? Function()? lastAyah,
     Reciter? selectedReciter,
     Duration? position,
@@ -61,6 +69,8 @@ class AudioState extends Equatable {
     String? errorMessage,
     Map<int, double>? downloadProgress,
     bool? repeatOne,
+    bool? isOptimistic,
+    List<int>? Function()? currentRange,
   }) {
     return AudioState(
       status: status ?? this.status,
@@ -69,9 +79,11 @@ class AudioState extends Equatable {
       selectedReciter: selectedReciter ?? this.selectedReciter,
       position: position ?? this.position,
       duration: duration ?? this.duration,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
       downloadProgress: downloadProgress ?? this.downloadProgress,
       repeatOne: repeatOne ?? this.repeatOne,
+      isOptimistic: isOptimistic ?? this.isOptimistic,
+      currentRange: currentRange != null ? currentRange() : this.currentRange,
     );
   }
 
@@ -86,5 +98,7 @@ class AudioState extends Equatable {
     errorMessage,
     downloadProgress,
     repeatOne,
+    isOptimistic,
+    currentRange,
   ];
 }
