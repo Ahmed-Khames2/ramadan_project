@@ -42,6 +42,10 @@ import 'package:ramadan_project/features/ramadan_worship/domain/repositories/wor
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
+import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
+import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
+import 'package:ramadan_project/features/hadith/presentation/bloc/hadith_cubit.dart';
+import 'package:ramadan_project/features/hadith/domain/repositories/hadith_repository.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -99,6 +103,10 @@ void main() async {
     customTasksDataSource: customTasksDataSource,
   );
 
+  final hadithRepository = HadithRepositoryImpl(
+    localDataSource: HadithLocalDataSourceImpl(),
+  );
+
   // Initialization complete - remove splash screen
   FlutterNativeSplash.remove();
 
@@ -108,6 +116,7 @@ void main() async {
       khatmahRepository: khatmahRepository,
       favoritesRepository: favoritesRepository,
       worshipRepository: worshipRepository,
+      hadithRepository: hadithRepository,
       prefs: prefs,
     ),
   );
@@ -146,6 +155,7 @@ class MyApp extends StatelessWidget {
   final KhatmahRepository khatmahRepository;
   final FavoritesRepository favoritesRepository;
   final WorshipRepository worshipRepository;
+  final HadithRepository hadithRepository;
   final SharedPreferences prefs;
 
   const MyApp({
@@ -154,6 +164,7 @@ class MyApp extends StatelessWidget {
     required this.khatmahRepository,
     required this.favoritesRepository,
     required this.worshipRepository,
+    required this.hadithRepository,
     required this.prefs,
   });
 
@@ -165,6 +176,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: khatmahRepository),
         RepositoryProvider.value(value: favoritesRepository),
         RepositoryProvider.value(value: worshipRepository),
+        RepositoryProvider.value(value: hadithRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -203,6 +215,9 @@ class MyApp extends StatelessWidget {
           BlocProvider(
             create: (context) =>
                 WorshipCubit(worshipRepository)..loadDailyProgress(),
+          ),
+          BlocProvider(
+            create: (context) => HadithCubit(repository: hadithRepository),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
         ],
