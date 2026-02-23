@@ -103,6 +103,7 @@ flutter:
     - assets/images/
     - assets/fonts/
     - assets/json/
+    - assets/json/hadiss/
     - assets/json/quranjson/surah/
     - assets/json/quranjson/translation/ar/
     - assets/soundes/

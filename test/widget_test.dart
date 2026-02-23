@@ -22,6 +22,8 @@ import 'package:ramadan_project/features/favorites/data/repositories/favorites_r
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/worship_local_datasource.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/repositories/worship_repository_impl.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
+import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
+import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
 
 import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
@@ -89,6 +91,10 @@ void main() {
       customTasksDataSource: customTasksDataSource,
     );
 
+    final hadithRepository = HadithRepositoryImpl(
+      localDataSource: HadithLocalDataSourceImpl(),
+    );
+
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
@@ -99,6 +105,7 @@ void main() {
         khatmahRepository: khatmahRepository,
         favoritesRepository: favoritesRepository,
         worshipRepository: worshipRepository,
+        hadithRepository: hadithRepository,
         prefs: prefs,
       ),
     );
