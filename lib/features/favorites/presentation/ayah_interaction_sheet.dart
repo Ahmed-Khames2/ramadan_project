@@ -5,7 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
-import 'package:ramadan_project/features/quran/presentation/utils/arabic_digits_ext.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class AyahInteractionSheet extends StatelessWidget {
   final int surahNumber;
@@ -75,7 +75,7 @@ class AyahInteractionSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'الآية الرقم $ayahNumber',
+                      'الآية الرقم ${ayahNumber.toArabic()}',
                       style: TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 12,
@@ -124,7 +124,7 @@ class AyahInteractionSheet extends StatelessWidget {
                         '﴿ $cleanVerse $endSymbol ﴾\n\n'
                         'التفسير الميسر:\n'
                         '$tafsirText\n\n'
-                        'سورة $surahName | الآية: ${ayahNumber.toArabicDigits()} | صفحة: ${pageNum.toArabicDigits()}';
+                        'سورة $surahName | الآية: ${ayahNumber.toArabic()} | صفحة: ${pageNum.toArabic()}';
 
                     Share.share(shareText);
                   },

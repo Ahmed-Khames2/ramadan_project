@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../utils/arabic_digits_ext.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class AyahSymbol extends StatelessWidget {
   final int ayahNumber;
@@ -36,7 +36,7 @@ class AyahSymbol extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                ayahNumber.toArabicDigits(),
+                ayahNumber.toArabic(),
                 style: TextStyle(
                   fontFamily: 'UthmanTaha',
                   fontSize: 11,

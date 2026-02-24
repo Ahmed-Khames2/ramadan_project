@@ -62,6 +62,6 @@ extension IntArabicDigits on int {
       29: 'الجزء التاسع والعشرون',
       30: 'الجزء الثلاثون',
     };
-    return juzNames[this] ?? 'الجزء $this';
+    return juzNames[this] ?? 'الجزء ${this.toArabicDigits()}';
   }
 }

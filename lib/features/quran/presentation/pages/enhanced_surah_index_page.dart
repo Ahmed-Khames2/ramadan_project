@@ -10,6 +10,7 @@ import 'package:ramadan_project/presentation/widgets/custom_search_bar.dart';
 import '../widgets/index/surah_tile.dart';
 import '../widgets/index/search_result_tile.dart';
 import '../widgets/index/surah_filter_chip.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
@@ -360,7 +361,7 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                     ),
                   ),
                   Text(
-                    _lastReadSurahName ?? 'عودة للمصحف',
+                    '${_lastReadSurahName ?? 'عودة للمصحف'} - صفحة ${_lastReadPage?.toArabic() ?? ""}',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -498,7 +499,7 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                       ),
                     ),
                     child: Text(
-                      'الجزء $item',
+                      'الجزء ${item.toArabic()}',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

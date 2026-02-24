@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/arabic_digits_ext.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class PageFooterWidget extends StatelessWidget {
@@ -37,7 +37,7 @@ class PageFooterWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                pageNumber.toArabicDigits(),
+                pageNumber.toArabic(),
                 style: TextStyle(
                   fontFamily: 'UthmanTaha',
                   fontSize: 18,

@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class BookmarksSheet extends StatefulWidget {
   const BookmarksSheet({super.key});
@@ -53,10 +54,10 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
       if (data.isNotEmpty) {
         final surah = data.first['surah'] as int;
         final juz = quran.getJuzNumber(surah, data.first['start'] as int? ?? 1);
-        return 'سورة ${quran.getSurahNameArabic(surah)} — الجزء $juz';
+        return 'سورة ${quran.getSurahNameArabic(surah)} — الجزء ${juz.toArabic()}';
       }
     } catch (_) {}
-    return 'صفحة $page';
+    return 'صفحة ${page.toArabic()}';
   }
 
   @override
@@ -124,7 +125,7 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
                           ),
                         ),
                         Text(
-                          '${_bookmarks.length} صفحة محفوظة',
+                          '${_bookmarks.length.toArabic()} صفحة محفوظة',
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 12,
@@ -259,7 +260,7 @@ class _BookmarkTile extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  '$page',
+                  page.toArabic(),
                   style: const TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 16,
@@ -275,7 +276,7 @@ class _BookmarkTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'صفحة $page',
+                    'صفحة ${page.toArabic()}',
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 15,

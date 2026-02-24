@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import '../utils/arabic_digits_ext.dart';
 
 class QuranIndexDrawer extends StatelessWidget {
@@ -228,7 +229,7 @@ class QuranIndexDrawer extends StatelessWidget {
                 width: 45,
                 alignment: Alignment.center,
                 child: Text(
-                  "${(currentFontScale * 100).toInt()}%",
+                  "${(currentFontScale * 100).toInt().toArabic()}%",
                   style: TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 13,
@@ -297,7 +298,7 @@ class QuranIndexDrawer extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  "$surahNum",
+                  surahNum.toArabic(),
                   style: TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 13,
@@ -315,7 +316,7 @@ class QuranIndexDrawer extends StatelessWidget {
                 ),
               ),
               subtitle: Text(
-                "${quran.getPlaceOfRevelation(surahNum) == 'Makkah' ? 'مكية' : 'مدنية'} • ${quran.getVerseCount(surahNum)} آية",
+                "${quran.getPlaceOfRevelation(surahNum) == 'Makkah' ? 'مكية' : 'مدنية'} • ${quran.getVerseCount(surahNum).toArabic()} آية",
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: 11,

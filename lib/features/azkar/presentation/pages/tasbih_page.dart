@@ -7,6 +7,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/settings/presentation/tasbih_settings_sheet.dart';
 import 'package:ramadan_project/presentation/blocs/tasbih_bloc.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class TasbihPage extends StatefulWidget {
   const TasbihPage({super.key});
@@ -284,7 +285,7 @@ class _TasbihPageState extends State<TasbihPage>
               return ScaleTransition(scale: animation, child: child);
             },
             child: Text(
-              '${state.count}',
+              state.count.toArabic(),
               key: ValueKey(state.count),
               style: TextStyle(
                 fontSize: 72,
@@ -301,7 +302,7 @@ class _TasbihPageState extends State<TasbihPage>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'الدورة: ${state.rounds}',
+              'الدورة: ${state.rounds.toArabic()}',
               style: TextStyle(
                 fontSize: 16,
                 color: theme.colorScheme.secondary,

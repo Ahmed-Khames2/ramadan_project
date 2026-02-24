@@ -6,6 +6,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class KhatmahPlannerPage extends StatefulWidget {
   final KhatmahPlan? initialPlan;
@@ -26,8 +27,8 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
 
   final List<Map<String, dynamic>> _durations = [
     {'label': 'شهر واحد', 'months': 1, 'days': 30},
-    {'label': '3 أشهر', 'months': 3, 'days': 90},
-    {'label': '6 أشهر', 'months': 6, 'days': 180},
+    {'label': '3 أشهر'.toArabicNumbers(), 'months': 3, 'days': 90},
+    {'label': '6 أشهر'.toArabicNumbers(), 'months': 6, 'days': 180},
     {'label': 'مخصص', 'months': 0, 'days': 30},
   ];
 
@@ -358,7 +359,10 @@ class _KhatmahPlannerPageState extends State<KhatmahPlannerPage> {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          intl.DateFormat('yyyy/MM/dd', 'ar').format(_startDate),
+          intl.DateFormat(
+            'yyyy/MM/dd',
+            'ar',
+          ).format(_startDate).toArabicNumbers(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,

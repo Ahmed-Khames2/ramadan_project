@@ -6,6 +6,7 @@ import 'package:ramadan_project/features/ramadan_worship/domain/entities/worship
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_state.dart';
 import 'package:ramadan_project/features/ramadan_worship/presentation/widgets/worship_task_card.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class RamadanWorshipTrackerPage extends StatelessWidget {
   const RamadanWorshipTrackerPage({super.key});
@@ -129,7 +130,7 @@ class RamadanWorshipTrackerPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        "${state.currentStreak} يوم",
+                        "${state.currentStreak.toArabic()} يوم",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,

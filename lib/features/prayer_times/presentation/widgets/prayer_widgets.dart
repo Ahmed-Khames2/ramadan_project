@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 import '../../domain/entities/prayer_time.dart';
 import '../../domain/entities/governorate.dart';
@@ -64,7 +65,7 @@ class PrayerHeader extends StatelessWidget {
           ),
         ),
         Text(
-          gregorianDate,
+          gregorianDate.toArabicNumbers(),
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -245,7 +246,7 @@ class PrayerSettingsSheet extends StatelessWidget {
                           child: Text(
                             mins == 0
                                 ? 'في وقت الصلاة'
-                                : '$mins دقائق قبل الصلاة',
+                                : '${mins.toArabic()} دقائق قبل الصلاة',
                             style: TextStyle(fontSize: 14),
                           ),
                         );
@@ -389,7 +390,9 @@ class CurrentPrayerCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.spacing2),
                     Text(
-                      intl.DateFormat.jm().format(next.time),
+                      intl.DateFormat.jm(
+                        'ar',
+                      ).format(next.time).toArabicNumbers(),
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -407,7 +410,7 @@ class CurrentPrayerCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'متبقي $hours ساعة و $minutes دقيقة',
+                          'متبقي ${hours.toArabic()} ساعة و ${minutes.toArabic()} دقيقة',
                           style: TextStyle(fontSize: 13, color: Colors.white70),
                         ),
                       ],
@@ -482,7 +485,7 @@ class PrayerTimeRow extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            intl.DateFormat.jm().format(prayer.time),
+            intl.DateFormat.jm('ar').format(prayer.time).toArabicNumbers(),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
