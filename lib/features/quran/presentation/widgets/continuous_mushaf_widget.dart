@@ -19,6 +19,8 @@ class ContinuousMushafPageWidget extends StatefulWidget {
   final VoidCallback? onSearchTap;
   final VoidCallback? onMenuTap;
   final Function(Ayah)? onAyahTap;
+  final bool isBookmarked;
+  final VoidCallback? onBookmarkTap;
 
   const ContinuousMushafPageWidget({
     super.key,
@@ -32,6 +34,8 @@ class ContinuousMushafPageWidget extends StatefulWidget {
     this.onMenuTap,
     this.backgroundColor,
     this.onAyahTap,
+    this.isBookmarked = false,
+    this.onBookmarkTap,
   });
 
   final Color? backgroundColor;
@@ -149,6 +153,8 @@ class _ContinuousMushafPageWidgetState
       backgroundColor: widget.backgroundColor,
       onSearchTap: widget.onSearchTap,
       onMenuTap: widget.onMenuTap,
+      isBookmarked: widget.isBookmarked,
+      onBookmarkTap: widget.onBookmarkTap,
       showHeader: false, // Fixed header is in the parent stack
       child: Theme(
         data: Theme.of(context).copyWith(

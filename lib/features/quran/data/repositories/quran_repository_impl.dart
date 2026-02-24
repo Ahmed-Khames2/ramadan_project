@@ -313,11 +313,23 @@ class QuranRepositoryImpl implements QuranRepository {
         );
       }
 
+      // Determine all unique surahs on this page
+      final List<int> uniqueSurahs = [];
+      for (final ref in refs) {
+        if (!uniqueSurahs.contains(ref.surah)) {
+          uniqueSurahs.add(ref.surah);
+        }
+      }
+
+      final String multiSurahName = uniqueSurahs
+          .map((s) => quran.getSurahNameArabic(s))
+          .join(' - ');
+
       final firstRef = refs.first;
       return QuranPage(
         pageNumber: pageNumber,
         ayahs: pageAyahs,
-        surahName: quran.getSurahNameArabic(firstRef.surah),
+        surahName: multiSurahName,
         juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
       );
     } catch (e) {

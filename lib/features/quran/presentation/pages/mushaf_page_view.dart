@@ -14,7 +14,10 @@ import 'package:ramadan_project/features/quran/presentation/widgets/continuous_m
 import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/reciter_picker_sheet.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/mushaf/page_header_widget.dart';
-import 'package:ramadan_project/features/quran/presentation/widgets/mushaf/mushaf_instruction_dialog.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/bookmarks_sheet.dart';
+import 'package:ramadan_project/features/favorites/presentation/ayah_interaction_sheet.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/quran_index_drawer.dart';
 
 enum MushafReadingMode { white, beige, dark, navy }
 
@@ -48,7 +51,6 @@ class _MushafPageViewState extends State<MushafPageView> {
   Timer? _hideTimer;
   bool _isCurrentPageBookmarked = false;
   int? _selectedAyah;
-  bool _showSideMenu = false;
   MushafReadingMode _readingMode = MushafReadingMode.white;
 
   @override
@@ -74,15 +76,6 @@ class _MushafPageViewState extends State<MushafPageView> {
     setState(() {
       _readingMode = isDark ? MushafReadingMode.dark : MushafReadingMode.white;
     });
-
-    final hasShownInstruction =
-        prefs.getBool('mushaf_instruction_shown') ?? false;
-    if (!hasShownInstruction) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        MushafInstructionDialog.show(context);
-        prefs.setBool('mushaf_instruction_shown', true);
-      });
-    }
 
     final initialSurah = quran.getPageData(_currentPage).first['surah'] as int;
     context.read<QuranRepository>().preloadTafsir(initialSurah);
@@ -117,11 +110,12 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   void _updateFontScale(double scale) async {
+    final clampedScale = scale.clamp(0.5, 2.0);
     setState(() {
-      _fontScale = scale;
+      _fontScale = clampedScale;
     });
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('mushaf_font_scale', scale);
+    await prefs.setDouble('mushaf_font_scale', clampedScale);
   }
 
   Future<void> _saveBookmark(int page) async {
@@ -174,31 +168,6 @@ class _MushafPageViewState extends State<MushafPageView> {
             : MushafReadingMode.white;
       }
     });
-  }
-
-  void _playCurrentSurah() {
-    final pageData = quran.getPageData(_currentPage);
-    if (pageData.isEmpty) return;
-
-    final surahNum = pageData.first['surah'] as int;
-    final totalVerses = quran.getVerseCount(surahNum);
-
-    final List<int> globalIds = [];
-    int globalBase = 0;
-    for (int s = 1; s < surahNum; s++) {
-      globalBase += quran.getVerseCount(s);
-    }
-
-    for (int i = 1; i <= totalVerses; i++) {
-      globalIds.add(globalBase + i);
-    }
-
-    if (globalIds.isNotEmpty) {
-      setState(() {
-        _showControls = true;
-      });
-      context.read<AudioBloc>().add(AudioPlayRange(globalIds));
-    }
   }
 
   Color _getReadingModeBackground() {
@@ -268,6 +237,16 @@ class _MushafPageViewState extends State<MushafPageView> {
         ),
       ],
       child: Scaffold(
+        drawer: QuranIndexDrawer(
+          onPageSelected: (page) {
+            _portraitController.jumpToPage(_portraitIndexForPage(page));
+          },
+          onReadingModeToggle: () => _cycleReadingMode(isAppDark),
+          onFontScaleChanged: _updateFontScale,
+          onBookmarkListTap: _showBookmarksSheet,
+          currentFontScale: _fontScale,
+          readingMode: _readingMode,
+        ),
         backgroundColor: bgColor,
         body: SafeArea(
           bottom: false,
@@ -278,7 +257,7 @@ class _MushafPageViewState extends State<MushafPageView> {
               _buildBottomAudioBar(bgColor),
               _buildMiniPlayer(),
               _buildTopHeader(bgColor),
-              _buildSideControls(isAppDark, bgColor),
+              _buildTopHeader(bgColor),
             ],
           ),
         ),
@@ -325,6 +304,10 @@ class _MushafPageViewState extends State<MushafPageView> {
                   backgroundColor: bgColor,
                   initialSurah: widget.initialSurah,
                   initialAyah: widget.initialAyah,
+                  isBookmarked: _currentPage == _pageForPortraitIndex(index)
+                      ? _isCurrentPageBookmarked
+                      : false,
+                  onBookmarkTap: _toggleBookmark,
                   onAyahTap: (ayah) {
                     if (ayah != null) {
                       setState(() => _selectedAyah = ayah.globalAyahNumber);
@@ -352,7 +335,7 @@ class _MushafPageViewState extends State<MushafPageView> {
                   },
                   onSearchTap: () {},
                   onMenuTap: () {
-                    setState(() => _showSideMenu = !_showSideMenu);
+                    Scaffold.of(context).openDrawer();
                   },
                 );
               },
@@ -375,6 +358,7 @@ class _MushafPageViewState extends State<MushafPageView> {
     if (widget.shouldSaveProgress) {
       _saveBookmark(_currentPage);
     }
+    _refreshBookmarkState();
     widget.onPageChanged?.call(_currentPage);
   }
 
@@ -408,7 +392,7 @@ class _MushafPageViewState extends State<MushafPageView> {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
           bottom: 20,
-          right: 20,
+          left: 20,
           child: GestureDetector(
             onTap: () => setState(() => _showControls = true),
             child: Container(
@@ -462,38 +446,12 @@ class _MushafPageViewState extends State<MushafPageView> {
             backgroundColor: bgColor,
             onSearchTap: () {},
             onMenuTap: () {
-              setState(() => _showSideMenu = !_showSideMenu);
+              Scaffold.of(context).openDrawer();
             },
           );
         },
       ),
     );
-  }
-
-  Widget _buildSideControls(bool isAppDark, Color bgColor) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-      right: 8,
-      top: _showSideMenu ? 80 : -300,
-      child: Opacity(
-        opacity: _showSideMenu ? 1.0 : 0.0,
-        child: _SideControls(
-          isCurrentPageBookmarked: _isCurrentPageBookmarked,
-          isAppDark: isAppDark,
-          fontScale: _fontScale,
-          onBookmarkToggle: _toggleBookmark,
-          onBookmarkListTap: () => _showBookmarksSheet(),
-          onReadingModeToggle: () => _cycleReadingMode(isAppDark),
-          onPlaySurah: _playCurrentSurah,
-          onFontScaleChanged: _updateFontScale,
-        ),
-      ),
-    );
-  }
-
-  void _showBookmarksSheet() {
-    // BookmarksSheet.show(context);
   }
 
   Widget _buildAyahContextMenuOverlay(BuildContext context) {
@@ -614,11 +572,32 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   void _shareAyah(Ayah ayah) {
-    // ShareAyahWidget.shareImage(ayah);
+    final text = quran.getVerse(
+      ayah.surahNumber,
+      ayah.ayahNumber,
+      verseEndSymbol: true,
+    );
+    final shareText =
+        '$text\n\n[${quran.getSurahNameArabic(ayah.surahNumber)} : ${ayah.ayahNumber}]';
+    Share.share(shareText);
   }
 
   void _showTafsirSheet(Ayah ayah) {
-    // TafsirSheet.show(context, ayah);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AyahInteractionSheet(
+        surahNumber: ayah.surahNumber,
+        ayahNumber: ayah.ayahNumber,
+        ayahId: ayah.globalAyahNumber,
+        readingMode: _readingMode,
+      ),
+    );
+  }
+
+  void _showBookmarksSheet() {
+    BookmarksSheet.show(context);
   }
 }
 
@@ -740,8 +719,7 @@ class _AudioBar extends StatelessWidget {
           children: [
             _compactBtn(
               icon: Icons.skip_next_rounded,
-              onTap: () =>
-                  context.read<AudioBloc>().add(const AudioSkipPrevious()),
+              onTap: () => context.read<AudioBloc>().add(const AudioSkipNext()),
               color: iconFg,
               size: 24,
             ),
@@ -750,7 +728,8 @@ class _AudioBar extends StatelessWidget {
             const SizedBox(width: 16),
             _compactBtn(
               icon: Icons.skip_previous_rounded,
-              onTap: () => context.read<AudioBloc>().add(const AudioSkipNext()),
+              onTap: () =>
+                  context.read<AudioBloc>().add(const AudioSkipPrevious()),
               color: iconFg,
               size: 24,
             ),
@@ -814,127 +793,6 @@ class _AudioBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         child: Icon(icon, color: color, size: size),
-      ),
-    );
-  }
-}
-
-// Extracted side controls widget
-class _SideControls extends StatelessWidget {
-  final bool isCurrentPageBookmarked;
-  final bool isAppDark;
-  final double fontScale;
-  final VoidCallback onBookmarkToggle;
-  final VoidCallback onBookmarkListTap;
-  final VoidCallback onReadingModeToggle;
-  final VoidCallback onPlaySurah;
-  final ValueChanged<double> onFontScaleChanged;
-
-  const _SideControls({
-    required this.isCurrentPageBookmarked,
-    required this.isAppDark,
-    required this.fontScale,
-    required this.onBookmarkToggle,
-    required this.onBookmarkListTap,
-    required this.onReadingModeToggle,
-    required this.onPlaySurah,
-    required this.onFontScaleChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final isReadingDark = bgColor.computeLuminance() < 0.5;
-
-    final btnColor = isReadingDark
-        ? bgColor.withValues(alpha: 0.8)
-        : Colors.white;
-    final iconFgColor = isReadingDark ? Colors.white : AppTheme.primaryEmerald;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildIconBtn(
-          heroTag: 'zoom_in',
-          icon: Icons.add_rounded,
-          onPressed: () =>
-              onFontScaleChanged((fontScale + 0.1).clamp(0.8, 2.5)),
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-        _buildIconBtn(
-          heroTag: 'zoom_out',
-          icon: Icons.remove_rounded,
-          onPressed: () =>
-              onFontScaleChanged((fontScale - 0.1).clamp(0.8, 2.5)),
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-        _buildIconBtn(
-          heroTag: 'bookmark',
-          icon: isCurrentPageBookmarked
-              ? Icons.bookmark_rounded
-              : Icons.bookmark_border_rounded,
-          foreground: isCurrentPageBookmarked
-              ? AppTheme.accentGold
-              : AppTheme.primaryEmerald,
-          onPressed: onBookmarkToggle,
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-        _buildIconBtn(
-          heroTag: 'bookmark_list',
-          icon: Icons.bookmarks_rounded,
-          foreground: AppTheme.accentGold.withOpacity(0.8),
-          onPressed: onBookmarkListTap,
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-        _buildIconBtn(
-          heroTag: 'reading_mode_toggle',
-          icon: Icons.palette_rounded,
-          onPressed: onReadingModeToggle,
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-        _buildIconBtn(
-          heroTag: 'play_surah',
-          icon: Icons.play_arrow_rounded,
-          foreground: AppTheme.primaryEmerald,
-          onPressed: onPlaySurah,
-          btnColor: btnColor,
-          iconFgColor: iconFgColor,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIconBtn({
-    required String heroTag,
-    required IconData icon,
-    required VoidCallback onPressed,
-    Color? foreground,
-    required Color btnColor,
-    required Color iconFgColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: FloatingActionButton.small(
-        heroTag: heroTag,
-        onPressed: onPressed,
-        backgroundColor: btnColor,
-        foregroundColor: foreground ?? iconFgColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: isAppDark
-              ? BorderSide(
-                  color: AppTheme.primaryEmerald.withOpacity(0.3),
-                  width: 1,
-                )
-              : BorderSide.none,
-        ),
-        child: Icon(icon),
       ),
     );
   }

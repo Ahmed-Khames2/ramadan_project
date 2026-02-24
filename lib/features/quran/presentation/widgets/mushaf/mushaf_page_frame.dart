@@ -11,6 +11,9 @@ class MushafPageFrame extends StatelessWidget {
   final VoidCallback? onMenuTap;
   final bool showHeader;
 
+  final bool isBookmarked;
+  final VoidCallback? onBookmarkTap;
+
   const MushafPageFrame({
     super.key,
     required this.child,
@@ -19,6 +22,8 @@ class MushafPageFrame extends StatelessWidget {
     this.onSearchTap,
     this.onMenuTap,
     this.showHeader = true,
+    this.isBookmarked = false,
+    this.onBookmarkTap,
   });
 
   @override
@@ -66,7 +71,11 @@ class MushafPageFrame extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 8, top: 2),
-            child: PageFooterWidget(pageNumber: page.pageNumber),
+            child: PageFooterWidget(
+              pageNumber: page.pageNumber,
+              isBookmarked: isBookmarked,
+              onBookmarkTap: onBookmarkTap,
+            ),
           ),
         ],
       ),
