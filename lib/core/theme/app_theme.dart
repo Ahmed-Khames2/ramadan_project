@@ -22,6 +22,11 @@ class AppTheme {
   static const double spacing6 = 24.0;
   static const double spacing8 = 32.0;
 
+  // Radius System
+  static const double radiusS = 8.0;
+  static const double radiusM = 16.0;
+  static const double radiusL = 24.0;
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,

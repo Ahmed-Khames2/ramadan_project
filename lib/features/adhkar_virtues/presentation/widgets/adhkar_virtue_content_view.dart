@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/adhkar_virtue.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
-import 'zikr_counter_widget.dart';
 
 /// A completely redesigned, immersive details page for Adhkar & Virtues.
 /// Layout: Hero header with content text → counter (if applicable) →
@@ -84,7 +83,6 @@ class _AdhkarVirtueContentViewState extends State<AdhkarVirtueContentView> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final color = _categoryColor;
-    final hasCounter = widget.adhk.count > 1;
 
     return Stack(
       children: [
@@ -93,24 +91,7 @@ class _AdhkarVirtueContentViewState extends State<AdhkarVirtueContentView> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // ── Hero Header ──────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _buildHeroHeader(context, isDark, color, hasCounter),
-            ),
-
-            // ── Counter Section ──────────────────────────────────────────
-            if (hasCounter)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacing4,
-                  ),
-                  child: ZikrCounterWidget(
-                    targetCount: widget.adhk.count,
-                    countDescription: widget.adhk.countDescription,
-                    color: color,
-                  ),
-                ),
-              ),
+            SliverToBoxAdapter(child: _buildHeroHeader(context, isDark, color)),
 
             // ── Flowing Info Sections ────────────────────────────────────
             SliverPadding(
@@ -177,12 +158,7 @@ class _AdhkarVirtueContentViewState extends State<AdhkarVirtueContentView> {
   }
 
   // ── Hero Header with content text ────────────────────────────────────────
-  Widget _buildHeroHeader(
-    BuildContext context,
-    bool isDark,
-    Color color,
-    bool hasCounter,
-  ) {
+  Widget _buildHeroHeader(BuildContext context, bool isDark, Color color) {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
