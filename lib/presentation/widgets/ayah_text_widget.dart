@@ -110,7 +110,7 @@ class AyahTextWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                textAlign: TextAlign.justify,
+                textAlign: TextAlign.right,
               ),
             ),
           ],

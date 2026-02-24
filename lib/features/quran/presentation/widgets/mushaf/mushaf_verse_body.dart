@@ -343,7 +343,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: RichText(
-                    textAlign: TextAlign.justify,
+                    textAlign: TextAlign.right,
                     textDirection: TextDirection.rtl,
                     text: TextSpan(
                       children: [

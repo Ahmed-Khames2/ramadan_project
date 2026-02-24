@@ -39,9 +39,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: DecorativeBackground(
+    return Scaffold(
+      body: DecorativeBackground(
+        child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [

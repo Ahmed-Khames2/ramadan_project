@@ -124,6 +124,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -190,9 +191,9 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
       builder: (context, snapshot) {
         if (snapshot.hasError || (!snapshot.hasData && kIsWeb)) {
           // Fallback for Web or Desktop where compass sensors are missing
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: SafeArea(
               child: Column(
                 children: [
                   _buildWebManualNotice(),
@@ -219,9 +220,9 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
         final compassHeading = snapshot.data!.heading ?? 0;
         final qiblahOffset = (_qiblahDirection ?? 0) - compassHeading;
 
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: SafeArea(
             child: Column(
               children: [
                 // Main Compass

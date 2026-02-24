@@ -174,12 +174,12 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        behavior: HitTestBehavior.opaque,
-        child: Scaffold(
-          body: DecorativeBackground(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        body: DecorativeBackground(
+          child: SafeArea(
             child: Column(
               children: [
                 _buildFixedHeader(theme),
