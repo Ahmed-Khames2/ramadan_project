@@ -68,6 +68,8 @@ class _AyahContextMenuState extends State<AyahContextMenu>
 
     final surfaceColor = readingMode == MushafReadingMode.navy
         ? AppTheme.mushafNavyDeep
+        : readingMode == MushafReadingMode.dark
+        ? AppTheme.cardDark
         : isDark
         ? const Color(0xFF1E1E2E)
         : Colors.white;
@@ -80,11 +82,16 @@ class _AyahContextMenuState extends State<AyahContextMenu>
 
     final iconPrimary = readingMode == MushafReadingMode.navy
         ? Colors.white.withValues(alpha: 0.8)
+        : readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
         : AppTheme.primaryEmerald;
 
     final accentColor = readingMode == MushafReadingMode.navy
         ? Colors.white.withValues(alpha: 0.15)
-        : AppTheme.primaryEmerald.withOpacity(0.1);
+        : (readingMode == MushafReadingMode.dark
+                  ? AppTheme.accentGold
+                  : AppTheme.primaryEmerald)
+              .withOpacity(0.1);
 
     return Center(
       child: ScaleTransition(
@@ -105,7 +112,13 @@ class _AyahContextMenuState extends State<AyahContextMenu>
                 ),
               ],
               border: Border.all(
-                color: AppTheme.primaryEmerald.withOpacity(0.15),
+                color:
+                    (readingMode == MushafReadingMode.navy
+                            ? Colors.white
+                            : readingMode == MushafReadingMode.dark
+                            ? AppTheme.accentGold
+                            : AppTheme.primaryEmerald)
+                        .withOpacity(0.15),
                 width: 1,
               ),
             ),

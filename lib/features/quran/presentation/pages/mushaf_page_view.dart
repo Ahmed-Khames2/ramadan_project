@@ -225,8 +225,8 @@ class _MushafPageViewState extends State<MushafPageView> {
                   _buildMainContent(bgColor, settings),
                   if (_selectedAyah != null)
                     _buildAyahContextMenuOverlay(context, settings.readingMode),
-                  _buildBottomAudioBar(bgColor),
-                  _buildMiniPlayer(),
+                  _buildBottomAudioBar(bgColor, settings.readingMode),
+                  _buildMiniPlayer(settings.readingMode),
                   _buildTopHeader(bgColor),
                 ],
               ),
@@ -337,7 +337,7 @@ class _MushafPageViewState extends State<MushafPageView> {
     widget.onPageChanged?.call(_currentPage);
   }
 
-  Widget _buildBottomAudioBar(Color bgColor) {
+  Widget _buildBottomAudioBar(Color bgColor, MushafReadingMode readingMode) {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
@@ -346,6 +346,7 @@ class _MushafPageViewState extends State<MushafPageView> {
       right: 16,
       child: _AudioBar(
         backgroundColor: bgColor,
+        readingMode: readingMode,
         onClose: () {
           setState(() {
             _showControls = false;
@@ -361,7 +362,11 @@ class _MushafPageViewState extends State<MushafPageView> {
     );
   }
 
-  Widget _buildMiniPlayer() {
+  Widget _buildMiniPlayer(MushafReadingMode readingMode) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
     return BlocBuilder<AudioBloc, AudioState>(
       builder: (context, state) {
         final bool isAudioActive =
@@ -386,11 +391,11 @@ class _MushafPageViewState extends State<MushafPageView> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.primaryEmerald,
+                color: accentColor,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryEmerald.withOpacity(0.4),
+                    color: accentColor.withOpacity(0.4),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -607,11 +612,13 @@ class _AudioBar extends StatelessWidget {
   final Color backgroundColor;
   final VoidCallback onClose;
   final VoidCallback onCollapse;
+  final MushafReadingMode readingMode;
 
   const _AudioBar({
     required this.backgroundColor,
     required this.onClose,
     required this.onCollapse,
+    required this.readingMode,
   });
 
   @override
@@ -619,7 +626,10 @@ class _AudioBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = backgroundColor;
-    final borderColor = AppTheme.primaryEmerald.withValues(alpha: 0.3);
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+    final borderColor = accentColor.withValues(alpha: 0.3);
     final iconFg = isDark ? Colors.white70 : Colors.black87;
 
     return BlocBuilder<AudioBloc, AudioState>(
@@ -664,13 +674,17 @@ class _AudioBar extends StatelessWidget {
   }
 
   Widget _buildReciterPill(BuildContext context, String reciterName) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
     return InkWell(
       onTap: () => ReciterPickerSheet.show(context),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AppTheme.primaryEmerald.withOpacity(0.08),
+          color: accentColor.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -678,17 +692,17 @@ class _AudioBar extends StatelessWidget {
           children: [
             Text(
               reciterName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Cairo',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
+                color: accentColor,
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: AppTheme.primaryEmerald,
+              color: accentColor,
               size: 14,
             ),
           ],
@@ -751,6 +765,10 @@ class _AudioBar extends StatelessWidget {
     bool isPlaying,
     bool isBuffering,
   ) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
     return GestureDetector(
       onTap: () {
         final bloc = context.read<AudioBloc>();
@@ -761,10 +779,7 @@ class _AudioBar extends StatelessWidget {
       child: Container(
         width: 48,
         height: 48,
-        decoration: const BoxDecoration(
-          color: AppTheme.primaryEmerald,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
         child: isBuffering
             ? const Padding(
                 padding: EdgeInsets.all(12),
