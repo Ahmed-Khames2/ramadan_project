@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:share_plus/share_plus.dart';
-import 'package:ramadan_project/features/favorites/presentation/bloc/favorites_bloc.dart';
-import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/presentation/utils/arabic_digits_ext.dart';
 
 class AyahInteractionSheet extends StatelessWidget {
   final int surahNumber;
@@ -86,39 +85,6 @@ class AyahInteractionSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              BlocBuilder<FavoritesBloc, FavoritesState>(
-                builder: (context, state) {
-                  final isFavorite =
-                      state is FavoritesLoaded &&
-                      state.favorites.contains(ayahId);
-                  return _buildCircleAction(
-                    icon: isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: isFavorite
-                        ? Colors.redAccent
-                        : colors.text.withOpacity(0.5),
-                    onTap: () {
-                      context.read<FavoritesBloc>().add(
-                        ToggleFavorite(
-                          Ayah(
-                            surahNumber: surahNumber,
-                            ayahNumber: ayahNumber,
-                            globalAyahNumber: ayahId,
-                            text: quran.getVerse(surahNumber, ayahNumber),
-                            pageNumber: quran.getPageNumber(
-                              surahNumber,
-                              ayahNumber,
-                            ),
-                            surahName: quran.getSurahNameArabic(surahNumber),
-                          ),
-                        ),
-                      );
-                    },
-                    colors: colors,
-                  );
-                },
-              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -132,16 +98,34 @@ class AyahInteractionSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildMainAction(
-                  label: 'مشاركة الآية',
-                  icon: Icons.share_rounded,
-                  onTap: () {
-                    final text = quran.getVerse(
+                  label: 'مشاركة',
+                  onTap: () async {
+                    final tafsirText = await context
+                        .read<KhatamBloc>()
+                        .quranRepository
+                        .getTafsir(surahNumber, ayahNumber);
+
+                    final surahName = quran.getSurahNameArabic(surahNumber);
+                    final pageNum = quran.getPageNumber(
                       surahNumber,
                       ayahNumber,
-                      verseEndSymbol: true,
                     );
+
+                    final String cleanVerse = quran.getVerse(
+                      surahNumber,
+                      ayahNumber,
+                      verseEndSymbol: false,
+                    );
+                    final String endSymbol = quran.getVerseEndSymbol(
+                      ayahNumber,
+                    );
+
                     final shareText =
-                        '$text\n\n[${quran.getSurahNameArabic(surahNumber)} : $ayahNumber]';
+                        '﴿ $cleanVerse $endSymbol ﴾\n\n'
+                        'التفسير الميسر:\n'
+                        '$tafsirText\n\n'
+                        'سورة $surahName | الآية: ${ayahNumber.toArabicDigits()} | صفحة: ${pageNum.toArabicDigits()}';
+
                     Share.share(shareText);
                   },
                   colors: colors,
@@ -224,63 +208,45 @@ class AyahInteractionSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildCircleAction({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required _SheetThemeColors colors,
-  }) {
-    return Material(
-      color: colors.text.withOpacity(0.05),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: color, size: 24),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMainAction({
     required String label,
-    required IconData icon,
+    IconData? icon,
     required VoidCallback onTap,
     required _SheetThemeColors colors,
   }) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 20),
-      label: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      style:
-          ElevatedButton.styleFrom(
-            backgroundColor: colors.primary,
-            foregroundColor: readingMode == MushafReadingMode.beige
-                ? Colors.white
-                : (readingMode == MushafReadingMode.white
-                      ? Colors.white
-                      : Colors.black87),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+    final buttonContent = icon != null
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          )
+        : Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.bold,
             ),
-            elevation: 0,
-          ).copyWith(
-            foregroundColor: WidgetStateProperty.resolveWith((states) {
-              if (readingMode == MushafReadingMode.white ||
-                  readingMode == MushafReadingMode.beige)
-                return Colors.white;
-              return Colors.white; // Simplified for contrast
-            }),
-          ),
+          );
+
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+      ),
+      child: buttonContent,
     );
   }
 

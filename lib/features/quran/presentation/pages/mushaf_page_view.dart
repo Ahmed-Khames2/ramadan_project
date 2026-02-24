@@ -371,7 +371,10 @@ class _MushafPageViewState extends State<MushafPageView> {
       right: 16,
       child: _AudioBar(
         backgroundColor: bgColor,
-        onClose: () => setState(() => _showControls = false),
+        onClose: () {
+          setState(() => _showControls = false);
+          context.read<AudioBloc>().add(AudioStop());
+        },
         onCollapse: () => setState(() => _showControls = false),
       ),
     );

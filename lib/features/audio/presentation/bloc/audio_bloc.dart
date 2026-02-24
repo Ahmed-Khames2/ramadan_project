@@ -188,6 +188,14 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
 
   Future<void> _onStop(AudioStop event, Emitter<AudioState> emit) async {
     await _audioRepository.stop();
+    emit(
+      state.copyWithNullable(
+        status: AudioStatus.initial,
+        currentAyah: () => null,
+        lastAyah: () => null,
+        currentRange: () => null,
+      ),
+    );
   }
 
   Future<void> _onResume(AudioResume event, Emitter<AudioState> emit) async {
