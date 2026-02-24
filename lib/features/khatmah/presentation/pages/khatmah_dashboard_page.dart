@@ -8,6 +8,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/domain/entities/khatmah_entities.dart';
 import 'package:ramadan_project/features/khatmah/domain/entities/khatam_plan.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'khatmah_planner_page.dart';
 import 'khatmah_history_page.dart';
 
@@ -105,42 +106,40 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.showBackButton) ...[
-            const IslamicBackButton(),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: widget.showBackButton
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'متابعة الختمة',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryEmerald,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'نظم خطتك اليومية لختم القرآن الكريم',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                    height: 1.2,
-                  ),
-                ),
+          Row(
+            children: [
+              if (widget.showBackButton) ...[
+                const IslamicBackButton(),
+                const SizedBox(width: 8),
               ],
+              const Text(
+                'متابعة الختمة',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryEmerald,
+                  height: 1.2,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'نظم خطتك اليومية لختم القرآن الكريم',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textGrey.withValues(alpha: 0.7),
+              height: 1.2,
+              fontFamily: 'Cairo',
             ),
           ),
+          const SizedBox(height: 16),
+          const OrnamentalDivider(width: 40),
         ],
       ),
     );
@@ -234,7 +233,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      plan.statusMessage,
+                      plan.statusMessage.toArabicNumbers(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -254,7 +253,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${progress.toStringAsFixed(0)}%',
+                  '${progress.toArabic(fractionDigits: 0)}%',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -306,7 +305,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
           child: _buildStatItem(
             context,
             'الصفحات المقروءة',
-            '${plan.currentProgressPage}',
+            '${plan.currentProgressPage.toArabic()}',
             Icons.menu_book_rounded,
             AppTheme.primaryEmerald,
           ),
@@ -318,7 +317,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
             (plan.remainingTodayPages) == 0 ? 'حالة التميز' : 'المتبقي اليوم',
             (plan.remainingTodayPages) == 0
                 ? (isAhead ? 'سابق للجدول' : 'ماشي عالمسطرة')
-                : '${plan.remainingTodayPages} صفحة',
+                : '${plan.remainingTodayPages.toArabic()} صفحة',
             (plan.remainingTodayPages) == 0
                 ? Icons.stars_rounded
                 : Icons.hourglass_top_rounded,
@@ -326,7 +325,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                 ? Colors.green.shade700
                 : AppTheme.accentGold,
             subtitle: (plan.remainingTodayPages) == 0 && diff > 0
-                ? '+$diff صفحة مسبقة'
+                ? '+${diff.toArabic()} صفحة مسبقة'
                 : null,
           ),
         ),
@@ -460,7 +459,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                   _buildTargetBox(
                     context,
                     'بدءاً من',
-                    '${plan.dailyTargetStartPage}',
+                    '${plan.dailyTargetStartPage.toArabic()}',
                     isDoneToday,
                   ),
                   Container(
@@ -476,7 +475,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
                   _buildTargetBox(
                     context,
                     'وصولاً إلى',
-                    '${plan.dailyTargetEndPage}',
+                    '${plan.dailyTargetEndPage.toArabic()}',
                     isDoneToday,
                   ),
                 ],

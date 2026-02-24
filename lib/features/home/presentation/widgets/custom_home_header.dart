@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:ramadan_project/core/utils/hijri_utils.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/governorate.dart';
 
@@ -33,7 +34,7 @@ class CustomHomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                hijriString,
+                hijriString.toArabicNumbers(),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -42,7 +43,7 @@ class CustomHomeHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                gregorianString,
+                gregorianString.toArabicNumbers(),
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(

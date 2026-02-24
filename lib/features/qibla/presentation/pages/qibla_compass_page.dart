@@ -5,8 +5,11 @@ import 'package:flutter_compass/flutter_compass.dart';
 
 import 'package:geolocator/geolocator.dart';
 import 'package:adhan/adhan.dart';
+import 'package:intl/intl.dart' as intl;
+import 'dart:async' show Timer;
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_arrow_painter.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/modern_compass_painter.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_info_card.dart';
 import 'package:ramadan_project/features/qibla/presentation/widgets/qibla_error_widget.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
@@ -25,6 +28,8 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   bool _isLoading = true;
   String? _errorMessage;
   late AnimationController _pulseController;
+  late DateTime _currentTime;
+  Timer? _clockTimer;
 
   @override
   void initState() {
@@ -34,11 +39,24 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+    _currentTime = DateTime.now();
+    _startClockTimer();
     _initializeQibla();
+  }
+
+  void _startClockTimer() {
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _clockTimer?.cancel();
     _pulseController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -124,6 +142,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -190,9 +209,9 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
       builder: (context, snapshot) {
         if (snapshot.hasError || (!snapshot.hasData && kIsWeb)) {
           // Fallback for Web or Desktop where compass sensors are missing
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: SafeArea(
               child: Column(
                 children: [
                   _buildWebManualNotice(),
@@ -219,9 +238,9 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
         final compassHeading = snapshot.data!.heading ?? 0;
         final qiblahOffset = (_qiblahDirection ?? 0) - compassHeading;
 
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: SafeArea(
             child: Column(
               children: [
                 // Main Compass
@@ -250,17 +269,17 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
 
   Widget _buildModernCompass(double heading, double qiblahOffset) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(isDark ? 0.8 : 0.5),
+        color: theme.cardColor.withOpacity(isDark ? 0.8 : 0.5),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+            color: theme.colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
             blurRadius: 30,
             spreadRadius: 5,
             offset: const Offset(0, 10),
@@ -269,82 +288,105 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
       ),
       child: Column(
         children: [
-          // Compass Circle
-          SizedBox(
-            height: 340,
-            width: 340,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Rotating compass ring
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    return Transform.rotate(
-                      angle: -heading * (pi / 180),
-                      child: CustomPaint(
-                        size: const Size(340, 340),
-                        painter: ModernCompassPainter(
-                          pulseValue: _pulseController.value,
+          AspectRatio(
+            aspectRatio: 1 / 1,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.cardColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Layer 1: Ornament Layer (Static)
+                  CustomPaint(
+                    size: const Size(340, 340),
+                    painter: ModernCompassPainter(
+                      pulseValue: _pulseController.value,
+                      isStatic: true,
+                      textColor: theme.colorScheme.onSurface,
+                      backgroundColor: theme.colorScheme.surface,
+                    ),
+                  ),
+
+                  // Layer 2: Rotating Ring (Cardinal Directions)
+                  Transform.rotate(
+                    angle: -heading * (pi / 180),
+                    child: CustomPaint(
+                      size: const Size(340, 340),
+                      painter: ModernCompassPainter(
+                        pulseValue: 0,
+                        isStatic: false,
+                        textColor: theme.colorScheme.onSurface,
+                        backgroundColor: theme.colorScheme.surface,
+                      ),
+                    ),
+                  ),
+
+                  // Layer 3: Qibla Indicator (Only on edge)
+                  Transform.rotate(
+                    angle: qiblahOffset * (pi / 180),
+                    child: CustomPaint(
+                      size: const Size(320, 320),
+                      painter: QiblaArrowPainter(
+                        activeColor: theme.colorScheme.primary,
+                        inactiveColor: theme.colorScheme.primary.withOpacity(
+                          0.2,
                         ),
                       ),
-                    );
-                  },
-                ),
-
-                // Qibla arrow
-                Transform.rotate(
-                  angle: qiblahOffset * (pi / 180),
-                  child: CustomPaint(
-                    size: const Size(120, 120),
-                    painter: QiblaArrowPainter(),
-                  ),
-                ),
-
-                // Center Kaaba icon
-                Container(
-                  height: 64,
-                  width: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.4),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                  ),
+
+                  // Layer 4: Center Time (Fixed)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        intl.DateFormat(
+                          'hh:mm',
+                          'ar',
+                        ).format(_currentTime).toArabicNumbers(),
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Roboto',
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        intl.DateFormat('a', 'ar').format(_currentTime),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.mosque_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-
-          const SizedBox(height: 20),
-
+          const SizedBox(height: 32),
           // Degree indicator
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: theme.colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                color: theme.colorScheme.primary.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -353,16 +395,16 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
               children: [
                 Icon(
                   Icons.phone_android_rounded,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${heading.toStringAsFixed(1)}°',
+                  '${heading.toArabic(fractionDigits: 1)}°',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -380,7 +422,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
           child: QiblaInfoCard(
             icon: Icons.explore_rounded,
             label: 'الاتجاه',
-            value: '${(_qiblahDirection ?? 0).toStringAsFixed(1)}°',
+            value: '${(_qiblahDirection ?? 0).toArabic(fractionDigits: 1)}°',
           ),
         ),
         const SizedBox(width: 12),
@@ -388,7 +430,7 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
           child: QiblaInfoCard(
             icon: Icons.location_on_rounded,
             label: 'المسافة',
-            value: '${distance.toStringAsFixed(0)} كم',
+            value: '${distance.toArabic(fractionDigits: 0)} كم',
           ),
         ),
       ],

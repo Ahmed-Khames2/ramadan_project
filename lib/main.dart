@@ -46,6 +46,7 @@ import 'package:ramadan_project/features/ramadan_worship/domain/repositories/wor
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar_virtue_repository_impl.dart';
 import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
 import 'package:ramadan_project/features/adhkar_virtues/presentation/bloc/adhkar_virtue_cubit.dart';
@@ -236,16 +237,38 @@ class MyApp extends StatelessWidget {
                 AdhkarVirtueCubit(repository: adhkarVirtueRepository),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
+          BlocProvider(create: (context) => QuranSettingsCubit(prefs)),
         ],
-        child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-          builder: (context, themeMode) {
+        child: BlocBuilder<ThemeModeCubit, AppThemeMode>(
+          builder: (context, appThemeMode) {
+            ThemeData theme;
+            ThemeData darkThemeData = AppTheme.darkTheme;
+            ThemeMode flutterThemeMode = ThemeMode.system;
+
+            switch (appThemeMode) {
+              case AppThemeMode.light:
+                theme = AppTheme.lightTheme;
+                flutterThemeMode = ThemeMode.light;
+                break;
+              case AppThemeMode.dark:
+                theme = AppTheme.lightTheme; // Standard light stays same
+                darkThemeData = AppTheme.darkTheme;
+                flutterThemeMode = ThemeMode.dark;
+                break;
+              case AppThemeMode.system:
+                theme = AppTheme.lightTheme;
+                darkThemeData = AppTheme.darkTheme;
+                flutterThemeMode = ThemeMode.system;
+                break;
+            }
+
             return MaterialApp(
               title: 'زاد',
               debugShowCheckedModeBanner: false,
               navigatorKey: NavigationRoutes.navigatorKey,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: themeMode,
+              theme: theme,
+              darkTheme: darkThemeData,
+              themeMode: flutterThemeMode,
               supportedLocales: const [Locale('ar')],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,

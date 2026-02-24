@@ -1,6 +1,5 @@
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 
-
 class Reciters {
   static const List<Reciter> all = [
     Reciter(
@@ -19,9 +18,9 @@ class Reciters {
       arabicName: 'ماهر المعيقلي',
     ),
     Reciter(
-      id: 'ar.abdulbasitmurattal',
-      name: 'Abdul Basit Abdul Samad (Murattal)',
-      arabicName: 'عبد الباسط عبد الصمد (مرتل)',
+      id: 'ar.ahmedajamy',
+      name: 'Ahmed ibn Ali al-Ajamy',
+      arabicName: 'أحمد علي العجمي',
     ),
   ];
 

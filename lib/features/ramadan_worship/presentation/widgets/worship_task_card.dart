@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/ramadan_worship/domain/entities/worship_task.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class WorshipTaskCard extends StatelessWidget {
   final WorshipTask task;
@@ -84,7 +85,7 @@ class WorshipTaskCard extends StatelessWidget {
             color: Colors.red[300],
           ),
           Text(
-            "${task.currentProgress} / ${task.target}",
+            "${task.currentProgress.toArabic()} / ${task.target.toArabic()}",
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(

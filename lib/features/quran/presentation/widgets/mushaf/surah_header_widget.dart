@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quran/quran.dart' as quran;
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class SurahHeaderWidget extends StatelessWidget {
   final int surahNumber;
   final double scale;
+  final MushafReadingMode readingMode;
 
   const SurahHeaderWidget({
     super.key,
     required this.surahNumber,
     this.scale = 1.0,
+    required this.readingMode,
   });
 
   @override
@@ -25,9 +28,11 @@ class SurahHeaderWidget extends StatelessWidget {
             width: MediaQuery.of(context).size.width * 0.85 * scale,
             fit: BoxFit.contain,
             colorFilter: ColorFilter.mode(
-              Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFC5A028)
-                  : const Color(0xFFD4AF37),
+              readingMode == MushafReadingMode.navy
+                  ? const Color(0xFF35355F)
+                  : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFC5A028)
+                        : const Color(0xFFD4AF37)),
               BlendMode.srcIn,
             ),
           ),
@@ -40,6 +45,10 @@ class SurahHeaderWidget extends StatelessWidget {
               quran.getSurahNameArabic(surahNumber),
               style: TextStyle(
                 fontFamily: 'UthmanTaha',
+                fontFamilyFallback: const [
+                  'KFGQPCUthmanTahaNaskhRegular',
+                  'Amiri',
+                ],
                 fontSize: (28 * scale).clamp(22, 42),
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,

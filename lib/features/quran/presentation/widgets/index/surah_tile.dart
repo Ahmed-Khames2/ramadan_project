@@ -4,6 +4,7 @@ import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/domain/entities/surah_info.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
 
 class SurahTile extends StatelessWidget {
@@ -67,7 +68,7 @@ class SurahTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${surah.ayahCount} آيات',
+                          '${surah.ayahCount.toArabic()} آيات',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textGrey,
@@ -97,7 +98,7 @@ class SurahTile extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.arrow_back_ios,
+                Icons.arrow_forward_ios_rounded,
                 size: 16,
                 color: AppTheme.textGrey,
               ),
@@ -113,9 +114,9 @@ class SurahTile extends StatelessWidget {
     int end = quran.getJuzNumber(surah.number, surah.ayahCount);
 
     if (start == end) {
-      return 'الجزء $start';
+      return 'الجزء ${start.toArabic()}';
     } else {
-      return 'الأجزاء $start - ${end - 1}';
+      return 'الأجزاء ${start.toArabic()} - ${end.toArabic()}';
     }
   }
 
@@ -149,7 +150,7 @@ class SurahTile extends StatelessWidget {
             ),
           ),
         Text(
-          '${surah.number}',
+          surah.number.toArabic(),
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,

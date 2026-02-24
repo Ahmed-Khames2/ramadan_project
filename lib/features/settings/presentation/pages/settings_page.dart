@@ -39,9 +39,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: DecorativeBackground(
+    return Scaffold(
+      body: DecorativeBackground(
+        child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [
@@ -178,7 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context) {
-    return BlocBuilder<ThemeModeCubit, ThemeMode>(
+    return BlocBuilder<ThemeModeCubit, AppThemeMode>(
       builder: (context, currentMode) {
         return IslamicCard(
           padding: const EdgeInsets.all(8),
@@ -188,22 +188,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 context,
                 'فاتح',
                 Icons.wb_sunny_rounded,
-                ThemeMode.light,
-                currentMode == ThemeMode.light,
+                AppThemeMode.light,
+                currentMode == AppThemeMode.light,
               ),
               _buildThemeOption(
                 context,
                 'داكن',
                 Icons.nightlight_round,
-                ThemeMode.dark,
-                currentMode == ThemeMode.dark,
+                AppThemeMode.dark,
+                currentMode == AppThemeMode.dark,
               ),
               _buildThemeOption(
                 context,
                 'تلقائي',
                 Icons.brightness_auto_rounded,
-                ThemeMode.system,
-                currentMode == ThemeMode.system,
+                AppThemeMode.system,
+                currentMode == AppThemeMode.system,
               ),
             ],
           ),
@@ -216,7 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     String label,
     IconData icon,
-    ThemeMode mode,
+    AppThemeMode mode,
     bool isSelected,
   ) {
     final color = isSelected ? AppTheme.primaryEmerald : AppTheme.textGrey;

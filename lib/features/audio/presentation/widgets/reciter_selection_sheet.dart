@@ -80,7 +80,6 @@ class _ReciterItem extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          subtitle: Text(reciter.name),
           trailing: isSelected
               ? const Icon(Icons.check_circle, color: Colors.green)
               : null,

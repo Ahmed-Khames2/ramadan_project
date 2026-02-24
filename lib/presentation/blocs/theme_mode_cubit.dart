@@ -1,36 +1,37 @@
-import 'package:flutter/material.dart';
+import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeModeCubit extends Cubit<ThemeMode> {
-  static const String _kThemeModeKey = 'theme_mode';
+class ThemeModeCubit extends Cubit<AppThemeMode> {
+  static const String _kThemeModeKey =
+      'theme_mode_v2'; // Changed key for the new enum
   final SharedPreferences _prefs;
 
-  ThemeModeCubit(this._prefs) : super(ThemeMode.system) {
+  ThemeModeCubit(this._prefs) : super(AppThemeMode.system) {
     _loadThemeMode();
   }
 
   void _loadThemeMode() {
     final savedMode = _prefs.getString(_kThemeModeKey);
     if (savedMode == 'light') {
-      emit(ThemeMode.light);
-    } else if (savedMode == 'dark') {
-      emit(ThemeMode.dark);
+      emit(AppThemeMode.light);
+    } else if (savedMode == 'dark' || savedMode == 'navy') {
+      emit(AppThemeMode.dark); // Redirect navy users to dark
     } else {
-      emit(ThemeMode.system);
+      emit(AppThemeMode.system);
     }
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
+  Future<void> setThemeMode(AppThemeMode mode) async {
     String modeStr;
     switch (mode) {
-      case ThemeMode.light:
+      case AppThemeMode.light:
         modeStr = 'light';
         break;
-      case ThemeMode.dark:
+      case AppThemeMode.dark:
         modeStr = 'dark';
         break;
-      case ThemeMode.system:
+      case AppThemeMode.system:
         modeStr = 'system';
         break;
     }

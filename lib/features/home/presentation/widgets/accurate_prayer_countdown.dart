@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/features/prayer_times/domain/entities/prayer_time.dart';
 
 class AccuratePrayerCountdown extends StatefulWidget {
@@ -136,7 +137,9 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                     ),
                     const SizedBox(height: AppTheme.spacing2),
                     Text(
-                      DateFormat.jm().format(_nextPrayer!.time),
+                      DateFormat.jm(
+                        'ar',
+                      ).format(_nextPrayer!.time).toArabicNumbers(),
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -154,7 +157,7 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'متبقي $hours ساعة و $minutes دقيقة',
+                          'متبقي ${hours.toArabic()} ساعة و ${minutes.toArabic()} دقيقة',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

@@ -15,6 +15,11 @@ class BasmalaWidget extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'AThuluthRegular',
+          fontFamilyFallback: const [
+            'KFGQPCUthmanTahaNaskhRegular',
+            'UthmanTaha',
+            'Amiri',
+          ],
           fontSize: (38 * scale).clamp(28, 52),
           height: 1.4,
           color: Theme.of(context).colorScheme.onSurface,

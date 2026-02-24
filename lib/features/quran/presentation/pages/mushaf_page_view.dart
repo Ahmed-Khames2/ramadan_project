@@ -1,15 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quran/quran.dart' as quran;
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
+import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/mushaf/ayah_context_menu.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/continuous_mushaf_widget.dart';
-import 'package:ramadan_project/core/widgets/error_dialog.dart';
 import 'package:ramadan_project/features/audio/presentation/bloc/audio_bloc.dart';
-import 'package:ramadan_project/core/widgets/common_widgets.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/reciter_picker_sheet.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/mushaf/page_header_widget.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/bookmarks_sheet.dart';
+import 'package:ramadan_project/features/favorites/presentation/ayah_interaction_sheet.dart';
+import 'package:ramadan_project/features/quran/presentation/widgets/quran_index_drawer.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
@@ -33,12 +40,14 @@ class MushafPageView extends StatefulWidget {
 
 class _MushafPageViewState extends State<MushafPageView> {
   late int _currentPage;
-  double _fontScale = 1.0;
   late Future<void> _initFuture;
   late PageController _portraitController;
   static const int _totalPages = 604;
-  bool _showControls = true;
+  bool _showControls = false;
   Timer? _hideTimer;
+  bool _isCurrentPageBookmarked = false;
+  int? _selectedAyah;
+  bool _isInitialEntry = true;
 
   @override
   void initState() {
@@ -49,120 +58,63 @@ class _MushafPageViewState extends State<MushafPageView> {
     _portraitController = PageController(
       initialPage: _portraitIndexForPage(_currentPage),
     );
-    _resetHideTimer();
+
+    // Detect if audio is already active to show controls/mini-player correctly
+    final audioState = context.read<AudioBloc>().state;
+    final isCurrentlyActive =
+        audioState.status != AudioStatus.initial || audioState.lastAyah != null;
+
+    if (isCurrentlyActive) {
+      _isInitialEntry = false;
+    }
   }
 
   Future<void> _initialize() async {
-    await context.read<QuranRepository>().init();
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _fontScale = prefs.getDouble('mushaf_font_scale') ?? 1.0;
-    });
+    final repo = context.read<QuranRepository>();
+    await repo.init();
+    _refreshBookmarkState();
 
-    // Show instructional message only once
-    final hasShownInstruction =
-        prefs.getBool('mushaf_instruction_shown') ?? false;
-    if (!hasShownInstruction) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showMushafInstruction();
-        prefs.setBool('mushaf_instruction_shown', true);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    context.read<QuranSettingsCubit>().updateForAppBrightness(isDark);
+
+    final initialSurah = quran.getPageData(_currentPage).first['surah'] as int;
+    repo.preloadTafsir(initialSurah);
+  }
+
+  void _refreshBookmarkState() {
+    final progress = context.read<QuranRepository>().getProgress();
+    final bookmarks = progress?.bookmarks ?? [];
+    if (mounted) {
+      setState(() {
+        _isCurrentPageBookmarked = bookmarks.contains(_currentPage);
       });
     }
-
-    // Preload initial page's surah tafsir
-    final initialSurah = quran.getPageData(_currentPage).first['surah'] as int;
-    context.read<QuranRepository>().preloadTafsir(initialSurah);
   }
 
-  void _resetHideTimer() {
-    _cancelHideTimer();
-    _hideTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted && _showControls) {
-        final audioState = context.read<AudioBloc>().state;
-        if (audioState.status == AudioStatus.playing) {
-          setState(() {
-            _showControls = false;
-          });
-        }
-      }
-    });
-  }
-
-  void _cancelHideTimer() {
-    _hideTimer?.cancel();
-  }
-
-  void _toggleControls() {
-    setState(() {
-      _showControls = !_showControls;
-    });
-    if (_showControls) {
-      _resetHideTimer();
+  Future<void> _toggleBookmark() async {
+    final repo = context.read<QuranRepository>();
+    if (_isCurrentPageBookmarked) {
+      await repo.removeBookmark(_currentPage);
     } else {
-      _cancelHideTimer();
+      await repo.saveBookmark(_currentPage);
     }
-  }
-
-  void _showMushafInstruction() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.info_outline, color: AppTheme.primaryEmerald),
-            SizedBox(width: 12),
-            Text(
-              'تعلم الاستخدام',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'يمكنك الضغط على أي آية لعرض التفسير وسماع التلاوة بصوت القارئ المفضل لديك.',
-          textAlign: TextAlign.right,
-          style: TextStyle(fontFamily: 'Cairo', fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'حسناً',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryEmerald,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    _refreshBookmarkState();
   }
 
   @override
   void dispose() {
-    _cancelHideTimer();
+    _hideTimer?.cancel();
     WakelockPlus.disable();
     _portraitController.dispose();
     super.dispose();
   }
 
-  void _updateFontScale(double scale) async {
-    setState(() {
-      _fontScale = scale;
-    });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('mushaf_font_scale', scale);
+  void _updateFontScale(double scale) {
+    context.read<QuranSettingsCubit>().updateFontScale(scale);
   }
 
   Future<void> _saveBookmark(int page) async {
     try {
-      // Get page data to find the first Ayah and its details
       final pageData = await context.read<QuranRepository>().getPage(page);
       if (pageData.ayahs.isNotEmpty) {
         final firstAyah = pageData.ayahs.first;
@@ -171,7 +123,6 @@ class _MushafPageViewState extends State<MushafPageView> {
           firstAyah.ayahNumber,
         );
 
-        // Save complete progress to repository
         await context.read<QuranRepository>().saveLastRead(
           page,
           firstAyah.ayahNumber,
@@ -185,317 +136,98 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   int _portraitIndexForPage(int page) => page - 1;
-
   int _pageForPortraitIndex(int index) => index + 1;
 
   int _getPageFromGlobalId(int globalId) {
-    int currentGlobal = 0;
-    for (int s = 1; s <= 114; s++) {
-      int vCount = quran.getVerseCount(s);
-      if (currentGlobal + vCount >= globalId) {
-        int v = globalId - currentGlobal;
-        return quran.getPageNumber(s, v);
-      }
-      currentGlobal += vCount;
+    return context.read<QuranRepository>().getPageFromGlobalId(globalId);
+  }
+
+  void _cycleReadingMode(bool isAppDark) {
+    context.read<QuranSettingsCubit>().cycleReadingMode(isAppDark);
+  }
+
+  Color _getReadingModeBackground(MushafReadingMode mode) {
+    switch (mode) {
+      case MushafReadingMode.white:
+        return AppTheme.surfaceWhite;
+      case MushafReadingMode.beige:
+        return AppTheme.mushafBeige;
+      case MushafReadingMode.dark:
+        return AppTheme.surfaceDark;
+      case MushafReadingMode.navy:
+        return AppTheme.mushafNavy;
     }
-    return 1;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocListener<AudioBloc, AudioState>(
-      listener: (context, state) {
-        if (state.status == AudioStatus.error && state.errorMessage != null) {
-          ErrorDialog.show(context, message: state.errorMessage!);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: DecorativeBackground(
-          child: Stack(
-            children: [
-              // Content
-              GestureDetector(
-                onTap: _toggleControls,
-                behavior: HitTestBehavior.opaque,
-                child: SafeArea(
-                  bottom: false,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: FutureBuilder(
-                      future: _initFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppTheme.primaryEmerald,
-                            ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Text(
-                              "خطأ في تحميل البيانات: ${snapshot.error}",
-                            ),
-                          );
-                        }
+    final isAppDark = theme.brightness == Brightness.dark;
 
-                        return BlocListener<AudioBloc, AudioState>(
-                          listenWhen: (previous, current) =>
-                              previous.currentAyah != current.currentAyah &&
-                              current.currentAyah != null &&
-                              current.status == AudioStatus.playing,
-                          listener: (context, state) {
-                            final audioPage = _getPageFromGlobalId(
-                              state.currentAyah!,
-                            );
+    return BlocBuilder<QuranSettingsCubit, QuranSettingsState>(
+      builder: (context, settings) {
+        final bgColor = _getReadingModeBackground(settings.readingMode);
 
-                            if (audioPage != _currentPage) {
-                              // Only auto-flip if it's the next page or within reasonable range
-                              if ((audioPage - _currentPage).abs() <= 1) {
-                                _portraitController.animateToPage(
-                                  _portraitIndexForPage(audioPage),
-                                  duration: const Duration(milliseconds: 800),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            }
-                          },
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: PageView.builder(
-                              key: ValueKey('portrait_${widget.initialPage}'),
-                              controller: _portraitController,
-                              itemCount: _totalPages,
-                              reverse: false,
-                              onPageChanged: (index) {
-                                _currentPage = _pageForPortraitIndex(index);
-                                setState(() {}); // Update title
-
-                                // Preload tafsir for the new surah
-                                final currentSurah =
-                                    quran
-                                            .getPageData(_currentPage)
-                                            .first['surah']
-                                        as int;
-                                context.read<QuranRepository>().preloadTafsir(
-                                  currentSurah,
-                                );
-
-                                if (widget.shouldSaveProgress) {
-                                  _saveBookmark(_currentPage);
-                                }
-                                widget.onPageChanged?.call(_currentPage);
-                              },
-                              itemBuilder: (context, index) {
-                                return ContinuousMushafPageWidget(
-                                  pageNumber: _pageForPortraitIndex(index),
-                                  fontScale: _fontScale,
-                                  initialSurah: widget.initialSurah,
-                                  initialAyah: widget.initialAyah,
-                                  onShowControls: () {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          if (mounted && !_showControls) {
-                                            setState(
-                                              () => _showControls = true,
-                                            );
-                                          }
-                                          _resetHideTimer();
-                                        });
-                                  },
-                                  onHideControls: () {
-                                    if (mounted && _showControls) {
-                                      setState(() => _showControls = false);
-                                      _cancelHideTimer();
-                                    }
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              // Top Floating Back Button
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                top: _showControls ? 40 : -60,
-                right: 20,
-                child: FloatingActionButton.small(
-                  onPressed: () => Navigator.of(context).pop(),
-                  backgroundColor: theme.brightness == Brightness.dark
-                      ? theme.colorScheme.surface
-                      : Colors.white,
-                  foregroundColor: AppTheme.primaryEmerald,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: theme.brightness == Brightness.dark
-                        ? BorderSide(
-                            color: AppTheme.primaryEmerald.withValues(
-                              alpha: 0.3,
-                            ),
-                            width: 1,
-                          )
-                        : BorderSide.none,
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded),
-                ),
-              ),
-              // Floating Zoom Controls
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                right: _showControls ? 20 : -60,
-                top: MediaQuery.of(context).size.height * 0.4,
-                child: Column(
-                  children: [
-                    FloatingActionButton.small(
-                      heroTag: 'zoom_in',
-                      onPressed: () =>
-                          _updateFontScale((_fontScale + 0.1).clamp(0.8, 2.5)),
-                      backgroundColor: theme.brightness == Brightness.dark
-                          ? theme.colorScheme.surface
-                          : Colors.white,
-                      foregroundColor: AppTheme.primaryEmerald,
-                      elevation: 4,
-                      child: const Icon(Icons.add_rounded),
-                    ),
-                    const SizedBox(height: 12),
-                    FloatingActionButton.small(
-                      heroTag: 'zoom_out',
-                      onPressed: () =>
-                          _updateFontScale((_fontScale - 0.1).clamp(0.8, 2.5)),
-                      backgroundColor: theme.brightness == Brightness.dark
-                          ? theme.colorScheme.surface
-                          : Colors.white,
-                      foregroundColor: AppTheme.primaryEmerald,
-                      elevation: 4,
-                      child: const Icon(Icons.remove_rounded),
-                    ),
-                  ],
-                ),
-              ),
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                bottom: _showControls ? 30 : -250,
-                left: 20,
-                right: 20,
-                child: _buildBottomAudioBar(theme),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomAudioBar(ThemeData theme) {
-    return BlocBuilder<AudioBloc, AudioState>(
-      builder: (context, state) {
-        if (state.status == AudioStatus.initial && state.lastAyah == null) {
-          return const SizedBox.shrink();
-        }
-
-        final isPlaying = state.status == AudioStatus.playing;
-        final isBuffering = state.status == AudioStatus.loading;
-        final currentPosition = state.position;
-        final totalDuration = state.duration;
-
-        return Material(
-          color: Colors.transparent,
-          child: Listener(
-            onPointerDown: (_) => _resetHideTimer(),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: theme.brightness == Brightness.dark
-                      ? [
-                          theme.colorScheme.surface.withValues(alpha: 0.98),
-                          theme.colorScheme.surface.withValues(alpha: 0.92),
-                        ]
-                      : [
-                          AppTheme.primaryEmerald.withValues(alpha: 0.95),
-                          AppTheme.primaryEmerald.withValues(alpha: 0.85),
-                        ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-                border: Border.all(
-                  color: theme.brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppTheme.accentGold.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<AudioBloc, AudioState>(
+              listenWhen: (previous, current) =>
+                  previous.currentAyah != current.currentAyah &&
+                  current.currentAyah != null,
+              listener: (context, state) {
+                final audioPage = _getPageFromGlobalId(state.currentAyah!);
+                if (audioPage != _currentPage &&
+                    _portraitController.hasClients) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    if ((audioPage - _currentPage).abs() <= 1) {
+                      _portraitController.animateToPage(
+                        _portraitIndexForPage(audioPage),
+                        duration: const Duration(milliseconds: 650),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _portraitController.jumpToPage(
+                        _portraitIndexForPage(audioPage),
+                      );
+                    }
+                  });
+                }
+              },
+            ),
+            BlocListener<AudioBloc, AudioState>(
+              listener: (context, state) {
+                if (state.status == AudioStatus.error &&
+                    state.errorMessage != null) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+                }
+              },
+            ),
+          ],
+          child: Scaffold(
+            drawer: QuranIndexDrawer(
+              onPageSelected: (page) {
+                _portraitController.jumpToPage(_portraitIndexForPage(page));
+              },
+              onReadingModeToggle: () => _cycleReadingMode(isAppDark),
+              onFontScaleChanged: _updateFontScale,
+              onBookmarkListTap: _showBookmarksSheet,
+              currentFontScale: settings.fontScale,
+              readingMode: settings.readingMode,
+            ),
+            backgroundColor: bgColor,
+            body: SafeArea(
+              bottom: false,
+              child: Stack(
                 children: [
-                  Text(
-                    _formatDuration(currentPosition),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                  Expanded(
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 2,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 5,
-                        ),
-                        activeTrackColor: AppTheme.accentGold,
-                        inactiveTrackColor: Colors.white24,
-                        thumbColor: AppTheme.accentGold,
-                      ),
-                      child: Slider(
-                        value: currentPosition.inMilliseconds.toDouble().clamp(
-                          0.0,
-                          totalDuration.inMilliseconds.toDouble() > 0
-                              ? totalDuration.inMilliseconds.toDouble()
-                              : 1.0,
-                        ),
-                        max: totalDuration.inMilliseconds.toDouble() > 0
-                            ? totalDuration.inMilliseconds.toDouble()
-                            : 1.0,
-                        onChanged: (value) {
-                          context.read<AudioBloc>().add(
-                            AudioSeek(Duration(milliseconds: value.toInt())),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  Text(
-                    _formatDuration(totalDuration),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildCompactIconButton(
-                    icon: Icons.close_rounded,
-                    onPressed: () =>
-                        context.read<AudioBloc>().add(const AudioStop()),
-                    size: 20,
-                  ),
+                  _buildMainContent(bgColor, settings),
+                  if (_selectedAyah != null)
+                    _buildAyahContextMenuOverlay(context, settings.readingMode),
+                  _buildBottomAudioBar(bgColor, settings.readingMode),
+                  _buildMiniPlayer(settings.readingMode),
+                  _buildTopHeader(bgColor),
                 ],
               ),
             ),
@@ -505,30 +237,579 @@ class _MushafPageViewState extends State<MushafPageView> {
     );
   }
 
-  Widget _buildCompactIconButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-    String? tooltip,
-    Color color = Colors.white70,
-    double size = 28,
-  }) {
-    return Tooltip(
-      message: tooltip ?? '',
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: color, size: size),
+  Widget _buildMainContent(Color bgColor, QuranSettingsState settings) {
+    return GestureDetector(
+      onTap: () {
+        if (_selectedAyah != null) {
+          setState(() => _selectedAyah = null);
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: FutureBuilder(
+          future: _initFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryEmerald,
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text("خطأ في تحميل البيانات: ${snapshot.error}"),
+              );
+            }
+
+            return PageView.builder(
+              key: ValueKey('portrait_${widget.initialPage}'),
+              controller: _portraitController,
+              itemCount: _totalPages,
+              reverse: false,
+              onPageChanged: _onPageChanged,
+              itemBuilder: (context, index) {
+                return ContinuousMushafPageWidget(
+                  pageNumber: _pageForPortraitIndex(index),
+                  fontScale: settings.fontScale,
+                  backgroundColor: bgColor,
+                  initialSurah: widget.initialSurah,
+                  initialAyah: widget.initialAyah,
+                  isBookmarked: _currentPage == _pageForPortraitIndex(index)
+                      ? _isCurrentPageBookmarked
+                      : false,
+                  onBookmarkTap: _toggleBookmark,
+                  readingMode: settings.readingMode,
+                  selectedAyahId: _selectedAyah,
+                  onAyahTap: (ayah) {
+                    setState(() => _selectedAyah = ayah.globalAyahNumber);
+                  },
+                  onShowControls: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && !_showControls) {
+                        setState(() => _showControls = true);
+                      }
+                    });
+                  },
+                  onHideControls: () {
+                    final audioState = context.read<AudioBloc>().state;
+                    final isAudioActive =
+                        audioState.status == AudioStatus.playing ||
+                        audioState.status == AudioStatus.loading;
+
+                    if (mounted &&
+                        _showControls &&
+                        _selectedAyah == null &&
+                        !isAudioActive) {
+                      setState(() => _showControls = false);
+                    }
+                  },
+                  onSearchTap: () {},
+                  onMenuTap: () {
+                    // Fix: Use the scaffold key or builder context if needed
+                    // but Scaffold.of(context) works if called within a builder down the tree.
+                    // Here we are inside MushafPageView's build, but down in a PageView.
+                    Scaffold.of(context).openDrawer();
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
+  void _onPageChanged(int index) {
+    _currentPage = _pageForPortraitIndex(index);
+    setState(() {
+      _selectedAyah = null;
+    });
+
+    final currentSurah = quran.getPageData(_currentPage).first['surah'] as int;
+    context.read<QuranRepository>().preloadTafsir(currentSurah);
+
+    if (widget.shouldSaveProgress) {
+      _saveBookmark(_currentPage);
+    }
+    _refreshBookmarkState();
+    widget.onPageChanged?.call(_currentPage);
+  }
+
+  Widget _buildBottomAudioBar(Color bgColor, MushafReadingMode readingMode) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      bottom: _showControls ? 20 : -250,
+      left: 16,
+      right: 16,
+      child: _AudioBar(
+        backgroundColor: bgColor,
+        readingMode: readingMode,
+        onClose: () {
+          setState(() {
+            _showControls = false;
+            _isInitialEntry = false;
+          });
+          context.read<AudioBloc>().add(const AudioStop());
+        },
+        onCollapse: () => setState(() {
+          _showControls = false;
+          _isInitialEntry = false;
+        }),
+      ),
+    );
+  }
+
+  Widget _buildMiniPlayer(MushafReadingMode readingMode) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
+    return BlocBuilder<AudioBloc, AudioState>(
+      builder: (context, state) {
+        final bool isAudioActive =
+            state.status != AudioStatus.initial || state.lastAyah != null;
+
+        if (!isAudioActive || _showControls || _isInitialEntry) {
+          return const SizedBox.shrink();
+        }
+
+        final isPlaying = state.status == AudioStatus.playing;
+        return AnimatedPositioned(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          bottom: 20,
+          left: 20,
+          child: GestureDetector(
+            onTap: () => setState(() {
+              _showControls = true;
+              _isInitialEntry = false;
+            }),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: accentColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.4),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: isPlaying ? 28 : 32,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopHeader(Color bgColor) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      top: 0,
+      left: 0,
+      right: 0,
+      child: FutureBuilder<QuranPage>(
+        future: context.read<QuranRepository>().getPage(_currentPage),
+        builder: (context, snapshot) {
+          final pageData = snapshot.data;
+          return PageHeaderWidget(
+            page:
+                pageData ??
+                QuranPage(
+                  pageNumber: _currentPage,
+                  ayahs: [],
+                  surahName: '',
+                  juzNumber: 1,
+                ),
+            backgroundColor: bgColor,
+            onSearchTap: () {},
+            onMenuTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            readingMode: context.read<QuranSettingsCubit>().state.readingMode,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAyahContextMenuOverlay(
+    BuildContext context,
+    MushafReadingMode readingMode,
+  ) {
+    if (_selectedAyah == null) return const SizedBox.shrink();
+
+    final pageData = quran.getPageData(_currentPage);
+    Ayah? selectedAyahObj;
+
+    for (var s in pageData) {
+      final surahNum = s['surah'] as int;
+      final start = s['start'] as int;
+      final end = s['end'] as int;
+
+      int currentGlobal = 0;
+      for (int i = 1; i < surahNum; i++) {
+        currentGlobal += quran.getVerseCount(i);
+      }
+
+      if (_selectedAyah! >= currentGlobal + start &&
+          _selectedAyah! <= currentGlobal + end) {
+        final verseNum = _selectedAyah! - currentGlobal;
+        selectedAyahObj = Ayah(
+          surahNumber: surahNum,
+          ayahNumber: verseNum,
+          text: quran.getVerse(surahNum, verseNum),
+          surahName: quran.getSurahNameArabic(surahNum),
+          pageNumber: _currentPage,
+          globalAyahNumber: _selectedAyah!,
+          isSajda: quran.isSajdahVerse(surahNum, verseNum),
+        );
+        break;
+      }
+    }
+
+    if (selectedAyahObj == null) return const SizedBox.shrink();
+
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _selectedAyah = null),
+          child: Container(color: Colors.black.withOpacity(0.4)),
+        ),
+        AyahContextMenu(
+          ayah: selectedAyahObj,
+          onDismiss: () => setState(() => _selectedAyah = null),
+          onTafsir: (ayah) {
+            setState(() => _selectedAyah = null);
+            _showTafsirSheet(ayah, readingMode);
+          },
+          onPlay: (ayah) {
+            setState(() => _selectedAyah = null);
+            _playAyah(ayah);
+          },
+          onPlaySequential: (ayah) {
+            setState(() => _selectedAyah = null);
+            _autoPlayFrom(ayah);
+          },
+          onPlaySurah: (ayah) {
+            setState(() => _selectedAyah = null);
+            _playSurah(ayah);
+          },
+          onShare: (ayah) {
+            setState(() => _selectedAyah = null);
+            _shareAyah(ayah);
+          },
+          readingMode: readingMode,
+        ),
+      ],
+    );
+  }
+
+  void _playAyah(Ayah ayah) {
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
+    final globalId = ayah.globalAyahNumber;
+    if (globalId > 0) {
+      context.read<AudioBloc>().add(AudioPlayAyah(globalId));
+    }
+  }
+
+  void _playSurah(Ayah ayah) {
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
+    final surah = ayah.surahNumber;
+    final endAyah = quran.getVerseCount(surah);
+
+    final List<int> globalIds = [];
+    int globalBase = 0;
+    for (int s = 1; s < surah; s++) {
+      globalBase += quran.getVerseCount(s);
+    }
+
+    for (int i = 1; i <= endAyah; i++) {
+      globalIds.add(globalBase + i);
+    }
+
+    if (globalIds.isNotEmpty) {
+      context.read<AudioBloc>().add(AudioPlayRange(globalIds));
+    }
+  }
+
+  void _autoPlayFrom(Ayah ayah) {
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
+    final surah = ayah.surahNumber;
+    final startAyah = ayah.ayahNumber;
+    final endAyah = quran.getVerseCount(surah);
+
+    final List<int> globalIds = [];
+    int globalBase = 0;
+    for (int s = 1; s < surah; s++) {
+      globalBase += quran.getVerseCount(s);
+    }
+
+    for (int i = startAyah; i <= endAyah; i++) {
+      globalIds.add(globalBase + i);
+    }
+
+    if (globalIds.isNotEmpty) {
+      context.read<AudioBloc>().add(AudioPlayRange(globalIds));
+    }
+  }
+
+  void _shareAyah(Ayah ayah) {
+    final text = quran.getVerse(
+      ayah.surahNumber,
+      ayah.ayahNumber,
+      verseEndSymbol: true,
+    );
+    final shareText =
+        '$text\n\n[${quran.getSurahNameArabic(ayah.surahNumber)} : ${ayah.ayahNumber}]';
+    Share.share(shareText);
+  }
+
+  void _showTafsirSheet(Ayah ayah, MushafReadingMode readingMode) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AyahInteractionSheet(
+        surahNumber: ayah.surahNumber,
+        ayahNumber: ayah.ayahNumber,
+        ayahId: ayah.globalAyahNumber,
+        readingMode: readingMode,
+      ),
+    );
+  }
+
+  void _showBookmarksSheet() {
+    BookmarksSheet.show(context);
+  }
+}
+
+// Extracted audio bar widget
+class _AudioBar extends StatelessWidget {
+  final Color backgroundColor;
+  final VoidCallback onClose;
+  final VoidCallback onCollapse;
+  final MushafReadingMode readingMode;
+
+  const _AudioBar({
+    required this.backgroundColor,
+    required this.onClose,
+    required this.onCollapse,
+    required this.readingMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = backgroundColor;
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+    final borderColor = accentColor.withValues(alpha: 0.3);
+    final iconFg = isDark ? Colors.white70 : Colors.black87;
+
+    return BlocBuilder<AudioBloc, AudioState>(
+      builder: (context, state) {
+        if (state.status == AudioStatus.initial && state.lastAyah == null) {
+          return const SizedBox.shrink();
+        }
+
+        final isPlaying = state.status == AudioStatus.playing;
+        final isBuffering = state.status == AudioStatus.loading;
+        final reciterName = state.selectedReciter.arabicName;
+
+        return Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: borderColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildReciterPill(context, reciterName),
+                const SizedBox(height: 12),
+                _buildControls(context, isPlaying, isBuffering, iconFg),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReciterPill(BuildContext context, String reciterName) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
+    return InkWell(
+      onTap: () => ReciterPickerSheet.show(context),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              reciterName,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: accentColor,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: accentColor,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControls(
+    BuildContext context,
+    bool isPlaying,
+    bool isBuffering,
+    Color iconFg,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _compactBtn(
+          icon: Icons.close_rounded,
+          color: iconFg.withOpacity(0.6),
+          onTap: () {
+            context.read<AudioBloc>().add(const AudioStop());
+            onClose();
+          },
+          size: 20,
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _compactBtn(
+              icon: Icons.skip_next_rounded,
+              onTap: () => context.read<AudioBloc>().add(const AudioSkipNext()),
+              color: iconFg,
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            _buildPlayButton(context, isPlaying, isBuffering),
+            const SizedBox(width: 16),
+            _compactBtn(
+              icon: Icons.skip_previous_rounded,
+              onTap: () =>
+                  context.read<AudioBloc>().add(const AudioSkipPrevious()),
+              color: iconFg,
+              size: 24,
+            ),
+          ],
+        ),
+        _compactBtn(
+          icon: Icons.keyboard_arrow_down_rounded,
+          color: iconFg.withOpacity(0.6),
+          onTap: onCollapse,
+          size: 22,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayButton(
+    BuildContext context,
+    bool isPlaying,
+    bool isBuffering,
+  ) {
+    final accentColor = readingMode == MushafReadingMode.dark
+        ? AppTheme.accentGold
+        : AppTheme.primaryEmerald;
+
+    return GestureDetector(
+      onTap: () {
+        final bloc = context.read<AudioBloc>();
+        isPlaying
+            ? bloc.add(const AudioPause())
+            : bloc.add(const AudioResume());
+      },
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
+        child: isBuffering
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Icon(
+                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+      ),
+    );
+  }
+
+  Widget _compactBtn({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color color = Colors.white70,
+    double size = 24,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, color: color, size: size),
+      ),
+    );
   }
 }

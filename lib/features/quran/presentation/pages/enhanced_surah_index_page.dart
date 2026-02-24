@@ -10,14 +10,15 @@ import 'package:ramadan_project/presentation/widgets/custom_search_bar.dart';
 import '../widgets/index/surah_tile.dart';
 import '../widgets/index/search_result_tile.dart';
 import '../widgets/index/surah_filter_chip.dart';
-import '../widgets/index/juz_picker.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/presentation/pages/mushaf_page_view.dart';
-import 'package:ramadan_project/features/favorites/presentation/pages/favorites_page.dart';
+// import 'package:ramadan_project/features/favorites/presentation/pages/favorites_page.dart';
 
 class EnhancedSurahIndexPage extends StatefulWidget {
-  const EnhancedSurahIndexPage({super.key});
+  final bool showBackButton;
+  const EnhancedSurahIndexPage({super.key, this.showBackButton = false});
 
   @override
   State<EnhancedSurahIndexPage> createState() => EnhancedSurahIndexPageState();
@@ -38,7 +39,7 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   final Map<int, int> _juzIndexMap = {};
 
   String? _selectedRevelationType; // null, 'Makkah', 'Madinah'
-  int? _selectedJuz; // 1-30
+  final Set<int> _collapsedJuzs = {};
 
   // Progress Tracking
   int? _lastReadSurah;
@@ -64,6 +65,7 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         if (_lastReadSurah != null) {
           _lastReadSurahName = quran.getSurahNameArabic(_lastReadSurah!);
         }
+        _updateDisplayList(); // Ensure list is updated after progress is loaded
       });
     }
   }
@@ -81,6 +83,10 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     }
 
     // 2. Build the display list with Dividers
+    if (_lastReadPage != null && _searchController.text.isEmpty) {
+      _displayList.add('CONTINUE_READING_BANNER');
+    }
+
     int currentJuzTracker = 0;
 
     for (var surah in filteredSurahs) {
@@ -90,7 +96,11 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         _displayList.add(startJuz); // Integer indicates a Header
         currentJuzTracker = startJuz;
       }
-      _displayList.add(surah);
+
+      // Only add surah if its parent Juz is not collapsed
+      if (!_collapsedJuzs.contains(startJuz)) {
+        _displayList.add(surah);
+      }
     }
 
     // 3. Build the Scrolling Map (Juz -> Index)
@@ -123,11 +133,15 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     }
   }
 
-  Future<void> _scrollToJuz(int juz) async {
-    final index = _juzIndexMap[juz];
-    if (index != null) {
-      _itemScrollController.jumpTo(index: index);
-    }
+  void _toggleJuz(int juz) {
+    setState(() {
+      if (_collapsedJuzs.contains(juz)) {
+        _collapsedJuzs.remove(juz);
+      } else {
+        _collapsedJuzs.add(juz);
+      }
+      _updateDisplayList();
+    });
   }
 
   List<SurahInfo> _getSurahList() {
@@ -161,113 +175,132 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('فهرس القرآن'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_rounded),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavoritesPage()),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        body: DecorativeBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildFixedHeader(theme),
+                Expanded(
+                  child: BlocBuilder<SearchBloc, SearchState>(
+                    builder: (context, state) {
+                      if (state is SearchLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.primary,
+                          ),
+                        );
+                      }
+
+                      if (state is SearchLoaded &&
+                          state.query.trim().isNotEmpty) {
+                        if (state.results.isEmpty) {
+                          return _buildEmptySearchState(state.query, theme);
+                        }
+                        return ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppTheme.spacing4,
+                            AppTheme.spacing4,
+                            AppTheme.spacing4,
+                            110, // Added padding for floating navbar
+                          ),
+                          itemCount: state.results.length,
+                          itemBuilder: (context, index) => SearchResultTile(
+                            result: state.results[index],
+                            query: state.query,
+                          ),
+                        );
+                      }
+
+                      return _buildSurahList();
+                    },
+                  ),
+                ),
+              ],
             ),
-            tooltip: 'المفضلة',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixedHeader(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor, // Ensure unified fixed background
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      body: DecorativeBackground(
-        child: Column(
-          children: [
-            _buildSearchSection(theme),
-            if (_searchController.text.isEmpty) _buildFilters(),
-            Expanded(
-              child: BlocBuilder<SearchBloc, SearchState>(
-                builder: (context, state) {
-                  if (state is SearchLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
-                      ),
-                    );
-                  }
-
-                  if (state is SearchLoaded && state.query.trim().isNotEmpty) {
-                    if (state.results.isEmpty) {
-                      return _buildEmptySearchState(state.query, theme);
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppTheme.spacing4,
-                        AppTheme.spacing4,
-                        AppTheme.spacing4,
-                        110, // Added padding for floating navbar
-                      ),
-                      itemCount: state.results.length,
-                      itemBuilder: (context, index) => SearchResultTile(
-                        result: state.results[index],
-                        query: state.query,
-                        onReturn: _loadProgress,
-                      ),
-                    );
-                  }
-
-                  return _buildSurahList();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      floatingActionButton: _lastReadPage != null
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 90), // Lift above navbar
-              child: FloatingActionButton.extended(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MushafPageView(
-                        initialPage: _lastReadPage!,
-                        initialSurah: _lastReadSurah,
-                      ),
-                    ),
-                  );
-                  _loadProgress(); // Refresh on return
-                },
-                backgroundColor: AppTheme.primaryEmerald,
-                icon: const Icon(Icons.history_edu, color: Colors.white),
-                label: Text(
-                  'متابعة القراءة: $_lastReadSurahName',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (widget.showBackButton)
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: AppTheme.primaryEmerald,
                   ),
+                  onPressed: () => Navigator.pop(context),
                 ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'فهرس القرآن',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryEmerald,
+                      height: 1.2,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  Text(
+                    'ابحث عن السور والآيات',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textGrey.withValues(alpha: 0.7),
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ],
               ),
-            )
-          : null,
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const OrnamentalDivider(width: 40),
+          const SizedBox(height: 16),
+          _buildSearchSection(theme),
+          if (_searchController.text.isEmpty) _buildFilters(),
+        ],
+      ),
     );
   }
 
   Widget _buildSearchSection(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppTheme.spacing4,
-        AppTheme.spacing2,
-        AppTheme.spacing4,
-        AppTheme.spacing4,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(AppTheme.spacing8),
-          bottomRight: Radius.circular(AppTheme.spacing8),
-        ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: AppTheme.spacing2,
       ),
       child: CustomSearchBar(
         controller: _searchController,
         hintText: 'ابحث عن سورة أو آية...',
+        showBorder: true,
+        showShadow: false,
         onChanged: (value) {
           context.read<SearchBloc>().add(SearchQueryChanged(value));
           setState(() {});
@@ -281,61 +314,112 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     );
   }
 
-  Widget _buildFilters() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacing4,
-        vertical: AppTheme.spacing3,
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        reverse: true,
+  Widget _buildContinueReadingBanner(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: IslamicCard(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MushafPageView(
+                initialPage: _lastReadPage!,
+                initialSurah: _lastReadSurah,
+              ),
+            ),
+          );
+          _loadProgress();
+        },
+        padding: const EdgeInsets.all(16),
+        color: AppTheme.primaryEmerald.withOpacity(0.05),
         child: Row(
           children: [
-            SurahFilterChip(
-              label: 'الكل',
-              isSelected: _selectedRevelationType == null,
-              onTap: () {
-                setState(() {
-                  _selectedRevelationType = null;
-                  _updateDisplayList();
-                });
-              },
-            ),
-            const SizedBox(width: 8),
-            SurahFilterChip(
-              label: 'مكية',
-              isSelected: _selectedRevelationType == 'Makkah',
-              onTap: () {
-                setState(() {
-                  _selectedRevelationType = 'Makkah';
-                  _updateDisplayList();
-                });
-              },
-            ),
-            const SizedBox(width: 8),
-            SurahFilterChip(
-              label: 'مدنية',
-              isSelected: _selectedRevelationType == 'Madinah',
-              onTap: () {
-                setState(() {
-                  _selectedRevelationType = 'Madinah';
-                  _updateDisplayList();
-                });
-              },
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryEmerald,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.history_edu,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 16),
-            JuzPicker(
-              selectedJuz: _selectedJuz,
-              onChanged: (val) {
-                setState(() => _selectedJuz = val);
-                if (val != null) {
-                  _scrollToJuz(val);
-                }
-              },
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'متابعة القراءة',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '${_lastReadSurahName ?? 'عودة للمصحف'} - صفحة ${_lastReadPage?.toArabic() ?? ""}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: AppTheme.accentGold.withOpacity(0.7),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SurahFilterChip(
+            label: 'الكل',
+            isSelected: _selectedRevelationType == null,
+            onTap: () {
+              setState(() {
+                _selectedRevelationType = null;
+                _updateDisplayList();
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          SurahFilterChip(
+            label: 'مكية',
+            isSelected: _selectedRevelationType == 'Makkah',
+            onTap: () {
+              setState(() {
+                _selectedRevelationType = 'Makkah';
+                _updateDisplayList();
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          SurahFilterChip(
+            label: 'مدنية',
+            isSelected: _selectedRevelationType == 'Madinah',
+            onTap: () {
+              setState(() {
+                _selectedRevelationType = 'Madinah';
+                _updateDisplayList();
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -356,46 +440,101 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
       itemPositionsListener: _itemPositionsListener,
       itemBuilder: (context, index) {
         final item = _displayList[index];
+        if (item == 'CONTINUE_READING_BANNER') {
+          return _buildContinueReadingBanner(theme);
+        }
         if (item is int) {
           // It's a Juz Header
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24.0),
-            child: Column(
-              children: [
-                const OrnamentalDivider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Container(
+          final isCollapsed = _collapsedJuzs.contains(item);
+          return GestureDetector(
+            onTap: () => _toggleJuz(item),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Left ornament
+                  Container(
+                    height: 1,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          AppTheme.accentGold.withOpacity(0.4),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Icon(
+                      isCollapsed
+                          ? Icons.keyboard_arrow_left_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: AppTheme.accentGold.withOpacity(0.7),
+                    ),
+                  ),
+
+                  // Juz text
+                  Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
+                      horizontal: 16,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? theme.colorScheme.secondary.withValues(alpha: 0.12)
-                          : theme.colorScheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
+                          ? theme.colorScheme.secondary.withOpacity(0.1)
+                          : theme.colorScheme.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isDark
-                            ? theme.colorScheme.secondary.withValues(alpha: 0.2)
-                            : theme.colorScheme.primary.withValues(alpha: 0.15),
+                        color:
+                            (isDark
+                                    ? theme.colorScheme.secondary
+                                    : theme.colorScheme.primary)
+                                .withOpacity(0.2),
                       ),
                     ),
                     child: Text(
-                      'الجزء $item',
+                      'الجزء ${item.toArabic()}',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: isDark
                             ? theme.colorScheme.secondary
                             : theme.colorScheme.primary,
-                        letterSpacing: 1.2,
+                        fontFamily: 'Cairo',
                       ),
                     ),
                   ),
-                ),
-                const OrnamentalDivider(),
-              ],
+
+                  // Right ornament
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Icon(
+                      isCollapsed
+                          ? Icons.keyboard_arrow_left_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: AppTheme.accentGold.withOpacity(0.7),
+                    ),
+                  ),
+                  Container(
+                    height: 1,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.accentGold.withOpacity(0.4),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         } else if (item is SurahInfo) {

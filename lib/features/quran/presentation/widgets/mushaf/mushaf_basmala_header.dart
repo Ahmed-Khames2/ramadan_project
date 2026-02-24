@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class MushafBasmalaHeader extends StatelessWidget {
   final int surahNumber;
@@ -7,12 +8,15 @@ class MushafBasmalaHeader extends StatelessWidget {
   final double pageWidth;
   final TextStyle baseTextStyle;
 
+  final MushafReadingMode readingMode;
+
   const MushafBasmalaHeader({
     super.key,
     required this.surahNumber,
     required this.scale,
     required this.pageWidth,
     required this.baseTextStyle,
+    required this.readingMode,
   });
 
   @override
@@ -25,7 +29,12 @@ class MushafBasmalaHeader extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
+            border: Border.all(
+              color: readingMode == MushafReadingMode.navy
+                  ? Colors.white.withOpacity(0.5)
+                  : const Color(0xFFD4AF37),
+              width: 1.2,
+            ),
           ),
           child: Text(
             'سورة ${quran.getSurahNameArabic(surahNumber)}',
