@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
 import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 import 'ayah_symbol.dart';
 import 'surah_header_widget.dart';
 import 'basmala_widget.dart';
@@ -22,6 +23,7 @@ class MushafVerseBody extends StatefulWidget {
   final VoidCallback? onShowControls;
   final Color? textColor;
   final Function(Ayah)? onAyahTap;
+  final MushafReadingMode readingMode;
 
   const MushafVerseBody({
     super.key,
@@ -32,6 +34,7 @@ class MushafVerseBody extends StatefulWidget {
     this.onShowControls,
     this.textColor,
     this.onAyahTap,
+    required this.readingMode,
   });
 
   @override
@@ -134,9 +137,11 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.touch_app_rounded,
-                    color: AppTheme.accentGold,
+                    color: widget.readingMode == MushafReadingMode.navy
+                        ? Colors.white
+                        : AppTheme.accentGold,
                     size: 64,
                   ),
                   const SizedBox(height: 16),
@@ -194,9 +199,11 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.keyboard_double_arrow_down_rounded,
-                    color: AppTheme.accentGold,
+                    color: widget.readingMode == MushafReadingMode.navy
+                        ? Colors.white
+                        : AppTheme.accentGold,
                     size: 64,
                   ),
                   const SizedBox(height: 16),
@@ -338,7 +345,10 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                   ),
                   decoration: BoxDecoration(
                     color: isPlayingItem
-                        ? AppTheme.accentGold.withValues(alpha: 0.13)
+                        ? (widget.readingMode == MushafReadingMode.navy
+                                  ? Colors.white
+                                  : AppTheme.accentGold)
+                              .withValues(alpha: 0.13)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -351,7 +361,10 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                           text: cleanedText,
                           style: baseTextStyle.copyWith(
                             backgroundColor: isPlayingItem
-                                ? AppTheme.accentGold.withValues(alpha: 0.08)
+                                ? (widget.readingMode == MushafReadingMode.navy
+                                          ? Colors.white
+                                          : AppTheme.accentGold)
+                                      .withValues(alpha: 0.08)
                                 : null,
                           ),
                         ),
@@ -362,9 +375,13 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                             child: AyahSymbol(
                               ayahNumber: ayah.ayahNumber,
                               color: isPlayingItem
-                                  ? AppTheme.accentGold
+                                  ? (widget.readingMode ==
+                                            MushafReadingMode.navy
+                                        ? Colors.white
+                                        : AppTheme.accentGold)
                                   : AppTheme.primaryEmerald,
                               scale: widget.scale,
+                              readingMode: widget.readingMode,
                             ),
                           ),
                         ),
@@ -398,6 +415,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                     : null,
                 surahNumber: surahNum,
                 scale: widget.scale,
+                readingMode: widget.readingMode,
               ),
             ],
             if (isNewSurah && surahNum != 1 && surahNum != 9)

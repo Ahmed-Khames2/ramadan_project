@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 import '../../utils/arabic_digits_ext.dart';
 
 class PageHeaderWidget extends StatelessWidget {
@@ -8,12 +9,15 @@ class PageHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
   final Color? backgroundColor;
 
+  final MushafReadingMode readingMode;
+
   const PageHeaderWidget({
     super.key,
     required this.page,
     this.onSearchTap,
     this.onMenuTap,
     this.backgroundColor,
+    required this.readingMode,
   });
 
   @override

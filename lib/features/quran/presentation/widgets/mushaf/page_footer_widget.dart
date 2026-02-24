@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_project/core/utils/string_extensions.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class PageFooterWidget extends StatelessWidget {
   final int pageNumber;
   final bool isBookmarked;
   final VoidCallback? onBookmarkTap;
 
+  final MushafReadingMode readingMode;
+
   const PageFooterWidget({
     super.key,
     required this.pageNumber,
     this.isBookmarked = false,
     this.onBookmarkTap,
+    required this.readingMode,
   });
 
   @override
@@ -64,7 +68,9 @@ class PageFooterWidget extends StatelessWidget {
                         : Icons.bookmark_border_rounded,
                     size: 24,
                     color: isBookmarked
-                        ? AppTheme.accentGold
+                        ? (readingMode == MushafReadingMode.navy
+                              ? Colors.white
+                              : AppTheme.accentGold)
                         : textColor.withOpacity(0.3),
                   ),
                 ),

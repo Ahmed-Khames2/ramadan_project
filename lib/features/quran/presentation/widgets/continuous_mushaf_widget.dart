@@ -8,6 +8,7 @@ import 'package:ramadan_project/features/quran/data/repositories/quran_repositor
 import 'mushaf/mushaf_verse_body.dart';
 import 'mushaf/mushaf_page_frame.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
@@ -36,7 +37,10 @@ class ContinuousMushafPageWidget extends StatefulWidget {
     this.onAyahTap,
     this.isBookmarked = false,
     this.onBookmarkTap,
+    required this.readingMode,
   });
+
+  final MushafReadingMode readingMode;
 
   final Color? backgroundColor;
 
@@ -109,6 +113,7 @@ class _ContinuousMushafPageWidgetState
                 onSearchTap: widget.onSearchTap,
                 onMenuTap: widget.onMenuTap,
                 showHeader: false, // Fixed header is in the parent stack
+                readingMode: widget.readingMode,
                 child: const Center(child: CircularProgressIndicator()),
               );
             }
@@ -156,6 +161,7 @@ class _ContinuousMushafPageWidgetState
       isBookmarked: widget.isBookmarked,
       onBookmarkTap: widget.onBookmarkTap,
       showHeader: false, // Fixed header is in the parent stack
+      readingMode: widget.readingMode,
       child: Theme(
         data: Theme.of(context).copyWith(
           brightness: isDarkBackground ? Brightness.dark : Brightness.light,
@@ -169,7 +175,9 @@ class _ContinuousMushafPageWidgetState
           ),
           scrollbarTheme: ScrollbarThemeData(
             thumbColor: WidgetStateProperty.all(
-              AppTheme.accentGold.withOpacity(0.6),
+              widget.readingMode == MushafReadingMode.navy
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : AppTheme.accentGold.withOpacity(0.6),
             ),
             thickness: WidgetStateProperty.all(6),
             radius: const Radius.circular(10),
@@ -212,6 +220,7 @@ class _ContinuousMushafPageWidgetState
                       initialAyah: widget.initialAyah,
                       onShowControls: widget.onShowControls,
                       onAyahTap: widget.onAyahTap,
+                      readingMode: widget.readingMode,
                     ),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 import 'page_header_widget.dart';
 import 'page_footer_widget.dart';
 
@@ -13,6 +14,7 @@ class MushafPageFrame extends StatelessWidget {
 
   final bool isBookmarked;
   final VoidCallback? onBookmarkTap;
+  final MushafReadingMode readingMode;
 
   const MushafPageFrame({
     super.key,
@@ -24,6 +26,7 @@ class MushafPageFrame extends StatelessWidget {
     this.showHeader = true,
     this.isBookmarked = false,
     this.onBookmarkTap,
+    required this.readingMode,
   });
 
   @override
@@ -48,6 +51,7 @@ class MushafPageFrame extends StatelessWidget {
                 page: page,
                 onSearchTap: onSearchTap,
                 onMenuTap: onMenuTap,
+                readingMode: readingMode,
               ),
             ),
             // ─── Thin Divider ──────────────────────────────────────────
@@ -75,6 +79,7 @@ class MushafPageFrame extends StatelessWidget {
               pageNumber: page.pageNumber,
               isBookmarked: isBookmarked,
               onBookmarkTap: onBookmarkTap,
+              readingMode: readingMode,
             ),
           ),
         ],

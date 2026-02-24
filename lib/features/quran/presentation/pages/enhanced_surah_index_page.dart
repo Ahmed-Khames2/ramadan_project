@@ -211,7 +211,6 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
                           itemBuilder: (context, index) => SearchResultTile(
                             result: state.results[index],
                             query: state.query,
-                            onReturn: _loadProgress,
                           ),
                         );
                       }

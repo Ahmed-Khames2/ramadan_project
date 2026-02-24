@@ -13,7 +13,6 @@ class SearchResultTile extends StatelessWidget {
     super.key,
     required this.result,
     required this.query,
-    required Future<void> Function() onReturn,
   });
 
   @override
@@ -141,15 +140,68 @@ class SearchResultTile extends StatelessWidget {
     );
   }
 
+  String _normalize(String text) {
+    var normalized = text;
+    // Remove Tashkeel
+    normalized = normalized.replaceAll(
+      RegExp(r'[\u064B-\u0652\u0670\u0640]'),
+      '',
+    );
+    // Normalize Alif
+    normalized = normalized.replaceAll(RegExp(r'[أإآ]'), 'ا');
+    return normalized;
+  }
+
   List<TextRange> _getMatchRanges(String text, String query) {
+    if (query.isEmpty) return [];
+
     final ranges = <TextRange>[];
+    final normalizedText = _normalize(text);
+    final normalizedQuery = _normalize(query);
+
     int start = 0;
     while (true) {
-      final index = text.indexOf(query, start);
-      if (index == -1) break;
-      ranges.add(TextRange(start: index, end: index + query.length));
-      start = index + query.length;
+      final matchIndex = normalizedText.indexOf(normalizedQuery, start);
+      if (matchIndex == -1) break;
+
+      // Map normalized index back to original index
+      int originalStart = _mapNormalizedIndexToOriginal(
+        text,
+        normalizedText,
+        matchIndex,
+      );
+      int originalEnd = _mapNormalizedIndexToOriginal(
+        text,
+        normalizedText,
+        matchIndex + normalizedQuery.length,
+      );
+
+      ranges.add(TextRange(start: originalStart, end: originalEnd));
+      start = matchIndex + normalizedQuery.length;
     }
     return ranges;
+  }
+
+  int _mapNormalizedIndexToOriginal(
+    String original,
+    String normalized,
+    int normalizedIndex,
+  ) {
+    if (normalizedIndex == 0) return 0;
+    if (normalizedIndex >= normalized.length) return original.length;
+
+    int currentNormalizedCount = 0;
+    for (int i = 0; i < original.length; i++) {
+      final char = original[i];
+      // Check if this character was removed during normalization
+      // (Tashkeel or Tatweel)
+      if (!RegExp(r'[\u064B-\u0652\u0670\u0640]').hasMatch(char)) {
+        if (currentNormalizedCount == normalizedIndex) {
+          return i;
+        }
+        currentNormalizedCount++;
+      }
+    }
+    return original.length;
   }
 }

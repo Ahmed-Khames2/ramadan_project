@@ -42,6 +42,7 @@ import 'package:ramadan_project/features/ramadan_worship/domain/repositories/wor
 import 'package:ramadan_project/features/ramadan_worship/presentation/cubit/worship_cubit.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -205,6 +206,7 @@ class MyApp extends StatelessWidget {
                 WorshipCubit(worshipRepository)..loadDailyProgress(),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
+          BlocProvider(create: (context) => QuranSettingsCubit(prefs)),
         ],
         child: BlocBuilder<ThemeModeCubit, AppThemeMode>(
           builder: (context, appThemeMode) {

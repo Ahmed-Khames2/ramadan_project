@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:ramadan_project/core/utils/string_extensions.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class AyahSymbol extends StatelessWidget {
   final int ayahNumber;
   final double scale;
   final Color? color;
+  final MushafReadingMode? readingMode;
 
   const AyahSymbol({
     super.key,
     required this.ayahNumber,
     required this.scale,
     this.color,
+    this.readingMode,
   });
 
   @override
@@ -29,7 +32,10 @@ class AyahSymbol extends StatelessWidget {
               width: 32 * scale,
               height: 32 * scale,
               colorFilter: ColorFilter.mode(
-                color ?? const Color(0xFFD4AF37),
+                color ??
+                    (readingMode == MushafReadingMode.navy
+                        ? Colors.white.withOpacity(0.9)
+                        : const Color(0xFFD4AF37)),
                 BlendMode.srcIn,
               ),
             ),

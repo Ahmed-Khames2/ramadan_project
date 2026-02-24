@@ -46,4 +46,7 @@ abstract class QuranRepository {
   Future<void> addFavorite(int ayahId);
   Future<void> removeFavorite(int ayahId);
   Future<void> saveScrollOffset(double offset);
+
+  /// Get the page number for a given global Ayah ID
+  int getPageFromGlobalId(int globalId);
 }

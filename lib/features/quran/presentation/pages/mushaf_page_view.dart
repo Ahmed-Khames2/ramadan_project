@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
@@ -18,8 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/bookmarks_sheet.dart';
 import 'package:ramadan_project/features/favorites/presentation/ayah_interaction_sheet.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/quran_index_drawer.dart';
-
-enum MushafReadingMode { white, beige, dark, navy }
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
@@ -43,7 +40,6 @@ class MushafPageView extends StatefulWidget {
 
 class _MushafPageViewState extends State<MushafPageView> {
   late int _currentPage;
-  double _fontScale = 1.0;
   late Future<void> _initFuture;
   late PageController _portraitController;
   static const int _totalPages = 604;
@@ -51,7 +47,7 @@ class _MushafPageViewState extends State<MushafPageView> {
   Timer? _hideTimer;
   bool _isCurrentPageBookmarked = false;
   int? _selectedAyah;
-  MushafReadingMode _readingMode = MushafReadingMode.white;
+  bool _isInitialEntry = true;
 
   @override
   void initState() {
@@ -62,23 +58,20 @@ class _MushafPageViewState extends State<MushafPageView> {
     _portraitController = PageController(
       initialPage: _portraitIndexForPage(_currentPage),
     );
+    // Ensure fresh session on entry
+    context.read<AudioBloc>().add(const AudioStop());
   }
 
   Future<void> _initialize() async {
-    await context.read<QuranRepository>().init();
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _fontScale = prefs.getDouble('mushaf_font_scale') ?? 1.0;
-    });
+    final repo = context.read<QuranRepository>();
+    await repo.init();
     _refreshBookmarkState();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    setState(() {
-      _readingMode = isDark ? MushafReadingMode.dark : MushafReadingMode.white;
-    });
+    context.read<QuranSettingsCubit>().updateForAppBrightness(isDark);
 
     final initialSurah = quran.getPageData(_currentPage).first['surah'] as int;
-    context.read<QuranRepository>().preloadTafsir(initialSurah);
+    repo.preloadTafsir(initialSurah);
   }
 
   void _refreshBookmarkState() {
@@ -109,13 +102,8 @@ class _MushafPageViewState extends State<MushafPageView> {
     super.dispose();
   }
 
-  void _updateFontScale(double scale) async {
-    final clampedScale = scale.clamp(0.5, 2.0);
-    setState(() {
-      _fontScale = clampedScale;
-    });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('mushaf_font_scale', clampedScale);
+  void _updateFontScale(double scale) {
+    context.read<QuranSettingsCubit>().updateFontScale(scale);
   }
 
   Future<void> _saveBookmark(int page) async {
@@ -144,34 +132,15 @@ class _MushafPageViewState extends State<MushafPageView> {
   int _pageForPortraitIndex(int index) => index + 1;
 
   int _getPageFromGlobalId(int globalId) {
-    int currentGlobal = 0;
-    for (int s = 1; s <= 114; s++) {
-      int vCount = quran.getVerseCount(s);
-      if (currentGlobal + vCount >= globalId) {
-        int v = globalId - currentGlobal;
-        return quran.getPageNumber(s, v);
-      }
-      currentGlobal += vCount;
-    }
-    return 1;
+    return context.read<QuranRepository>().getPageFromGlobalId(globalId);
   }
 
   void _cycleReadingMode(bool isAppDark) {
-    setState(() {
-      if (isAppDark) {
-        _readingMode = (_readingMode == MushafReadingMode.dark)
-            ? MushafReadingMode.navy
-            : MushafReadingMode.dark;
-      } else {
-        _readingMode = (_readingMode == MushafReadingMode.white)
-            ? MushafReadingMode.beige
-            : MushafReadingMode.white;
-      }
-    });
+    context.read<QuranSettingsCubit>().cycleReadingMode(isAppDark);
   }
 
-  Color _getReadingModeBackground() {
-    switch (_readingMode) {
+  Color _getReadingModeBackground(MushafReadingMode mode) {
+    switch (mode) {
       case MushafReadingMode.white:
         return AppTheme.surfaceWhite;
       case MushafReadingMode.beige:
@@ -183,89 +152,85 @@ class _MushafPageViewState extends State<MushafPageView> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAppDark = theme.brightness == Brightness.dark;
 
-    if (isAppDark &&
-        (_readingMode == MushafReadingMode.white ||
-            _readingMode == MushafReadingMode.beige)) {
-      _readingMode = MushafReadingMode.dark;
-    } else if (!isAppDark &&
-        (_readingMode == MushafReadingMode.dark ||
-            _readingMode == MushafReadingMode.navy)) {
-      _readingMode = MushafReadingMode.white;
-    }
+    return BlocBuilder<QuranSettingsCubit, QuranSettingsState>(
+      builder: (context, settings) {
+        final bgColor = _getReadingModeBackground(settings.readingMode);
 
-    final bgColor = _getReadingModeBackground();
-
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<AudioBloc, AudioState>(
-          listenWhen: (previous, current) =>
-              previous.currentAyah != current.currentAyah &&
-              current.currentAyah != null,
-          listener: (context, state) {
-            final audioPage = _getPageFromGlobalId(state.currentAyah!);
-            if (audioPage != _currentPage && _portraitController.hasClients) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                if ((audioPage - _currentPage).abs() <= 1) {
-                  _portraitController.animateToPage(
-                    _portraitIndexForPage(audioPage),
-                    duration: const Duration(milliseconds: 650),
-                    curve: Curves.easeInOut,
-                  );
-                } else {
-                  _portraitController.jumpToPage(
-                    _portraitIndexForPage(audioPage),
-                  );
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<AudioBloc, AudioState>(
+              listenWhen: (previous, current) =>
+                  previous.currentAyah != current.currentAyah &&
+                  current.currentAyah != null,
+              listener: (context, state) {
+                final audioPage = _getPageFromGlobalId(state.currentAyah!);
+                if (audioPage != _currentPage &&
+                    _portraitController.hasClients) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    if ((audioPage - _currentPage).abs() <= 1) {
+                      _portraitController.animateToPage(
+                        _portraitIndexForPage(audioPage),
+                        duration: const Duration(milliseconds: 650),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _portraitController.jumpToPage(
+                        _portraitIndexForPage(audioPage),
+                      );
+                    }
+                  });
                 }
-              });
-            }
-          },
-        ),
-        BlocListener<AudioBloc, AudioState>(
-          listener: (context, state) {
-            if (state.status == AudioStatus.error &&
-                state.errorMessage != null) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
-            }
-          },
-        ),
-      ],
-      child: Scaffold(
-        drawer: QuranIndexDrawer(
-          onPageSelected: (page) {
-            _portraitController.jumpToPage(_portraitIndexForPage(page));
-          },
-          onReadingModeToggle: () => _cycleReadingMode(isAppDark),
-          onFontScaleChanged: _updateFontScale,
-          onBookmarkListTap: _showBookmarksSheet,
-          currentFontScale: _fontScale,
-          readingMode: _readingMode,
-        ),
-        backgroundColor: bgColor,
-        body: SafeArea(
-          bottom: false,
-          child: Stack(
-            children: [
-              _buildMainContent(bgColor),
-              if (_selectedAyah != null) _buildAyahContextMenuOverlay(context),
-              _buildBottomAudioBar(bgColor),
-              _buildMiniPlayer(),
-              _buildTopHeader(bgColor),
-              _buildTopHeader(bgColor),
-            ],
+              },
+            ),
+            BlocListener<AudioBloc, AudioState>(
+              listener: (context, state) {
+                if (state.status == AudioStatus.error &&
+                    state.errorMessage != null) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+                }
+              },
+            ),
+          ],
+          child: Scaffold(
+            drawer: QuranIndexDrawer(
+              onPageSelected: (page) {
+                _portraitController.jumpToPage(_portraitIndexForPage(page));
+              },
+              onReadingModeToggle: () => _cycleReadingMode(isAppDark),
+              onFontScaleChanged: _updateFontScale,
+              onBookmarkListTap: _showBookmarksSheet,
+              currentFontScale: settings.fontScale,
+              readingMode: settings.readingMode,
+            ),
+            backgroundColor: bgColor,
+            body: SafeArea(
+              bottom: false,
+              child: Stack(
+                children: [
+                  _buildMainContent(bgColor, settings),
+                  if (_selectedAyah != null)
+                    _buildAyahContextMenuOverlay(context, settings.readingMode),
+                  _buildBottomAudioBar(bgColor),
+                  _buildMiniPlayer(),
+                  _buildTopHeader(bgColor),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildMainContent(Color bgColor) {
+  Widget _buildMainContent(Color bgColor, QuranSettingsState settings) {
     return GestureDetector(
       onTap: () {
         if (_selectedAyah != null) {
@@ -300,7 +265,7 @@ class _MushafPageViewState extends State<MushafPageView> {
               itemBuilder: (context, index) {
                 return ContinuousMushafPageWidget(
                   pageNumber: _pageForPortraitIndex(index),
-                  fontScale: _fontScale,
+                  fontScale: settings.fontScale,
                   backgroundColor: bgColor,
                   initialSurah: widget.initialSurah,
                   initialAyah: widget.initialAyah,
@@ -308,10 +273,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                       ? _isCurrentPageBookmarked
                       : false,
                   onBookmarkTap: _toggleBookmark,
+                  readingMode: settings.readingMode,
                   onAyahTap: (ayah) {
-                    if (ayah != null) {
-                      setState(() => _selectedAyah = ayah.globalAyahNumber);
-                    }
+                    setState(() => _selectedAyah = ayah.globalAyahNumber);
                   },
                   onShowControls: () {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -335,6 +299,9 @@ class _MushafPageViewState extends State<MushafPageView> {
                   },
                   onSearchTap: () {},
                   onMenuTap: () {
+                    // Fix: Use the scaffold key or builder context if needed
+                    // but Scaffold.of(context) works if called within a builder down the tree.
+                    // Here we are inside MushafPageView's build, but down in a PageView.
                     Scaffold.of(context).openDrawer();
                   },
                 );
@@ -372,10 +339,16 @@ class _MushafPageViewState extends State<MushafPageView> {
       child: _AudioBar(
         backgroundColor: bgColor,
         onClose: () {
-          setState(() => _showControls = false);
-          context.read<AudioBloc>().add(AudioStop());
+          setState(() {
+            _showControls = false;
+            _isInitialEntry = false;
+          });
+          context.read<AudioBloc>().add(const AudioStop());
         },
-        onCollapse: () => setState(() => _showControls = false),
+        onCollapse: () => setState(() {
+          _showControls = false;
+          _isInitialEntry = false;
+        }),
       ),
     );
   }
@@ -386,7 +359,7 @@ class _MushafPageViewState extends State<MushafPageView> {
         final bool isAudioActive =
             state.status != AudioStatus.initial || state.lastAyah != null;
 
-        if (!isAudioActive || _showControls) {
+        if (!isAudioActive || _showControls || _isInitialEntry) {
           return const SizedBox.shrink();
         }
 
@@ -397,7 +370,10 @@ class _MushafPageViewState extends State<MushafPageView> {
           bottom: 20,
           left: 20,
           child: GestureDetector(
-            onTap: () => setState(() => _showControls = true),
+            onTap: () => setState(() {
+              _showControls = true;
+              _isInitialEntry = false;
+            }),
             child: Container(
               width: 56,
               height: 56,
@@ -451,13 +427,17 @@ class _MushafPageViewState extends State<MushafPageView> {
             onMenuTap: () {
               Scaffold.of(context).openDrawer();
             },
+            readingMode: context.read<QuranSettingsCubit>().state.readingMode,
           );
         },
       ),
     );
   }
 
-  Widget _buildAyahContextMenuOverlay(BuildContext context) {
+  Widget _buildAyahContextMenuOverlay(
+    BuildContext context,
+    MushafReadingMode readingMode,
+  ) {
     if (_selectedAyah == null) return const SizedBox.shrink();
 
     final pageData = quran.getPageData(_currentPage);
@@ -468,14 +448,14 @@ class _MushafPageViewState extends State<MushafPageView> {
       final start = s['start'] as int;
       final end = s['end'] as int;
 
-      int globalBase = 0;
+      int currentGlobal = 0;
       for (int i = 1; i < surahNum; i++) {
-        globalBase += quran.getVerseCount(i);
+        currentGlobal += quran.getVerseCount(i);
       }
 
-      if (_selectedAyah! >= globalBase + start &&
-          _selectedAyah! <= globalBase + end) {
-        final verseNum = _selectedAyah! - globalBase;
+      if (_selectedAyah! >= currentGlobal + start &&
+          _selectedAyah! <= currentGlobal + end) {
+        final verseNum = _selectedAyah! - currentGlobal;
         selectedAyahObj = Ayah(
           surahNumber: surahNum,
           ayahNumber: verseNum,
@@ -502,7 +482,7 @@ class _MushafPageViewState extends State<MushafPageView> {
           onDismiss: () => setState(() => _selectedAyah = null),
           onTafsir: (ayah) {
             setState(() => _selectedAyah = null);
-            _showTafsirSheet(ayah);
+            _showTafsirSheet(ayah, readingMode);
           },
           onPlay: (ayah) {
             setState(() => _selectedAyah = null);
@@ -526,7 +506,10 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   void _playAyah(Ayah ayah) {
-    setState(() => _showControls = true);
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
     final globalId = ayah.globalAyahNumber;
     if (globalId > 0) {
       context.read<AudioBloc>().add(AudioPlayAyah(globalId));
@@ -534,7 +517,10 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   void _playSurah(Ayah ayah) {
-    setState(() => _showControls = true);
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
     final surah = ayah.surahNumber;
     final endAyah = quran.getVerseCount(surah);
 
@@ -554,7 +540,10 @@ class _MushafPageViewState extends State<MushafPageView> {
   }
 
   void _autoPlayFrom(Ayah ayah) {
-    setState(() => _showControls = true);
+    setState(() {
+      _showControls = true;
+      _isInitialEntry = false;
+    });
     final surah = ayah.surahNumber;
     final startAyah = ayah.ayahNumber;
     final endAyah = quran.getVerseCount(surah);
@@ -585,7 +574,7 @@ class _MushafPageViewState extends State<MushafPageView> {
     Share.share(shareText);
   }
 
-  void _showTafsirSheet(Ayah ayah) {
+  void _showTafsirSheet(Ayah ayah, MushafReadingMode readingMode) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -594,7 +583,7 @@ class _MushafPageViewState extends State<MushafPageView> {
         surahNumber: ayah.surahNumber,
         ayahNumber: ayah.ayahNumber,
         ayahId: ayah.globalAyahNumber,
-        readingMode: _readingMode,
+        readingMode: readingMode,
       ),
     );
   }
