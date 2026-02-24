@@ -51,6 +51,8 @@ dependencies:
   font_awesome_flutter: ^10.7.0
   sqflite: ^2.3.0
   path: ^1.9.0
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -83,6 +85,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   hive_generator: ^2.0.1
+  isar_generator: ^3.1.0+1
   build_runner: ^2.4.8
   flutter_native_splash: ^2.4.4
   flutter_launcher_icons: ^0.13.1
@@ -104,6 +107,10 @@ flutter:
     - assets/fonts/
     - assets/json/
     - assets/json/hadiss/
+    - assets/json/hadiss/abudawud/
+    - assets/json/hadiss/bukhari/
+    - assets/json/hadiss/muslim/
+    - assets/json/hadiss/tirmidhi/
     - assets/json/quranjson/surah/
     - assets/json/quranjson/translation/ar/
     - assets/soundes/

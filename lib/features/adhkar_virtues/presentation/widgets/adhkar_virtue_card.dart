@@ -5,8 +5,16 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 class AdhkarVirtueCard extends StatelessWidget {
   final AdhkarVirtue adhk;
   final VoidCallback onTap;
+  final bool isRead;
+  final VoidCallback onToggleRead;
 
-  const AdhkarVirtueCard({super.key, required this.adhk, required this.onTap});
+  const AdhkarVirtueCard({
+    super.key,
+    required this.adhk,
+    required this.onTap,
+    required this.isRead,
+    required this.onToggleRead,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +40,16 @@ class AdhkarVirtueCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacing4,
-        vertical: AppTheme.spacing2,
+        vertical: AppTheme.spacing1,
       ),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: categoryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-          width: 1,
+          color: isRead
+              ? AppTheme.primaryEmerald.withValues(alpha: 0.3)
+              : categoryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+          width: isRead ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -58,37 +68,51 @@ class AdhkarVirtueCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppTheme.spacing4),
             child: Row(
               children: [
-                // Icon/Badge Container
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        categoryColor,
-                        categoryColor.withValues(alpha: 0.8),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: categoryColor.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
+                // Read Status Check Icon
+                IconButton(
+                  onPressed: onToggleRead,
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
                     child: Icon(
-                      adhk.type == 1
-                          ? Icons.wb_sunny_rounded
-                          : (adhk.type == 2
-                                ? Icons.nightlight_round
-                                : Icons.star_rounded),
-                      color: Colors.white,
-                      size: 24,
+                      isRead
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      key: ValueKey(isRead),
+                      color: isRead
+                          ? AppTheme.primaryEmerald
+                          : AppTheme.textGrey,
+                      size: 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacing2),
+                // Icon/Badge Container
+                Opacity(
+                  opacity: isRead ? 0.5 : 1.0,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          categoryColor,
+                          categoryColor.withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        adhk.type == 1
+                            ? Icons.wb_sunny_rounded
+                            : (adhk.type == 2
+                                  ? Icons.nightlight_round
+                                  : Icons.star_rounded),
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
@@ -104,34 +128,22 @@ class AdhkarVirtueCard extends StatelessWidget {
                             child: Text(
                               categoryName,
                               style: TextStyle(
-                                color: categoryColor,
+                                color: isRead
+                                    ? AppTheme.textGrey
+                                    : categoryColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
+                                decoration: isRead
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          if (adhk.count > 1)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accentGold.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                adhk.countDescription,
-                                style: const TextStyle(
-                                  color: AppTheme.accentGold,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                          // Counter info removed from card if count is 1 or user doesn't want it,
+                          // but keeping brief description if relevant.
+                          // User said: "الافضال اللي ليها عدد موجود عداد فيها عايزك تشيله خالص"
+                          // If they mean the small badge on the card too, I'll remove it.
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -141,6 +153,10 @@ class AdhkarVirtueCard extends StatelessWidget {
                           fontSize: 16,
                           fontFamily: 'Cairo',
                           height: 1.4,
+                          color: isRead ? AppTheme.textGrey : null,
+                          decoration: isRead
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -148,10 +164,17 @@ class AdhkarVirtueCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: AppTheme.accentGold,
+                ReorderableDragStartListener(
+                  index: adhk
+                      .order, // This index needs to be carefully handled in ReorderableListView
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Icon(
+                      Icons.drag_handle_rounded,
+                      color: AppTheme.textGrey,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ],
             ),

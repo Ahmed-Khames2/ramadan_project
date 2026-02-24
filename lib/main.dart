@@ -51,6 +51,12 @@ import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar
 import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
 import 'package:ramadan_project/features/adhkar_virtues/presentation/bloc/adhkar_virtue_cubit.dart';
 import 'package:ramadan_project/features/adhkar_virtues/domain/repositories/adhkar_virtue_repository.dart';
+import 'package:isar/isar.dart';
+import 'package:ramadan_project/features/hadith_library/data/models/hadith_model.dart';
+import 'package:ramadan_project/features/hadith_library/data/datasources/hadith_isar_importer.dart';
+import 'package:ramadan_project/features/hadith_library/data/repositories/hadith_library_repository_impl.dart';
+import 'package:ramadan_project/features/hadith_library/domain/repositories/hadith_library_repository.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_library_cubit.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -72,6 +78,18 @@ void main() async {
   ]);
 
   final prefs = await SharedPreferences.getInstance();
+
+  // Initialize Isar
+  final dir = await getApplicationDocumentsDirectory();
+  final isar = await Isar.open([
+    HadithModelSchema,
+    HadithBookModelSchema,
+    HadithChapterModelSchema,
+  ], directory: dir.path);
+
+  // Initialize Hadith Importer (Non-blocking)
+  final hadithImporter = HadithIsarImporter(isar: isar, prefs: prefs);
+  hadithImporter.init(); // Start import in background
 
   // Register Hive Adapters
   _registerHiveAdapters();
@@ -116,6 +134,7 @@ void main() async {
     localDataSource: AdhkarVirtueLocalDataSourceImpl(),
   );
 
+  final hadithLibraryRepository = HadithLibraryRepositoryImpl(isar: isar);
   // Initialization complete - remove splash screen
   FlutterNativeSplash.remove();
 
@@ -127,6 +146,7 @@ void main() async {
       worshipRepository: worshipRepository,
       hadithRepository: hadithRepository,
       adhkarVirtueRepository: adhkarVirtueRepository,
+      hadithLibraryRepository: hadithLibraryRepository,
       prefs: prefs,
     ),
   );
@@ -167,6 +187,7 @@ class MyApp extends StatelessWidget {
   final WorshipRepository worshipRepository;
   final HadithRepository hadithRepository;
   final AdhkarVirtueRepository adhkarVirtueRepository;
+  final HadithLibraryRepository hadithLibraryRepository;
   final SharedPreferences prefs;
 
   const MyApp({
@@ -177,6 +198,7 @@ class MyApp extends StatelessWidget {
     required this.worshipRepository,
     required this.hadithRepository,
     required this.adhkarVirtueRepository,
+    required this.hadithLibraryRepository,
     required this.prefs,
   });
 
@@ -190,6 +212,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: worshipRepository),
         RepositoryProvider.value(value: hadithRepository),
         RepositoryProvider.value(value: adhkarVirtueRepository),
+        RepositoryProvider.value(value: hadithLibraryRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -233,8 +256,14 @@ class MyApp extends StatelessWidget {
             create: (context) => HadithCubit(repository: hadithRepository),
           ),
           BlocProvider(
+            create: (context) => AdhkarVirtueCubit(
+              repository: adhkarVirtueRepository,
+              prefs: prefs,
+            ),
+          ),
+          BlocProvider(
             create: (context) =>
-                AdhkarVirtueCubit(repository: adhkarVirtueRepository),
+                HadithLibraryCubit(repository: hadithLibraryRepository),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
           BlocProvider(create: (context) => QuranSettingsCubit(prefs)),

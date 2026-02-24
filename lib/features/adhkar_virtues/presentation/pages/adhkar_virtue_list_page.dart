@@ -31,7 +31,7 @@ class _AdhkarVirtueListPageState extends State<AdhkarVirtueListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('أذكار وفضائل')),
+      appBar: AppBar(title: const Text('أفضال الأذكار')),
       body: DecorativeBackground(
         child: Column(
           children: [
@@ -55,7 +55,7 @@ class _AdhkarVirtueListPageState extends State<AdhkarVirtueListPage> {
                     },
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'ابحث في الأذكار والفضائل...',
+                      hintText: 'ابحث في أفضال الأذكار...',
                       hintStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                       ),
@@ -144,18 +144,32 @@ class _AdhkarVirtueListPageState extends State<AdhkarVirtueListPage> {
                         child: Text('لم يتم العثور على نتائج'),
                       );
                     }
-                    return ListView.builder(
+                    return ReorderableListView.builder(
                       padding: const EdgeInsets.only(bottom: 32),
                       physics: const BouncingScrollPhysics(),
                       itemCount: adhkar.length,
+                      onReorder: (oldIndex, newIndex) {
+                        context.read<AdhkarVirtueCubit>().reorderItems(
+                          oldIndex,
+                          newIndex,
+                        );
+                      },
                       itemBuilder: (context, index) {
+                        final adhk = adhkar[index];
                         return AdhkarVirtueCard(
-                          adhk: adhkar[index],
+                          key: ValueKey(adhk.order),
+                          adhk: adhk,
+                          isRead: state.readStatuses[adhk.order] ?? false,
+                          onToggleRead: () {
+                            context.read<AdhkarVirtueCubit>().toggleReadStatus(
+                              adhk.order,
+                            );
+                          },
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  AdhkarVirtueDetailsPage(adhk: adhkar[index]),
+                                  AdhkarVirtueDetailsPage(adhk: adhk),
                             ),
                           ),
                         );
