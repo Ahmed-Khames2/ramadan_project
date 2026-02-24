@@ -35,7 +35,10 @@ class MushafVerseBody extends StatefulWidget {
     this.textColor,
     this.onAyahTap,
     required this.readingMode,
+    this.selectedAyahId,
   });
+
+  final int? selectedAyahId;
 
   @override
   State<MushafVerseBody> createState() => _MushafVerseBodyState();
@@ -344,13 +347,27 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                     horizontal: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: isPlayingItem
+                    color:
+                        (isPlayingItem ||
+                            widget.selectedAyahId == ayah.globalAyahNumber)
                         ? (widget.readingMode == MushafReadingMode.navy
-                                  ? Colors.white
-                                  : AppTheme.accentGold)
-                              .withValues(alpha: 0.13)
+                                  ? const Color(0xFF35355F)
+                                  : isPlayingItem
+                                  ? AppTheme.accentGold
+                                  : AppTheme.primaryEmerald)
+                              .withValues(alpha: 0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
+                    border: widget.selectedAyahId == ayah.globalAyahNumber
+                        ? Border.all(
+                            color:
+                                (widget.readingMode == MushafReadingMode.navy
+                                        ? Colors.white
+                                        : AppTheme.primaryEmerald)
+                                    .withValues(alpha: 0.1),
+                            width: 1,
+                          )
+                        : null,
                   ),
                   child: RichText(
                     textAlign: TextAlign.right,
@@ -360,11 +377,16 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
                         TextSpan(
                           text: cleanedText,
                           style: baseTextStyle.copyWith(
-                            backgroundColor: isPlayingItem
+                            backgroundColor:
+                                (isPlayingItem ||
+                                    widget.selectedAyahId ==
+                                        ayah.globalAyahNumber)
                                 ? (widget.readingMode == MushafReadingMode.navy
-                                          ? Colors.white
-                                          : AppTheme.accentGold)
-                                      .withValues(alpha: 0.08)
+                                          ? const Color(0xFF35355F)
+                                          : isPlayingItem
+                                          ? AppTheme.accentGold
+                                          : AppTheme.primaryEmerald)
+                                      .withValues(alpha: 0.1)
                                 : null,
                           ),
                         ),

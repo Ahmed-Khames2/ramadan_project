@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 
 class AyahContextMenu extends StatefulWidget {
@@ -20,7 +21,10 @@ class AyahContextMenu extends StatefulWidget {
     required this.onPlaySequential,
     required this.onPlaySurah,
     required this.onShare,
+    required this.readingMode,
   });
+
+  final MushafReadingMode readingMode;
 
   @override
   State<AyahContextMenu> createState() => _AyahContextMenuState();
@@ -56,9 +60,31 @@ class _AyahContextMenuState extends State<AyahContextMenu>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surfaceColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final readingMode = widget.readingMode;
+    final isDark =
+        theme.brightness == Brightness.dark ||
+        readingMode == MushafReadingMode.dark ||
+        readingMode == MushafReadingMode.navy;
+
+    final surfaceColor = readingMode == MushafReadingMode.navy
+        ? AppTheme.mushafNavyDeep
+        : isDark
+        ? const Color(0xFF1E1E2E)
+        : Colors.white;
+
+    final textColor = readingMode == MushafReadingMode.navy
+        ? Colors.white.withValues(alpha: 0.95)
+        : isDark
+        ? Colors.white
+        : Colors.black87;
+
+    final iconPrimary = readingMode == MushafReadingMode.navy
+        ? Colors.white.withValues(alpha: 0.8)
+        : AppTheme.primaryEmerald;
+
+    final accentColor = readingMode == MushafReadingMode.navy
+        ? Colors.white.withValues(alpha: 0.15)
+        : AppTheme.primaryEmerald.withOpacity(0.1);
 
     return Center(
       child: ScaleTransition(
@@ -95,34 +121,44 @@ class _AyahContextMenuState extends State<AyahContextMenu>
                       label: 'تفسير',
                       onTap: () => widget.onTafsir(widget.ayah),
                       textColor: textColor,
+                      iconColor: iconPrimary,
+                      accentColor: accentColor,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(readingMode, isDark),
                     _buildItem(
                       icon: Icons.hearing_rounded,
                       label: 'الاستماع للايه',
                       onTap: () => widget.onPlay(widget.ayah),
                       textColor: textColor,
+                      iconColor: iconPrimary,
+                      accentColor: accentColor,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(readingMode, isDark),
                     _buildItem(
                       icon: Icons.play_circle_outline_rounded,
                       label: 'تشغيل متتابع',
                       onTap: () => widget.onPlaySequential(widget.ayah),
                       textColor: textColor,
+                      iconColor: iconPrimary,
+                      accentColor: accentColor,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(readingMode, isDark),
                     _buildItem(
                       icon: Icons.auto_stories_rounded,
                       label: 'سماع السورة من البداية',
                       onTap: () => widget.onPlaySurah(widget.ayah),
                       textColor: textColor,
+                      iconColor: iconPrimary,
+                      accentColor: accentColor,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(readingMode, isDark),
                     _buildItem(
                       icon: Icons.share_rounded,
                       label: 'المشاركة',
                       onTap: () => widget.onShare(widget.ayah),
                       textColor: textColor,
+                      iconColor: iconPrimary,
+                      accentColor: accentColor,
                     ),
                   ],
                 ),
@@ -139,7 +175,8 @@ class _AyahContextMenuState extends State<AyahContextMenu>
     required String label,
     required VoidCallback onTap,
     required Color textColor,
-    Color? iconColor,
+    required Color iconColor,
+    required Color accentColor,
   }) {
     return InkWell(
       onTap: onTap,
@@ -151,14 +188,10 @@ class _AyahContextMenuState extends State<AyahContextMenu>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? AppTheme.primaryEmerald).withOpacity(0.1),
+                color: accentColor,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                size: 18,
-                color: iconColor ?? AppTheme.primaryEmerald,
-              ),
+              child: Icon(icon, size: 18, color: iconColor),
             ),
             const SizedBox(width: 16),
             Text(
@@ -176,11 +209,13 @@ class _AyahContextMenuState extends State<AyahContextMenu>
     );
   }
 
-  Widget _buildDivider(bool isDark) {
+  Widget _buildDivider(MushafReadingMode readingMode, bool isDark) {
     return Divider(
       height: 1,
       thickness: 0.5,
-      color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+      color: (readingMode == MushafReadingMode.navy)
+          ? Colors.white.withValues(alpha: 0.08)
+          : (isDark ? Colors.white : Colors.black).withOpacity(0.06),
       indent: 20,
       endIndent: 20,
     );

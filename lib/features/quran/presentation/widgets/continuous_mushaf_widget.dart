@@ -38,7 +38,10 @@ class ContinuousMushafPageWidget extends StatefulWidget {
     this.isBookmarked = false,
     this.onBookmarkTap,
     required this.readingMode,
+    this.selectedAyahId,
   });
+
+  final int? selectedAyahId;
 
   final MushafReadingMode readingMode;
 
@@ -221,6 +224,7 @@ class _ContinuousMushafPageWidgetState
                       onShowControls: widget.onShowControls,
                       onAyahTap: widget.onAyahTap,
                       readingMode: widget.readingMode,
+                      selectedAyahId: widget.selectedAyahId,
                     ),
                   ),
                 ),

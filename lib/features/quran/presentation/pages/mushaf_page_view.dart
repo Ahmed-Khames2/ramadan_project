@@ -58,8 +58,15 @@ class _MushafPageViewState extends State<MushafPageView> {
     _portraitController = PageController(
       initialPage: _portraitIndexForPage(_currentPage),
     );
-    // Ensure fresh session on entry
-    context.read<AudioBloc>().add(const AudioStop());
+
+    // Detect if audio is already active to show controls/mini-player correctly
+    final audioState = context.read<AudioBloc>().state;
+    final isCurrentlyActive =
+        audioState.status != AudioStatus.initial || audioState.lastAyah != null;
+
+    if (isCurrentlyActive) {
+      _isInitialEntry = false;
+    }
   }
 
   Future<void> _initialize() async {
@@ -274,6 +281,7 @@ class _MushafPageViewState extends State<MushafPageView> {
                       : false,
                   onBookmarkTap: _toggleBookmark,
                   readingMode: settings.readingMode,
+                  selectedAyahId: _selectedAyah,
                   onAyahTap: (ayah) {
                     setState(() => _selectedAyah = ayah.globalAyahNumber);
                   },
@@ -500,6 +508,7 @@ class _MushafPageViewState extends State<MushafPageView> {
             setState(() => _selectedAyah = null);
             _shareAyah(ayah);
           },
+          readingMode: readingMode,
         ),
       ],
     );
