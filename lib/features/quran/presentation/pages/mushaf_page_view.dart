@@ -17,6 +17,10 @@ import 'package:ramadan_project/features/quran/presentation/widgets/bookmarks_sh
 import 'package:ramadan_project/features/favorites/presentation/ayah_interaction_sheet.dart';
 import 'package:ramadan_project/features/quran/presentation/widgets/quran_index_drawer.dart';
 import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:ramadan_project/features/quran/presentation/widgets/mushaf/ayah_share_card.dart';
 
 class MushafPageView extends StatefulWidget {
   final int initialPage;
@@ -47,6 +51,7 @@ class _MushafPageViewState extends State<MushafPageView> {
   Timer? _hideTimer;
   bool _isCurrentPageBookmarked = false;
   int? _selectedAyah;
+  Timer? _pageChangeDebounceTimer;
   bool _isInitialEntry = true;
 
   @override
@@ -61,8 +66,7 @@ class _MushafPageViewState extends State<MushafPageView> {
 
     // Detect if audio is already active to show controls/mini-player correctly
     final audioState = context.read<AudioBloc>().state;
-    final isCurrentlyActive =
-        audioState.status != AudioStatus.initial || audioState.lastAyah != null;
+    final isCurrentlyActive = audioState.status != AudioStatus.initial;
 
     if (isCurrentlyActive) {
       _isInitialEntry = false;
@@ -104,6 +108,7 @@ class _MushafPageViewState extends State<MushafPageView> {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _pageChangeDebounceTimer?.cancel();
     WakelockPlus.disable();
     _portraitController.dispose();
     super.dispose();
@@ -175,23 +180,40 @@ class _MushafPageViewState extends State<MushafPageView> {
                   previous.currentAyah != current.currentAyah &&
                   current.currentAyah != null,
               listener: (context, state) {
+                // Ignore page jumps if we are loading/buffering to prevent erratic scrolling
+                // when changing reciters or skipping quickly.
+                // Also ignore when initial/stopped so closing the player doesn't jump the page.
+                if (state.status == AudioStatus.loading ||
+                    state.status == AudioStatus.initial)
+                  return;
+
                 final audioPage = _getPageFromGlobalId(state.currentAyah!);
                 if (audioPage != _currentPage &&
                     _portraitController.hasClients) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted) return;
-                    if ((audioPage - _currentPage).abs() <= 1) {
-                      _portraitController.animateToPage(
-                        _portraitIndexForPage(audioPage),
-                        duration: const Duration(milliseconds: 650),
-                        curve: Curves.easeInOut,
-                      );
-                    } else {
-                      _portraitController.jumpToPage(
-                        _portraitIndexForPage(audioPage),
-                      );
-                    }
-                  });
+                  // Debounce the page change to allow fast skipping without seizing the UI
+                  _pageChangeDebounceTimer?.cancel();
+                  _pageChangeDebounceTimer = Timer(
+                    const Duration(milliseconds: 300),
+                    () {
+                      if (!mounted) return;
+
+                      // Re-verify the current status after debounce
+                      final currentState = context.read<AudioBloc>().state;
+                      if (currentState.status == AudioStatus.loading) return;
+
+                      if ((audioPage - _currentPage).abs() <= 1) {
+                        _portraitController.animateToPage(
+                          _portraitIndexForPage(audioPage),
+                          duration: const Duration(milliseconds: 650),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        _portraitController.jumpToPage(
+                          _portraitIndexForPage(audioPage),
+                        );
+                      }
+                    },
+                  );
                 }
               },
             ),
@@ -369,8 +391,7 @@ class _MushafPageViewState extends State<MushafPageView> {
 
     return BlocBuilder<AudioBloc, AudioState>(
       builder: (context, state) {
-        final bool isAudioActive =
-            state.status != AudioStatus.initial || state.lastAyah != null;
+        final bool isAudioActive = state.status != AudioStatus.initial;
 
         if (!isAudioActive || _showControls || _isInitialEntry) {
           return const SizedBox.shrink();
@@ -577,15 +598,50 @@ class _MushafPageViewState extends State<MushafPageView> {
     }
   }
 
-  void _shareAyah(Ayah ayah) {
-    final text = quran.getVerse(
-      ayah.surahNumber,
-      ayah.ayahNumber,
-      verseEndSymbol: true,
-    );
-    final shareText =
-        '$text\n\n[${quran.getSurahNameArabic(ayah.surahNumber)} : ${ayah.ayahNumber}]';
-    Share.share(shareText);
+  Future<void> _shareAyah(Ayah ayah) async {
+    try {
+      if (!mounted) return;
+
+      // Provide immediate UX feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('جاري تجهيز الصورة...', textAlign: TextAlign.center),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final readingMode = context.read<QuranSettingsCubit>().state.readingMode;
+      final screenshotController = ScreenshotController();
+
+      final capturedImage = await screenshotController.captureFromWidget(
+        AyahShareCard(ayah: ayah, readingMode: readingMode),
+        delay: const Duration(milliseconds: 100),
+        targetSize: const Size(600, 600), // Enforce square aspect ratio
+        pixelRatio: 3.0, // High quality
+      );
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+        '${tempDir.path}/ayah_${ayah.surahNumber}_${ayah.ayahNumber}.png',
+      );
+      await file.writeAsBytes(capturedImage);
+
+      final shareText =
+          'سورة ${quran.getSurahNameArabic(ayah.surahNumber)} - آية ${ayah.ayahNumber}';
+      await Share.shareXFiles([XFile(file.path)], text: shareText);
+    } catch (e) {
+      debugPrint('Error sharing ayah: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'حدث خطأ أثناء المشاركة',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _showTafsirSheet(Ayah ayah, MushafReadingMode readingMode) {

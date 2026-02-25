@@ -18,6 +18,28 @@ class PageFooterWidget extends StatelessWidget {
     required this.readingMode,
   });
 
+  String _getHizbQuarterText() {
+    try {
+      if (pageNumber == 1) return "الحزب ١ • الربع ١";
+      if (pageNumber >= 604) return "الحزب ٦٠ • الربع ٤";
+
+      // The standard Medina Mushaf aligns 1 Juz = 20 pages, 1 Hizb = 10 pages
+      // Starting from page 2.
+      int hizb = ((pageNumber - 2) / 10).floor() + 1;
+
+      // Each Hizb is 4 Quarters, making each Quarter roughly 2.5 pages long
+      double offsetInHizb = (pageNumber - 2) % 10;
+      int quarter = (offsetInHizb / 2.5).floor() + 1;
+
+      // Cap at 60 for safety
+      if (hizb > 60) hizb = 60;
+
+      return "الحزب ${hizb.toArabic()} • الربع ${quarter.toArabic()}";
+    } catch (e) {
+      return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -30,6 +52,20 @@ class PageFooterWidget extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Left Side: Rub (Hizb Quarter) info
+          Positioned(
+            left: 0,
+            child: Text(
+              _getHizbQuarterText(),
+              style: TextStyle(
+                fontFamily: 'UthmanTaha',
+                fontSize: 16,
+                color: textColor.withOpacity(0.5),
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ),
+
           // Centered Page number
           Row(
             mainAxisSize: MainAxisSize.min,

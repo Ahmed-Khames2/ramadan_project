@@ -51,11 +51,8 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     );
     on<_AudioPlayerStateChanged>(_onPlayerStateChanged);
     on<_AudioCurrentAyahChanged>((event, emit) {
-      // If we are in optimistic mode (just skipped), ignore all stream updates
-      // until the player catches up to our targeted ayah.
       if (state.isOptimistic) {
         if (event.ayahNumber == state.currentAyah) {
-          // Target reached! Clear flag and update state in one go.
           emit(
             state.copyWith(
               isOptimistic: false,
@@ -64,9 +61,15 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
             ),
           );
         }
-        // While optimistic, we block ALL other ayah changes from the stream
-        // to prevent "jump back" flickers.
         return;
+      }
+
+      // Ignore updates if we are in a loading state entirely, particularly on reciter changes
+      // or initial buffering where stale events might fire from the previous audio stream.
+      if (state.status == AudioStatus.loading) {
+        if (event.ayahNumber != state.currentAyah) {
+          return;
+        }
       }
 
       emit(

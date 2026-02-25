@@ -20,7 +20,7 @@ class BasmalaWidget extends StatelessWidget {
             'UthmanTaha',
             'Amiri',
           ],
-          fontSize: (38 * scale).clamp(28, 52),
+          fontSize: (26 * scale).clamp(20, 36),
           height: 1.4,
           color: Theme.of(context).colorScheme.onSurface,
           fontWeight: FontWeight.w500,

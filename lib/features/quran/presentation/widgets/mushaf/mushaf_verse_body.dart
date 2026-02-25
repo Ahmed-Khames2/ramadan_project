@@ -70,9 +70,14 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
 
         // Priority 1: Current playing ayah if it's on this page
         final audioState = context.read<AudioBloc>().state;
+        bool isFirstElement = false;
+
         if (audioState.currentAyah != null &&
             _ayahKeyMap.containsKey(audioState.currentAyah)) {
           targetKey = _ayahKeyMap[audioState.currentAyah];
+          isFirstElement =
+              audioState.currentAyah ==
+              widget.page.ayahs.first.globalAyahNumber;
         }
         // Priority 2: Initial ayah/surah from navigation
         else if (widget.initialAyah != null && widget.initialSurah != null) {
@@ -81,19 +86,29 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
             widget.initialAyah!,
           );
           targetKey = _ayahKeyMap[globalId];
+          isFirstElement = globalId == widget.page.ayahs.first.globalAyahNumber;
         }
         // Priority 3: Surah header
         else if (widget.initialSurah != null) {
           targetKey = _headerKey;
+          isFirstElement = true; // Header is always at the top
         }
 
         if (targetKey != null && targetKey.currentContext != null) {
-          Scrollable.ensureVisible(
-            targetKey.currentContext!,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOut,
-            alignment: 0.5, // Center on screen
-          );
+          if (isFirstElement) {
+            Scrollable.of(targetKey.currentContext!).position.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOut,
+            );
+          } else {
+            Scrollable.ensureVisible(
+              targetKey.currentContext!,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOut,
+              alignment: 0.5, // Center on screen
+            );
+          }
         }
       });
     }
@@ -313,22 +328,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
         final cleanedText = _cleanQuranText(ayah.text);
 
         ayahWidgets.add(
-          BlocConsumer<AudioBloc, AudioState>(
-            listenWhen: (previous, current) =>
-                current.currentAyah == ayah.globalAyahNumber &&
-                previous.currentAyah != current.currentAyah,
-            listener: (context, state) {
-              // Ensure playing ayah is always visible
-              final targetKey = isFirstAyah ? _tutorialKey : ayahKey;
-              if (targetKey.currentContext != null) {
-                Scrollable.ensureVisible(
-                  targetKey.currentContext!,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                  alignment: 0.5,
-                );
-              }
-            },
+          BlocBuilder<AudioBloc, AudioState>(
             buildWhen: (previous, current) =>
                 previous.currentAyah == ayah.globalAyahNumber ||
                 current.currentAyah == ayah.globalAyahNumber,
@@ -443,8 +443,26 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
             if (isNewSurah && surahNum != 1 && surahNum != 9)
               BasmalaWidget(scale: widget.scale),
             const SizedBox(height: 8),
-            // Ayahs flow continuously — no dividers between them
-            ...ayahWidgets,
+            // Ayahs flow continuously with a subtle divider between them
+            for (int i = 0; i < ayahWidgets.length; i++) ...[
+              ayahWidgets[i],
+              if (i < ayahWidgets.length - 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 32.0,
+                  ),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color:
+                        (widget.readingMode == MushafReadingMode.navy
+                                ? Colors.white
+                                : AppTheme.accentGold)
+                            .withValues(alpha: 0.15),
+                  ),
+                ),
+            ],
           ],
         ),
       );
@@ -467,19 +485,39 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
       listener: (context, state) {
         final targetKey = _ayahKeyMap[state.currentAyah];
         if (targetKey != null && targetKey.currentContext != null) {
-          Scrollable.ensureVisible(
-            targetKey.currentContext!,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOut,
-            alignment: 0.5,
-          );
+          final isFirstAyah =
+              state.currentAyah == widget.page.ayahs.first.globalAyahNumber;
+
+          if (isFirstAyah) {
+            // Scroll to absolute top to preserve the 70px safe area padding
+            Scrollable.of(context).position.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            );
+          } else {
+            Scrollable.ensureVisible(
+              targetKey.currentContext!,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+              alignment: 0.5, // requested to be centered
+            );
+          }
         }
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Padding(
           // Slightly larger horizontal padding for authentic Mushaf feel
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          // Added top padding so the first ayah isn't obscured by the Page Header
+          // when scrolled automatically.
+          padding: const EdgeInsets.only(
+            left: 12,
+            right: 12,
+            top: 40,
+            bottom: 20,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: surahWidgets,
