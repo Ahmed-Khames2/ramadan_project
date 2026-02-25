@@ -131,6 +131,7 @@ class _HadithListPageState extends State<HadithListPage> {
                       itemBuilder: (context, index) {
                         return HadithCard(
                           hadith: hadiths[index],
+                          searchQuery: _searchController.text,
                           onTap: () {
                             Navigator.push(
                               context,

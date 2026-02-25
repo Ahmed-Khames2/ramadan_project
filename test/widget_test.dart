@@ -146,5 +146,16 @@ class _MockHadithLibraryRepository implements HadithLibraryRepository {
   Future<List<Hadith>> searchHadiths(String query, {int limit = 50}) async =>
       [];
   @override
+  Future<List<Hadith>> searchHadithsInChapter({
+    required String query,
+    required String bookKey,
+    required int chapterId,
+  }) async => [];
+  @override
+  Future<int> getHadithCountByChapter({
+    required String bookKey,
+    required int chapterId,
+  }) async => 0;
+  @override
   Future<Hadith?> getHadithById(int id) async => null;
 }

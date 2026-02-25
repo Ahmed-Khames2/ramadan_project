@@ -81,6 +81,36 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     return model != null ? _mapToEntity(model) : null;
   }
 
+  @override
+  Future<List<Hadith>> searchHadithsInChapter({
+    required String query,
+    required String bookKey,
+    required int chapterId,
+  }) async {
+    final normalizedQuery = ArabicNormalization.normalize(query);
+    if (normalizedQuery.isEmpty) return [];
+
+    final models = await isar.hadithModels
+        .where()
+        .bookKeyChapterIdEqualTo(bookKey, chapterId)
+        .filter()
+        .normalizedTextContains(normalizedQuery)
+        .findAll();
+
+    return models.map((m) => _mapToEntity(m)).toList();
+  }
+
+  @override
+  Future<int> getHadithCountByChapter({
+    required String bookKey,
+    required int chapterId,
+  }) async {
+    return await isar.hadithModels
+        .where()
+        .bookKeyChapterIdEqualTo(bookKey, chapterId)
+        .count();
+  }
+
   Hadith _mapToEntity(HadithModel m) {
     return Hadith(
       id: m.id,

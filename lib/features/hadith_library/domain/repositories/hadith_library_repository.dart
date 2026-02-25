@@ -10,5 +10,14 @@ abstract class HadithLibraryRepository {
     int pageSize = 20,
   });
   Future<List<Hadith>> searchHadiths(String query, {int limit = 50});
+  Future<List<Hadith>> searchHadithsInChapter({
+    required String query,
+    required String bookKey,
+    required int chapterId,
+  });
+  Future<int> getHadithCountByChapter({
+    required String bookKey,
+    required int chapterId,
+  });
   Future<Hadith?> getHadithById(int id);
 }
