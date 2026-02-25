@@ -235,33 +235,55 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
           );
         }
 
-        final compassHeading = snapshot.data!.heading ?? 0;
-        final qiblahOffset = (_qiblahDirection ?? 0) - compassHeading;
+        // Store previous heading to prevent long-way-around spinning when crossing North
+        double _lastHeading = 0;
+        double _lastQiblahOffset = 0;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Main Compass
-                _buildModernCompass(compassHeading, qiblahOffset),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final compassHeading = snapshot.data!.heading ?? 0;
+            var qiblahOffset = (_qiblahDirection ?? 0) - compassHeading;
 
-                const SizedBox(height: 32),
+            // Normalize to find the shortest path for rotation
+            double _normalizeAngle(double oldAngle, double newAngle) {
+              double diff = newAngle - oldAngle;
+              while (diff > 180) diff -= 360;
+              while (diff < -180) diff += 360;
+              return oldAngle + diff;
+            }
 
-                // Info Cards
-                _buildInfoCards(distance),
+            _lastHeading = _normalizeAngle(_lastHeading, compassHeading);
+            _lastQiblahOffset = _normalizeAngle(
+              _lastQiblahOffset,
+              qiblahOffset,
+            );
 
-                const SizedBox(height: 16),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    // Main Compass
+                    _buildModernCompass(_lastHeading, _lastQiblahOffset),
 
-                const SizedBox(height: 24),
-                const OrnamentalDivider(),
-                const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
-                // Instruction
-                _buildInstructionCard(),
-              ],
-            ),
-          ),
+                    // Info Cards
+                    _buildInfoCards(distance),
+
+                    const SizedBox(height: 16),
+
+                    const SizedBox(height: 24),
+                    const OrnamentalDivider(),
+                    const SizedBox(height: 24),
+
+                    // Instruction
+                    _buildInstructionCard(),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -317,31 +339,50 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
                   ),
 
                   // Layer 2: Rotating Ring (Cardinal Directions)
-                  Transform.rotate(
-                    angle: -heading * (pi / 180),
-                    child: CustomPaint(
-                      size: const Size(340, 340),
-                      painter: ModernCompassPainter(
-                        pulseValue: 0,
-                        isStatic: false,
-                        textColor: theme.colorScheme.onSurface,
-                        backgroundColor: theme.colorScheme.surface,
-                      ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: -heading * (pi / 180),
+                      end: -heading * (pi / 180),
                     ),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, angle, child) {
+                      return Transform.rotate(
+                        angle: angle,
+                        child: CustomPaint(
+                          size: const Size(340, 340),
+                          painter: ModernCompassPainter(
+                            pulseValue: 0,
+                            isStatic: false,
+                            textColor: theme.colorScheme.onSurface,
+                            backgroundColor: theme.colorScheme.surface,
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   // Layer 3: Qibla Indicator (Only on edge)
-                  Transform.rotate(
-                    angle: qiblahOffset * (pi / 180),
-                    child: CustomPaint(
-                      size: const Size(320, 320),
-                      painter: QiblaArrowPainter(
-                        activeColor: theme.colorScheme.primary,
-                        inactiveColor: theme.colorScheme.primary.withOpacity(
-                          0.2,
-                        ),
-                      ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: qiblahOffset * (pi / 180),
+                      end: qiblahOffset * (pi / 180),
                     ),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, angle, child) {
+                      return Transform.rotate(
+                        angle: angle,
+                        child: CustomPaint(
+                          size: const Size(320, 320),
+                          painter: QiblaArrowPainter(
+                            activeColor: theme.colorScheme.primary,
+                            inactiveColor: theme.colorScheme.primary
+                                .withOpacity(0.2),
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   // Layer 4: Center Time (Fixed)
@@ -399,13 +440,23 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${heading.toArabic(fractionDigits: 1)}°',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: heading, end: heading),
+                  duration: const Duration(milliseconds: 300),
+                  builder: (context, value, child) {
+                    return Text(
+                      '${value.toArabic(fractionDigits: 1)}°',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                        fontFeatures: const [
+                          // Optional: tabular figures for smoother numeric changes if font supports it
+                          // FontFeature.tabularFigures(),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ramadan_project/features/40_hadith/data/repositories/hadith_repository_impl.dart';
@@ -35,7 +36,7 @@ import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_r
     as prayer_repo;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:ramadan_project/features/splash/presentation/pages/splash_page.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
@@ -61,9 +62,16 @@ import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadi
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_list_cubit.dart';
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_search_cubit.dart';
 
-void main() async {
+Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Initialize just_audio_background for lock screen controls
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+    androidNotificationChannelName: 'القرآن الكريم',
+    androidNotificationOngoing: true,
+  );
 
   // Basic global error handling for user feedback
   FlutterError.onError = (details) {
@@ -83,7 +91,11 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   // Initialize Isar
-  final dir = await getApplicationDocumentsDirectory();
+  final dir = await getApplicationSupportDirectory();
+  if (!await dir.exists()) {
+    await dir.create(recursive: true);
+  }
+
   final isar = await Isar.open([
     HadithModelSchema,
     HadithBookModelSchema,
@@ -153,19 +165,6 @@ void main() async {
       prefs: prefs,
     ),
   );
-}
-
-Future<void> _clearAudioCache() async {
-  if (kIsWeb) return; // Audio cache clearing is mobile-only
-  try {
-    final tempDir = await getTemporaryDirectory();
-    final cacheDir = Directory('${tempDir.path}/just_audio_cache');
-    if (await cacheDir.exists()) {
-      await cacheDir.delete(recursive: true);
-    }
-  } catch (e) {
-    debugPrint('Error clearing audio cache: $e');
-  }
 }
 
 void _registerHiveAdapters() {

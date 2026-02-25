@@ -5,7 +5,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:rxdart/rxdart.dart';
@@ -69,16 +71,23 @@ class AudioRepositoryImpl implements AudioRepository {
       if (kIsWeb) {
         final url = _getAudioUrl(ayahNumber, reciter);
 
+        final mediaItem = _buildMediaItem(ayahNumber, reciter);
+
         // 2. Explicitly set initialPosition to Duration.zero
-        await _audioPlayer.setUrl(url, initialPosition: Duration.zero);
+        await _audioPlayer.setAudioSource(
+          AudioSource.uri(Uri.parse(url), tag: mediaItem),
+          initialPosition: Duration.zero,
+        );
       } else {
         final localPath = await _getLocalFilePath(ayahNumber, reciter);
         final file = File(localPath);
 
+        final mediaItem = _buildMediaItem(ayahNumber, reciter);
+
         if (await file.exists()) {
           // 2. Explicitly set initialPosition to Duration.zero
-          await _audioPlayer.setFilePath(
-            localPath,
+          await _audioPlayer.setAudioSource(
+            AudioSource.uri(Uri.file(localPath), tag: mediaItem),
             initialPosition: Duration.zero,
           );
         } else {
@@ -99,6 +108,7 @@ class AudioRepositoryImpl implements AudioRepository {
           final source = LockCachingAudioSource(
             Uri.parse(url),
             cacheFile: File(localPath),
+            tag: mediaItem,
           );
           // 2. Explicitly set initialPosition to Duration.zero
           await _audioPlayer.setAudioSource(
@@ -143,8 +153,10 @@ class AudioRepositoryImpl implements AudioRepository {
         final exists = existsResults[i];
         final path = '${localDir.path}/$ayah.mp3';
 
+        final mediaItem = _buildMediaItem(ayah, reciter);
+
         if (exists) {
-          sources.add(AudioSource.file(path, tag: ayah));
+          sources.add(AudioSource.file(path, tag: mediaItem));
         } else {
           if (isOffline) {
             throw Exception("لا يوجد اتصال بالإنترنت لبعض الآيات في القائمة.");
@@ -154,7 +166,7 @@ class AudioRepositoryImpl implements AudioRepository {
             LockCachingAudioSource(
               Uri.parse(url),
               cacheFile: File(path),
-              tag: ayah,
+              tag: mediaItem,
             ),
           );
         }
@@ -273,6 +285,31 @@ class AudioRepositoryImpl implements AudioRepository {
 
   String _getAudioUrl(int ayahNumber, Reciter reciter) {
     return 'https://cdn.islamic.network/quran/audio/128/${reciter.id}/$ayahNumber.mp3';
+  }
+
+  /// Builds a MediaItem for the audio player notification.
+  /// Converts the global ayah number to a Surah name using the quran package.
+  MediaItem _buildMediaItem(int ayahNumber, Reciter reciter) {
+    // Convert global ayah number to surah/ayah
+    int surahNumber = 1;
+    int ayahInSurah = ayahNumber;
+    int count = 0;
+    for (int s = 1; s <= 114; s++) {
+      final verseCount = quran.getVerseCount(s);
+      if (count + verseCount >= ayahNumber) {
+        surahNumber = s;
+        ayahInSurah = ayahNumber - count;
+        break;
+      }
+      count += verseCount;
+    }
+    final surahName = quran.getSurahNameArabic(surahNumber);
+    return MediaItem(
+      id: ayahNumber.toString(),
+      album: reciter.arabicName,
+      title: 'سورة $surahName - الآية $ayahInSurah',
+      artist: reciter.arabicName,
+    );
   }
 
   Future<String> _getLocalFilePath(int ayahNumber, Reciter reciter) async {

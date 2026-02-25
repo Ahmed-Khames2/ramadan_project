@@ -96,6 +96,44 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
     final hours = _timeLeft.inHours;
     final minutes = _timeLeft.inMinutes % 60;
 
+    String _formatArabicTimeLeft(int hours, int minutes) {
+      if (hours == 0 && minutes == 0) {
+        return 'حان الآن وقت الصلاة';
+      }
+
+      String hoursText = '';
+      if (hours == 1) {
+        hoursText = 'ساعة';
+      } else if (hours == 2) {
+        hoursText = 'ساعتان';
+      } else if (hours >= 3 && hours <= 10) {
+        hoursText = '${hours.toArabic()} ساعات';
+      } else if (hours > 10) {
+        hoursText = '${hours.toArabic()} ساعة';
+      }
+
+      String minutesText = '';
+      if (minutes == 1) {
+        minutesText = 'دقيقة';
+      } else if (minutes == 2) {
+        minutesText = 'دقيقتان';
+      } else if (minutes >= 3 && minutes <= 10) {
+        minutesText = '${minutes.toArabic()} دقائق';
+      } else if (minutes > 10) {
+        minutesText = '${minutes.toArabic()} دقيقة';
+      }
+
+      if (hoursText.isEmpty && minutesText.isEmpty) {
+        return '';
+      } else if (hoursText.isNotEmpty && minutesText.isEmpty) {
+        return 'متبقي $hoursText';
+      } else if (hoursText.isEmpty && minutesText.isNotEmpty) {
+        return 'متبقي $minutesText';
+      } else {
+        return 'متبقي $hoursText و $minutesText';
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacing4),
       child: IslamicCard(
@@ -157,8 +195,8 @@ class _AccuratePrayerCountdownState extends State<AccuratePrayerCountdown> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'متبقي ${hours.toArabic()} ساعة و ${minutes.toArabic()} دقيقة',
-                          style: TextStyle(
+                          _formatArabicTimeLeft(hours, minutes),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

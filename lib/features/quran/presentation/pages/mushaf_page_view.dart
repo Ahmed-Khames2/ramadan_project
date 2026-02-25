@@ -64,13 +64,24 @@ class _MushafPageViewState extends State<MushafPageView> {
       initialPage: _portraitIndexForPage(_currentPage),
     );
 
-    // Detect if audio is already active to show controls/mini-player correctly
-    final audioState = context.read<AudioBloc>().state;
-    final isCurrentlyActive = audioState.status != AudioStatus.initial;
+    // Detect if audio is already active to show controls/mini-player correctly.
+    // This handles the case where the user exits and re-enters the page while audio is active,
+    // or navigates here from the continue-reading flow while audio is playing.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final audioState = context.read<AudioBloc>().state;
+      final isActive =
+          audioState.status == AudioStatus.playing ||
+          audioState.status == AudioStatus.paused ||
+          audioState.status == AudioStatus.loading;
 
-    if (isCurrentlyActive) {
-      _isInitialEntry = false;
-    }
+      if (isActive) {
+        setState(() {
+          _showControls = true;
+          _isInitialEntry = false;
+        });
+      }
+    });
   }
 
   Future<void> _initialize() async {
