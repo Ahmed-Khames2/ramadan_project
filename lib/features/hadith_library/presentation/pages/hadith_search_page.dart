@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../cubits/hadith_library_cubit.dart';
+import '../cubits/hadith_search_cubit.dart';
 import 'hadith_detail_page.dart';
 
 class HadithSearchPage extends StatefulWidget {
@@ -36,7 +36,7 @@ class _HadithSearchPageState extends State<HadithSearchPage> {
           style: const TextStyle(color: Colors.white),
           onChanged: (query) {
             if (query.length > 2) {
-              context.read<HadithLibraryCubit>().search(query);
+              context.read<HadithSearchCubit>().search(query);
             }
           },
         ),
@@ -45,16 +45,17 @@ class _HadithSearchPageState extends State<HadithSearchPage> {
             icon: const Icon(Icons.clear),
             onPressed: () {
               _searchController.clear();
+              context.read<HadithSearchCubit>().search('');
             },
           ),
         ],
       ),
       body: DecorativeBackground(
-        child: BlocBuilder<HadithLibraryCubit, HadithLibraryState>(
+        child: BlocBuilder<HadithSearchCubit, HadithSearchState>(
           builder: (context, state) {
-            if (state is HadithLibraryLoading) {
+            if (state is HadithSearchLoading) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is HadithLibrarySearchResults) {
+            } else if (state is HadithSearchLoaded) {
               if (state.results.isEmpty) {
                 return const Center(child: Text('لا توجد نتائج'));
               }
@@ -88,6 +89,8 @@ class _HadithSearchPageState extends State<HadithSearchPage> {
                   );
                 },
               );
+            } else if (state is HadithSearchError) {
+              return Center(child: Text('خطأ: ${state.message}'));
             }
             return const Center(child: Text('ابدأ البحث عن حديث'));
           },

@@ -159,6 +159,7 @@ class _AdhkarVirtueListPageState extends State<AdhkarVirtueListPage> {
                         return AdhkarVirtueCard(
                           key: ValueKey(adhk.order),
                           adhk: adhk,
+                          searchQuery: _searchController.text,
                           isRead: state.readStatuses[adhk.order] ?? false,
                           onToggleRead: () {
                             context.read<AdhkarVirtueCubit>().toggleReadStatus(

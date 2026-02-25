@@ -5,9 +5,15 @@ import 'package:ramadan_project/core/widgets/common_widgets.dart';
 
 class HadithCard extends StatelessWidget {
   final Hadith hadith;
+  final String searchQuery;
   final VoidCallback onTap;
 
-  const HadithCard({super.key, required this.hadith, required this.onTap});
+  const HadithCard({
+    super.key,
+    required this.hadith,
+    required this.onTap,
+    this.searchQuery = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +63,7 @@ class HadithCard extends StatelessWidget {
                     child: Center(
                       child: Text(
                         '${hadith.index + 1}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.primaryEmerald,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -86,15 +92,13 @@ class HadithCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        _buildHighlightedText(
                           hadith.content.replaceAll('\n', ' '),
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          theme.textTheme.bodySmall?.copyWith(
                             color: isDark ? Colors.white70 : AppTheme.textGrey,
                             height: 1.4,
                             fontFamily: 'Cairo',
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -111,5 +115,104 @@ class HadithCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildHighlightedText(String text, TextStyle? style) {
+    if (searchQuery.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final String normalizedQuery = searchQuery.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    // Build regex to match query regardless of diacritics and Arabic variations
+    final regexString = _buildSearchRegex(normalizedQuery);
+    final regex = RegExp(regexString, caseSensitive: false);
+
+    final matches = regex.allMatches(text);
+    if (matches.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final spans = <TextSpan>[];
+    int lastIndex = 0;
+
+    // We only care about the first match for the snippet if we are showing maxLines: 1
+    // but we can highlight multiple if they fit.
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(text: text.substring(lastIndex, match.start)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: const TextStyle(
+            backgroundColor: AppTheme.accentGold,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(lastIndex)));
+    }
+
+    return RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(style: style, children: spans),
+    );
+  }
+
+  String _buildSearchRegex(String query) {
+    // Basic normalization for building regex
+    String normalized = query
+        .replaceAll(RegExp(r'[\u064B-\u0652]'), '')
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي');
+
+    final buffer = StringBuffer();
+    const diacritics = r'[\u064B-\u0652]*';
+
+    for (int i = 0; i < normalized.length; i++) {
+      final char = normalized[i];
+      if (char == ' ') {
+        buffer.write(r'\s+');
+        continue;
+      }
+      if (char == 'ا') {
+        buffer.write('[اأإآ]$diacritics');
+      } else if (char == 'ه') {
+        buffer.write('[هة]$diacritics');
+      } else if (char == 'ي') {
+        buffer.write('[يى]$diacritics');
+      } else {
+        buffer.write('${RegExp.escape(char)}$diacritics');
+      }
+    }
+    return buffer.toString();
   }
 }

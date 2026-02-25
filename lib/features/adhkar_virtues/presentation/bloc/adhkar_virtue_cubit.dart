@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/adhkar_virtue.dart';
 import '../../domain/repositories/adhkar_virtue_repository.dart';
 
+import 'package:ramadan_project/core/utils/arabic_normalization.dart';
+
 // States
 abstract class AdhkarVirtueState extends Equatable {
   const AdhkarVirtueState();
@@ -213,9 +215,26 @@ class AdhkarVirtueCubit extends Cubit<AdhkarVirtueState> {
   void searchAdhkar(String query) {
     if (state is AdhkarVirtueLoaded) {
       final currentState = state as AdhkarVirtueLoaded;
+
+      if (query.isEmpty) {
+        // Just filter by category if search is cleared
+        filterByCategory(currentState.activeCategory);
+        return;
+      }
+
+      final normalizedQuery = ArabicNormalization.normalize(
+        query.toLowerCase(),
+      );
+
       final filtered = _allAdhkar.where((a) {
         final matchesQuery =
-            a.content.contains(query) || a.fadl.contains(query);
+            ArabicNormalization.normalize(
+              a.content.toLowerCase(),
+            ).contains(normalizedQuery) ||
+            ArabicNormalization.normalize(
+              a.fadl.toLowerCase(),
+            ).contains(normalizedQuery);
+
         final matchesCategory =
             currentState.activeCategory == 0 ||
             a.type == currentState.activeCategory;
