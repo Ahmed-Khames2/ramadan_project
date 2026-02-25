@@ -4,6 +4,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 
 class AdhkarVirtueCard extends StatelessWidget {
   final AdhkarVirtue adhk;
+  final String searchQuery;
   final VoidCallback onTap;
   final bool isRead;
   final VoidCallback onToggleRead;
@@ -14,6 +15,7 @@ class AdhkarVirtueCard extends StatelessWidget {
     required this.onTap,
     required this.isRead,
     required this.onToggleRead,
+    this.searchQuery = '',
   });
 
   @override
@@ -147,9 +149,9 @@ class AdhkarVirtueCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      _buildHighlightedText(
                         adhk.content,
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        theme.textTheme.titleLarge?.copyWith(
                           fontSize: 16,
                           fontFamily: 'Cairo',
                           height: 1.4,
@@ -158,8 +160,6 @@ class AdhkarVirtueCard extends StatelessWidget {
                               ? TextDecoration.lineThrough
                               : null,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -182,5 +182,100 @@ class AdhkarVirtueCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildHighlightedText(String text, TextStyle? style) {
+    if (searchQuery.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final String normalizedQuery = searchQuery.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final regexString = _buildSearchRegex(normalizedQuery);
+    final regex = RegExp(regexString, caseSensitive: false);
+
+    final matches = regex.allMatches(text);
+    if (matches.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final spans = <TextSpan>[];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(text: text.substring(lastIndex, match.start)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: const TextStyle(
+            backgroundColor: AppTheme.accentGold,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(lastIndex)));
+    }
+
+    return RichText(
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(style: style, children: spans),
+    );
+  }
+
+  String _buildSearchRegex(String query) {
+    String normalized = query
+        .replaceAll(RegExp(r'[\u064B-\u0652]'), '')
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ى', 'ي');
+
+    final buffer = StringBuffer();
+    const diacritics = r'[\u064B-\u0652]*';
+
+    for (int i = 0; i < normalized.length; i++) {
+      final char = normalized[i];
+      if (char == ' ') {
+        buffer.write(r'\s+');
+        continue;
+      }
+      if (char == 'ا') {
+        buffer.write('[اأإآ]$diacritics');
+      } else if (char == 'ه') {
+        buffer.write('[هة]$diacritics');
+      } else if (char == 'ي') {
+        buffer.write('[يى]$diacritics');
+      } else {
+        buffer.write('${RegExp.escape(char)}$diacritics');
+      }
+    }
+    return buffer.toString();
   }
 }

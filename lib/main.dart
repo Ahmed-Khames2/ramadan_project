@@ -55,7 +55,10 @@ import 'package:ramadan_project/features/hadith_library/data/models/hadith_model
 import 'package:ramadan_project/features/hadith_library/data/datasources/hadith_isar_importer.dart';
 import 'package:ramadan_project/features/hadith_library/data/repositories/hadith_library_repository_impl.dart';
 import 'package:ramadan_project/features/hadith_library/domain/repositories/hadith_library_repository.dart';
-import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_library_cubit.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_books_cubit.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_chapters_cubit.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_list_cubit.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_search_cubit.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -262,7 +265,21 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) =>
-                HadithLibraryCubit(repository: hadithLibraryRepository),
+                HadithBooksCubit(repository: hadithLibraryRepository),
+          ),
+          BlocProvider(
+            create: (context) =>
+                HadithChaptersCubit(repository: hadithLibraryRepository),
+          ),
+          BlocProvider(
+            create: (context) => HadithListCubit(
+              repository: hadithLibraryRepository,
+              prefs: prefs,
+            ),
+          ),
+          BlocProvider(
+            create: (context) =>
+                HadithSearchCubit(repository: hadithLibraryRepository),
           ),
           BlocProvider(create: (context) => ThemeModeCubit(prefs)),
         ],
