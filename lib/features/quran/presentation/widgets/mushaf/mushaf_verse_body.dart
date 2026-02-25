@@ -47,6 +47,7 @@ class MushafVerseBody extends StatefulWidget {
 class _MushafVerseBodyState extends State<MushafVerseBody> {
   final GlobalKey _headerKey = GlobalKey();
   final GlobalKey _tutorialKey = GlobalKey();
+  final GlobalKey _centerKey = GlobalKey();
   final Map<int, GlobalKey> _ayahKeyMap = {}; // Map globalAyahNumber to key
   final ScreenshotController _screenshotController = ScreenshotController();
   List<TargetFocus> targets = [];
@@ -144,7 +145,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
     targets.add(
       TargetFocus(
         identify: "ayah_details_tutorial",
-        keyTarget: _tutorialKey,
+        keyTarget: _centerKey,
         alignSkip: Alignment.topRight,
         enableOverlayTab: true,
         contents: [
@@ -205,8 +206,7 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
     targets.add(
       TargetFocus(
         identify: "scroll_down_tutorial",
-        keyTarget:
-            _headerKey, // Pointing generally to the top area or just use a full screen overlay if possible
+        keyTarget: _centerKey,
         alignSkip: Alignment.topRight,
         enableOverlayTab: true,
         contents: [
@@ -508,20 +508,25 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
-        child: Padding(
-          // Slightly larger horizontal padding for authentic Mushaf feel
-          // Added top padding so the first ayah isn't obscured by the Page Header
-          // when scrolled automatically.
-          padding: const EdgeInsets.only(
-            left: 12,
-            right: 12,
-            top: 40,
-            bottom: 20,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: surahWidgets,
-          ),
+        child: Stack(
+          children: [
+            Padding(
+              // Slightly larger horizontal padding for authentic Mushaf feel
+              // Added top padding so the first ayah isn't obscured by the Page Header
+              // when scrolled automatically.
+              padding: const EdgeInsets.only(
+                left: 12,
+                right: 12,
+                top: 40,
+                bottom: 20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: surahWidgets,
+              ),
+            ),
+            Center(child: SizedBox(key: _centerKey, width: 10, height: 10)),
+          ],
         ),
       ),
     );
