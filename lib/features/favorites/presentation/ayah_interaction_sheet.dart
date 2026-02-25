@@ -7,7 +7,7 @@ import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_
 import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/core/utils/string_extensions.dart';
 
-class AyahInteractionSheet extends StatelessWidget {
+class AyahInteractionSheet extends StatefulWidget {
   final int surahNumber;
   final int ayahNumber;
   final int ayahId;
@@ -22,10 +22,20 @@ class AyahInteractionSheet extends StatelessWidget {
   });
 
   @override
+  State<AyahInteractionSheet> createState() => _AyahInteractionSheetState();
+}
+
+class _AyahInteractionSheetState extends State<AyahInteractionSheet> {
+  bool _isTafsirExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = _getThemeColors(context);
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: const BorderRadius.only(
@@ -66,7 +76,7 @@ class AyahInteractionSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'سورة ${quran.getSurahNameArabic(surahNumber)}',
+                      'سورة ${quran.getSurahNameArabic(widget.surahNumber)}',
                       style: TextStyle(
                         fontFamily: 'UthmanTaha',
                         fontSize: 24,
@@ -75,7 +85,7 @@ class AyahInteractionSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'الآية الرقم ${ayahNumber.toArabic()}',
+                      'الآية الرقم ${widget.ayahNumber.toArabic()}',
                       style: TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 12,
@@ -89,59 +99,75 @@ class AyahInteractionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Tafsir Card
-          _buildTafsirCard(context, colors),
-          const SizedBox(height: 24),
+          // Scrollable Tafsir and buttons
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Tafsir Card
+                  _buildTafsirCard(context, colors),
+                  const SizedBox(height: 24),
 
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: _buildMainAction(
-                  label: 'مشاركة',
-                  onTap: () async {
-                    final tafsirText = await context
-                        .read<KhatamBloc>()
-                        .quranRepository
-                        .getTafsir(surahNumber, ayahNumber);
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMainAction(
+                          label: 'مشاركة',
+                          onTap: () async {
+                            final tafsirText = await context
+                                .read<KhatamBloc>()
+                                .quranRepository
+                                .getTafsir(
+                                  widget.surahNumber,
+                                  widget.ayahNumber,
+                                );
 
-                    final surahName = quran.getSurahNameArabic(surahNumber);
-                    final pageNum = quran.getPageNumber(
-                      surahNumber,
-                      ayahNumber,
-                    );
+                            final surahName = quran.getSurahNameArabic(
+                              widget.surahNumber,
+                            );
+                            final pageNum = quran.getPageNumber(
+                              widget.surahNumber,
+                              widget.ayahNumber,
+                            );
 
-                    final String cleanVerse = quran.getVerse(
-                      surahNumber,
-                      ayahNumber,
-                      verseEndSymbol: false,
-                    );
-                    final String endSymbol = quran.getVerseEndSymbol(
-                      ayahNumber,
-                    );
+                            final String cleanVerse = quran.getVerse(
+                              widget.surahNumber,
+                              widget.ayahNumber,
+                              verseEndSymbol: false,
+                            );
+                            final String endSymbol = quran.getVerseEndSymbol(
+                              widget.ayahNumber,
+                            );
 
-                    final shareText =
-                        '﴿ $cleanVerse $endSymbol ﴾\n\n'
-                        'التفسير الميسر:\n'
-                        '$tafsirText\n\n'
-                        'سورة $surahName | الآية: ${ayahNumber.toArabic()} | صفحة: ${pageNum.toArabic()}\n\n'
-                        'حمل تطبيق "زاد":\n'
-                        'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link';
+                            final shareText =
+                                '﴿ $cleanVerse $endSymbol ﴾\n\n'
+                                'التفسير الميسر:\n'
+                                '$tafsirText\n\n'
+                                'سورة $surahName | الآية: ${widget.ayahNumber.toArabic()} | صفحة: ${pageNum.toArabic()}\n\n'
+                                'حمل تطبيق "زاد":\n'
+                                'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link';
 
-                    Share.share(shareText);
-                  },
-                  colors: colors,
-                ),
+                            Share.share(shareText);
+                          },
+                          colors: colors,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSecondaryAction(
+                          label: 'إغلاق',
+                          onTap: () => Navigator.pop(context),
+                          colors: colors,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSecondaryAction(
-                  label: 'إغلاق',
-                  onTap: () => Navigator.pop(context),
-                  colors: colors,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -177,8 +203,8 @@ class AyahInteractionSheet extends StatelessWidget {
           const SizedBox(height: 12),
           FutureBuilder<String>(
             future: context.read<KhatamBloc>().quranRepository.getTafsir(
-              surahNumber,
-              ayahNumber,
+              widget.surahNumber,
+              widget.ayahNumber,
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -192,16 +218,60 @@ class AyahInteractionSheet extends StatelessWidget {
                   ),
                 );
               }
-              return Text(
-                snapshot.data ?? 'تعذر تحميل التفسير',
-                style: TextStyle(
-                  fontFamily: 'UthmanTaha',
-                  fontSize: 18,
-                  height: 1.7,
-                  color: colors.text,
-                ),
-                textAlign: TextAlign.justify,
-                textDirection: TextDirection.rtl,
+              final tafsir = snapshot.data ?? 'تعذر تحميل التفسير';
+              final isLong = tafsir.length > 200;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    tafsir,
+                    maxLines: _isTafsirExpanded ? null : 5,
+                    overflow: _isTafsirExpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.fade,
+                    style: TextStyle(
+                      fontFamily: 'UthmanTaha',
+                      fontSize: 18,
+                      height: 1.7,
+                      color: colors.text,
+                    ),
+                    textAlign: TextAlign.justify,
+                    textDirection: TextDirection.rtl,
+                  ),
+                  if (isLong)
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _isTafsirExpanded = !_isTafsirExpanded;
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _isTafsirExpanded ? 'عرض أقل' : 'عرض المزيد',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: colors.primary,
+                              ),
+                            ),
+                            Icon(
+                              _isTafsirExpanded
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: colors.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),
@@ -276,7 +346,7 @@ class AyahInteractionSheet extends StatelessWidget {
   }
 
   _SheetThemeColors _getThemeColors(BuildContext context) {
-    switch (readingMode) {
+    switch (widget.readingMode) {
       case MushafReadingMode.white:
         return _SheetThemeColors(
           background: Colors.white,

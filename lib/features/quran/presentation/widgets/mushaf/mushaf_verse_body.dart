@@ -511,13 +511,13 @@ class _MushafVerseBodyState extends State<MushafVerseBody> {
         child: Stack(
           children: [
             Padding(
-              // Slightly larger horizontal padding for authentic Mushaf feel
-              // Added top padding so the first ayah isn't obscured by the Page Header
-              // when scrolled automatically.
+              // Horizontal padding for authentic Mushaf feel.
+              // Note: top padding is handled by the parent ScrollView (top: 70)
+              // to avoid the fixed AppBar/Header overlap.
               padding: const EdgeInsets.only(
                 left: 12,
                 right: 12,
-                top: 40,
+                top: 0,
                 bottom: 20,
               ),
               child: Column(

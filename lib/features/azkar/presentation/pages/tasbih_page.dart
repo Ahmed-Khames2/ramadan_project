@@ -8,6 +8,8 @@ import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:ramadan_project/features/settings/presentation/tasbih_settings_sheet.dart';
 import 'package:ramadan_project/presentation/blocs/tasbih_bloc.dart';
 import 'package:ramadan_project/core/utils/string_extensions.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TasbihPage extends StatefulWidget {
   const TasbihPage({super.key});
@@ -29,6 +31,9 @@ class _TasbihPageState extends State<TasbihPage>
   bool _lockBeadPassDetection = false;
   bool _sessionCounted = false;
 
+  final GlobalKey _tasbihAreaKey = GlobalKey();
+  List<TargetFocus> _targets = [];
+
   @override
   void initState() {
     super.initState();
@@ -40,29 +45,116 @@ class _TasbihPageState extends State<TasbihPage>
     _physicsController.addListener(_handlePhysicsUpdate);
 
     // Show onboarding hint
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'اضغط على السبحة للبدء',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppTheme.primaryEmerald,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-            margin: const EdgeInsets.fromLTRB(40, 0, 40, 100),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
+    _checkAndShowTutorial();
+  }
+
+  Future<void> _checkAndShowTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool shown = prefs.getBool('tasbih_hint_shown') ?? false;
+
+    if (!shown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _initTutorialTargets();
+        _showTutorial();
+      });
+    }
+  }
+
+  void _initTutorialTargets() {
+    _targets.clear();
+    _targets.add(
+      TargetFocus(
+        identify: "tasbih_tap_tutorial",
+        keyTarget: _tasbihAreaKey,
+        alignSkip: Alignment.topRight,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.touch_app_rounded,
+                    color: AppTheme.accentGold,
+                    size: 80,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "اضغط على السبحة أو حولها للتسبيح",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "التفاعل يعتمد على الضغط فقط لضمان دقة العد",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () => controller.next(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentGold,
+                      foregroundColor: AppTheme.primaryEmerald,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: const Text(
+                      "ابدأ الآن",
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-        );
-      }
-    });
+        ],
+        shape: ShapeLightFocus.Circle,
+        paddingFocus: 20,
+      ),
+    );
+  }
+
+  void _showTutorial() {
+    TutorialCoachMark(
+      targets: _targets,
+      colorShadow: AppTheme.primaryEmerald,
+      textSkip: "تخطي",
+      paddingFocus: 10,
+      opacityShadow: 0.9,
+      onFinish: _markTutorialAsShown,
+      onSkip: () {
+        _markTutorialAsShown();
+        return true;
+      },
+    ).show(context: context);
+  }
+
+  Future<void> _markTutorialAsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('tasbih_hint_shown', true);
   }
 
   void _handlePhysicsUpdate() {
@@ -151,22 +243,20 @@ class _TasbihPageState extends State<TasbihPage>
   }
 
   void _onPanStart(DragStartDetails details) {
-    _sessionCounted = false;
+    // Manual movement disabled as per user request
+    // _sessionCounted = false;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _updateRotation(details.delta.dx / 120.0);
-    // Trigger count on first movement in any direction if not already counted via tap
-    if (!_sessionCounted && details.delta.distance > 0.1) {
-      _triggerCount();
-      _sessionCounted = true;
-    }
+    // Manual movement disabled as per user request
+    // _updateRotation(details.delta.dx / 120.0);
   }
 
   void _onPanEnd(DragEndDetails details) {
-    _sessionCounted = false;
-    _velocity = details.velocity.pixelsPerSecond.dx / 1000.0;
-    _physicsController.forward(from: 0.0);
+    // Manual movement disabled as per user request
+    // _sessionCounted = false;
+    // _velocity = details.velocity.pixelsPerSecond.dx / 1000.0;
+    // _physicsController.forward(from: 0.0);
   }
 
   void _triggerCount() {
@@ -339,6 +429,7 @@ class _TasbihPageState extends State<TasbihPage>
           width: double.infinity,
           margin: const EdgeInsets.symmetric(vertical: 20),
           child: RepaintBoundary(
+            key: _tasbihAreaKey,
             child: CustomPaint(
               painter: TasbihPainter(
                 angle: _rotationAngle,

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/hadith.dart';
 import '../../domain/repositories/hadith_library_repository.dart';
+
+// ... (states remain same)
 
 abstract class HadithListState extends Equatable {
   const HadithListState();
@@ -81,6 +84,7 @@ class HadithListCubit extends Cubit<HadithListState> {
   final HadithLibraryRepository repository;
   final SharedPreferences prefs;
   static const String _readKey = 'read_hadith_ids';
+  Timer? _searchTimer;
 
   HadithListCubit({required this.repository, required this.prefs})
     : super(HadithListInitial());
@@ -91,12 +95,19 @@ class HadithListCubit extends Cubit<HadithListState> {
     return ids.map((id) => int.parse(id)).toSet();
   }
 
+  @override
+  Future<void> close() {
+    _searchTimer?.cancel();
+    return super.close();
+  }
+
   Future<void> loadHadiths({
     required String bookKey,
     required int chapterId,
     int page = 0,
     bool isLoadMore = false,
   }) async {
+    _searchTimer?.cancel();
     final currentState = state;
     List<Hadith> oldHadiths = [];
     int totalCount = 0;
@@ -107,7 +118,9 @@ class HadithListCubit extends Cubit<HadithListState> {
       totalCount = currentState.totalCount;
       emit(currentState.copyWith(isLoadingMore: true, isSearching: false));
     } else {
-      emit(HadithListLoading());
+      if (currentState is! HadithListLoaded) {
+        emit(HadithListLoading());
+      }
       totalCount = await repository.getHadithCountByChapter(
         bookKey: bookKey,
         chapterId: chapterId,
@@ -144,6 +157,8 @@ class HadithListCubit extends Cubit<HadithListState> {
     required String bookKey,
     required int chapterId,
   }) async {
+    _searchTimer?.cancel();
+
     if (query.length < 2) {
       loadHadiths(bookKey: bookKey, chapterId: chapterId);
       return;
@@ -154,38 +169,41 @@ class HadithListCubit extends Cubit<HadithListState> {
       emit(currentState.copyWith(isSearching: true, searchQuery: query));
     }
 
-    try {
-      final results = await repository.searchHadithsInChapter(
-        query: query,
-        bookKey: bookKey,
-        chapterId: chapterId,
-      );
+    _searchTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final results = await repository.searchHadithsInChapter(
+          query: query,
+          bookKey: bookKey,
+          chapterId: chapterId,
+        );
 
-      final readHadithIds = _loadReadIds();
-      final totalCount = await repository.getHadithCountByChapter(
-        bookKey: bookKey,
-        chapterId: chapterId,
-      );
+        final readHadithIds = _loadReadIds();
+        final totalCount = await repository.getHadithCountByChapter(
+          bookKey: bookKey,
+          chapterId: chapterId,
+        );
 
-      emit(
-        HadithListLoaded(
-          hadiths: results,
-          hasReachedMax:
-              true, // Search results are not paginated for simplicity
-          currentPage: 0,
-          isLoadingMore: false,
-          totalCount: totalCount,
-          searchQuery: query,
-          readHadithIds: readHadithIds,
-          isSearching: false,
-        ),
-      );
-    } catch (e) {
-      emit(HadithListError(message: e.toString()));
-    }
+        emit(
+          HadithListLoaded(
+            hadiths: results,
+            hasReachedMax:
+                true, // Search results are not paginated for simplicity
+            currentPage: 0,
+            isLoadingMore: false,
+            totalCount: totalCount,
+            searchQuery: query,
+            readHadithIds: readHadithIds,
+            isSearching: false,
+          ),
+        );
+      } catch (e) {
+        emit(HadithListError(message: e.toString()));
+      }
+    });
   }
 
   Future<void> toggleReadStatus(int hadithId) async {
+    // ... (rest same)
     final currentState = state;
     if (currentState is HadithListLoaded) {
       final newReadIds = Set<int>.from(currentState.readHadithIds);

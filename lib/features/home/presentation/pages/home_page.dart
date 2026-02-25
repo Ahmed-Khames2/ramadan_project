@@ -38,35 +38,50 @@ class HomeDashboardPage extends StatelessWidget {
               }
 
               if (prayerState is PrayerLoaded) {
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: AppTheme.spacing4),
+                return Column(
+                  children: [
+                    // Sticky Header with background to ensure premium look when scrolling
+                    Container(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      padding: const EdgeInsets.only(top: AppTheme.spacing4),
+                      child: const CustomHomeHeader(),
+                    ),
 
-                      // Custom Header with Date and Location
-                      const CustomHomeHeader(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppTheme.spacing2,
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: AppTheme.spacing4),
 
-                      const SizedBox(height: AppTheme.spacing6),
+                            // Accurate Prayer Countdown
+                            AccuratePrayerCountdown(
+                              prayers: prayerState.prayerTimes,
+                            ),
 
-                      // Accurate Prayer Countdown
-                      AccuratePrayerCountdown(prayers: prayerState.prayerTimes),
+                            const SizedBox(height: AppTheme.spacing6),
 
-                      const SizedBox(height: AppTheme.spacing6),
+                            // Horizontal Prayer Strip
+                            const HorizontalPrayerStrip(),
 
-                      // Horizontal Prayer Strip
-                      const HorizontalPrayerStrip(),
+                            const SizedBox(height: AppTheme.spacing8),
 
-                      const SizedBox(height: AppTheme.spacing8),
+                            // All Worships Section
+                            const OrnamentalDivider(),
+                            const SizedBox(height: AppTheme.spacing4),
+                            const AllWorshipsSection(),
 
-                      // All Worships Section
-                      const OrnamentalDivider(),
-                      const SizedBox(height: AppTheme.spacing4),
-                      const AllWorshipsSection(),
-
-                      const SizedBox(height: AppTheme.spacing8),
-                    ],
-                  ),
+                            const SizedBox(
+                              height: 110,
+                            ), // Padding for floating navbar
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               }
 

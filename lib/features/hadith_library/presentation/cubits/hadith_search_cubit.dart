@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/hadith.dart';
@@ -29,21 +30,33 @@ class HadithSearchError extends HadithSearchState {
 
 class HadithSearchCubit extends Cubit<HadithSearchState> {
   final HadithLibraryRepository repository;
+  Timer? _searchTimer;
 
   HadithSearchCubit({required this.repository}) : super(HadithSearchInitial());
 
+  @override
+  Future<void> close() {
+    _searchTimer?.cancel();
+    return super.close();
+  }
+
   Future<void> search(String query) async {
+    _searchTimer?.cancel();
+
     if (query.isEmpty) {
       emit(HadithSearchInitial());
       return;
     }
 
     emit(HadithSearchLoading());
-    try {
-      final results = await repository.searchHadiths(query);
-      emit(HadithSearchLoaded(results: results));
-    } catch (e) {
-      emit(HadithSearchError(message: e.toString()));
-    }
+
+    _searchTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final results = await repository.searchHadiths(query);
+        emit(HadithSearchLoaded(results: results));
+      } catch (e) {
+        emit(HadithSearchError(message: e.toString()));
+      }
+    });
   }
 }

@@ -68,219 +68,244 @@ class _HadithListPageState extends State<HadithListPage> {
       body: DecorativeBackground(
         child: BlocBuilder<HadithListCubit, HadithListState>(
           builder: (context, state) {
-            if (state is HadithListLoading && _currentPage == 0) {
+            // Keep track of the current hadiths and loading state
+            final bool isLoading =
+                state is HadithListLoading && _currentPage == 0;
+            final bool isSearching =
+                state is HadithListLoaded && state.isSearching;
+
+            // We only show the full screen loader if we have absolutely no data and are loading the first page
+            if (isLoading && _currentPage == 0) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is HadithListLoaded ||
-                (state is HadithListLoading && _currentPage > 0)) {
-              final loadedState = state is HadithListLoaded ? state : null;
-              final hadiths = state is HadithListLoaded
-                  ? state.hadiths
-                  : (state as dynamic).hadiths;
-
-              return Column(
-                children: [
-                  // Search and Header Section
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacing4,
-                      vertical: AppTheme.spacing2,
-                    ),
-                    color: Theme.of(context).appBarTheme.backgroundColor,
-                    child: Column(
-                      children: [
-                        // Smart Search Field
-                        TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                            context.read<HadithListCubit>().searchInChapter(
-                              query: value,
-                              bookKey: widget.book.key,
-                              chapterId: widget.chapter.chapterId,
-                            );
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'بحث ذكي في الأحاديث...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon:
-                                (state is HadithListLoaded && state.isSearching)
-                                ? const Padding(
-                                    padding: EdgeInsets.all(12),
-                                    child: SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  )
-                                : _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 20),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                      _loadHadiths();
-                                    },
-                                  )
-                                : null,
-                            filled: true,
-                            fillColor: Theme.of(
-                              context,
-                            ).scaffoldBackgroundColor.withValues(alpha: 0.5),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.spacing4,
-                              vertical: AppTheme.spacing2,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusM,
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppTheme.spacing2),
-                        // Stats Row
-                        if (loadedState != null)
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppTheme.spacing3,
-                                  vertical: AppTheme.spacing1 / 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryEmerald.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusS,
-                                  ),
-                                ),
-                                child: Text(
-                                  'عدد الأحاديث: ${loadedState.totalCount}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryEmerald,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: AppTheme.spacing2),
-                              Text(
-                                'تم قراءة ${loadedState.readHadithIds.length} حديث',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                  // Hadith List with Scrollbar
-                  Expanded(
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        scrollbarTheme: ScrollbarThemeData(
-                          thumbColor: WidgetStateProperty.all(
-                            AppTheme.primaryEmerald.withValues(alpha: 0.5),
-                          ),
-                          thickness: WidgetStateProperty.all(8),
-                          radius: const Radius.circular(AppTheme.radiusM),
-                          interactive: true,
-                        ),
-                      ),
-                      child: Scrollbar(
-                        controller: _scrollController,
-                        thumbVisibility: true,
-                        trackVisibility: true,
-                        child: hadiths.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off,
-                                      size: 64,
-                                      color: Colors.grey.withValues(alpha: 0.3),
-                                    ),
-                                    const SizedBox(height: AppTheme.spacing2),
-                                    const Text(
-                                      'لا توجد أحاديث تطابق بحثك',
-                                      style: TextStyle(color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppTheme.spacing4,
-                                  vertical: AppTheme.spacing4,
-                                ),
-                                itemCount:
-                                    hadiths.length +
-                                    (loadedState != null &&
-                                            loadedState.hasReachedMax
-                                        ? 0
-                                        : 1),
-                                itemBuilder: (context, index) {
-                                  if (index >= hadiths.length) {
-                                    return const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: AppTheme.spacing4,
-                                        ),
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    );
-                                  }
-
-                                  final hadith = hadiths[index];
-                                  final isRead =
-                                      loadedState?.readHadithIds.contains(
-                                        hadith.id,
-                                      ) ??
-                                      false;
-
-                                  return _HadithCard(
-                                    hadith: hadith,
-                                    index: index + 1,
-                                    isRead: isRead,
-                                    searchQuery: _searchQuery,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              HadithDetailPage(hadith: hadith),
-                                        ),
-                                      ).then((_) {
-                                        // Auto-load state if needed
-                                      });
-                                    },
-                                    onToggleRead: () {
-                                      context
-                                          .read<HadithListCubit>()
-                                          .toggleReadStatus(hadith.id);
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            } else if (state is HadithListError) {
-              return Center(child: Text('خطأ: ${state.message}'));
             }
-            return const SizedBox();
+
+            // At this point we either have data or an error, or we are loading more/searching
+            final List<Hadith> hadiths = (state is HadithListLoaded)
+                ? state.hadiths
+                : (state is HadithListLoading && _currentPage > 0)
+                ? (context.read<HadithListCubit>().state as dynamic).hadiths
+                : [];
+
+            final HadithListLoaded? loadedState = (state is HadithListLoaded)
+                ? state
+                : null;
+
+            return Column(
+              children: [
+                // Search and Header Section
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacing4,
+                    vertical: AppTheme.spacing2,
+                  ),
+                  color: Theme.of(context).appBarTheme.backgroundColor,
+                  child: Column(
+                    children: [
+                      // Smart Search Field
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                          context.read<HadithListCubit>().searchInChapter(
+                            query: value,
+                            bookKey: widget.book.key,
+                            chapterId: widget.chapter.chapterId,
+                          );
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'بحث ذكي في الأحاديث...',
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          suffixIcon: isSearching
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                    _loadHadiths();
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacing4,
+                            vertical: AppTheme.spacing2,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusM,
+                            ),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spacing2),
+                      // Stats Row
+                      if (loadedState != null)
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppTheme.spacing3,
+                                vertical: AppTheme.spacing1 / 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryEmerald.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusS,
+                                ),
+                              ),
+                              child: Text(
+                                'عدد الأحاديث: ${loadedState.totalCount}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryEmerald,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacing2),
+                            Text(
+                              'تم قراءة ${loadedState.readHadithIds.length} حديث',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+                // Hadith List with Scrollbar
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          scrollbarTheme: ScrollbarThemeData(
+                            thumbColor: WidgetStateProperty.all(
+                              AppTheme.primaryEmerald.withValues(alpha: 0.5),
+                            ),
+                            thickness: WidgetStateProperty.all(8),
+                            radius: const Radius.circular(AppTheme.radiusM),
+                            interactive: true,
+                          ),
+                        ),
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          trackVisibility: true,
+                          child: (hadiths.isEmpty && !isLoading && !isSearching)
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.search_off,
+                                        size: 64,
+                                        color: Colors.grey.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppTheme.spacing2),
+                                      const Text(
+                                        'لا توجد أحاديث تطابق بحثك',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppTheme.spacing4,
+                                    vertical: AppTheme.spacing4,
+                                  ),
+                                  itemCount:
+                                      hadiths.length +
+                                      (loadedState != null &&
+                                              loadedState.hasReachedMax
+                                          ? 0
+                                          : 1),
+                                  itemBuilder: (context, index) {
+                                    if (index >= hadiths.length) {
+                                      return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: AppTheme.spacing4,
+                                          ),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    }
+
+                                    final hadith = hadiths[index];
+                                    final isRead =
+                                        loadedState?.readHadithIds.contains(
+                                          hadith.id,
+                                        ) ??
+                                        false;
+
+                                    return _HadithCard(
+                                      hadith: hadith,
+                                      index: index + 1,
+                                      isRead: isRead,
+                                      searchQuery: _searchQuery,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                HadithDetailPage(
+                                                  hadith: hadith,
+                                                ),
+                                          ),
+                                        ).then((_) {
+                                          // Auto-load state if needed
+                                        });
+                                      },
+                                      onToggleRead: () {
+                                        context
+                                            .read<HadithListCubit>()
+                                            .toggleReadStatus(hadith.id);
+                                      },
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                      // Semi-transparent overlay when searching to provide feedback
+                      if (isSearching)
+                        Positioned.fill(
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 300),
+                            opacity: 0.3,
+                            child: Container(color: Colors.white10),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
           },
         ),
       ),
@@ -500,30 +525,32 @@ class HighlightedText extends StatelessWidget {
       );
     }
 
-    final normalizedText = ArabicNormalization.normalize(text);
-    final normalizedQuery = ArabicNormalization.normalize(query);
+    final pattern = ArabicNormalization.searchPattern(query);
+    if (pattern.isEmpty) {
+      return Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      );
+    }
 
+    final regex = RegExp(pattern, caseSensitive: false);
     final List<TextSpan> spans = [];
-    int start = 0;
+    int lastMatchEnd = 0;
 
-    // Find all matches
-    while (true) {
-      final int index = normalizedText.indexOf(normalizedQuery, start);
-      if (index == -1) {
-        spans.add(TextSpan(text: text.substring(start)));
-        break;
+    final matches = regex.allMatches(text);
+
+    for (final match in matches) {
+      // Text before the match
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
       }
 
-      if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index)));
-      }
-
+      // The matched text (highlighted)
       spans.add(
         TextSpan(
-          text: text.substring(
-            index,
-            index + query.length,
-          ), // Note: might not match perfectly due to normalization, using query length as a proxy
+          text: text.substring(match.start, match.end),
           style: style.copyWith(
             backgroundColor: AppTheme.accentGold.withValues(alpha: 0.3),
             fontWeight: FontWeight.bold,
@@ -531,7 +558,12 @@ class HighlightedText extends StatelessWidget {
         ),
       );
 
-      start = index + normalizedQuery.length;
+      lastMatchEnd = match.end;
+    }
+
+    // Remaining text after last match
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
     }
 
     return RichText(
