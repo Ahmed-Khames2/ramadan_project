@@ -7,11 +7,7 @@ class Reciters {
       name: 'Mishary Rashid Alafasy',
       arabicName: 'مشاري راشد العفاسي',
     ),
-    Reciter(
-      id: 'ar.husary',
-      name: 'Mahmoud Khalil Al-Husary',
-      arabicName: 'محمود خليل الحصري',
-    ),
+
     Reciter(
       id: 'ar.mahermuaiqly',
       name: 'Maher Al Muaiqly',
