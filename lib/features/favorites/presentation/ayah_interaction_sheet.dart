@@ -124,7 +124,9 @@ class AyahInteractionSheet extends StatelessWidget {
                         '﴿ $cleanVerse $endSymbol ﴾\n\n'
                         'التفسير الميسر:\n'
                         '$tafsirText\n\n'
-                        'سورة $surahName | الآية: ${ayahNumber.toArabic()} | صفحة: ${pageNum.toArabic()}';
+                        'سورة $surahName | الآية: ${ayahNumber.toArabic()} | صفحة: ${pageNum.toArabic()}\n\n'
+                        'حمل تطبيق "زاد":\n'
+                        'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link';
 
                     Share.share(shareText);
                   },

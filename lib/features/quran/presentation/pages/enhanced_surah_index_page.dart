@@ -83,8 +83,11 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
     }
 
     // 2. Build the display list with Dividers
-    if (_lastReadPage != null && _searchController.text.isEmpty) {
-      _displayList.add('CONTINUE_READING_BANNER');
+    if (_searchController.text.isEmpty) {
+      if (_lastReadPage != null) {
+        _displayList.add('CONTINUE_READING_BANNER');
+      }
+      _displayList.add('FILTERS');
     }
 
     int currentJuzTracker = 0;
@@ -175,11 +178,12 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Scaffold(
-        body: DecorativeBackground(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: DecorativeBackground(
           child: SafeArea(
             child: Column(
               children: [
@@ -284,7 +288,6 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
           const OrnamentalDivider(width: 40),
           const SizedBox(height: 16),
           _buildSearchSection(theme),
-          if (_searchController.text.isEmpty) _buildFilters(),
         ],
       ),
     );
@@ -442,6 +445,9 @@ class EnhancedSurahIndexPageState extends State<EnhancedSurahIndexPage> {
         final item = _displayList[index];
         if (item == 'CONTINUE_READING_BANNER') {
           return _buildContinueReadingBanner(theme);
+        }
+        if (item == 'FILTERS') {
+          return _buildFilters();
         }
         if (item is int) {
           // It's a Juz Header

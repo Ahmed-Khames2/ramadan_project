@@ -59,7 +59,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
             ? Border.all(
                 color: _isFocused
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.primary.withOpacity(0.1),
+                    : theme.colorScheme.onSurface.withOpacity(0.25),
                 width: _isFocused ? 1.5 : 1,
               )
             : null,

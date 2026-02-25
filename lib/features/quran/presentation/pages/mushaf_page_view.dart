@@ -627,7 +627,9 @@ class _MushafPageViewState extends State<MushafPageView> {
       await file.writeAsBytes(capturedImage);
 
       final shareText =
-          'سورة ${quran.getSurahNameArabic(ayah.surahNumber)} - آية ${ayah.ayahNumber}';
+          'سورة ${quran.getSurahNameArabic(ayah.surahNumber)} - آية ${ayah.ayahNumber}\n\n'
+          'حمل تطبيق "زاد":\n'
+          'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link';
       await Share.shareXFiles([XFile(file.path)], text: shareText);
     } catch (e) {
       debugPrint('Error sharing ayah: $e');

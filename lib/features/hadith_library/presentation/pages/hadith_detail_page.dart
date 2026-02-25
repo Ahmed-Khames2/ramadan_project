@@ -39,7 +39,7 @@ class HadithDetailPage extends StatelessWidget {
             tooltip: 'مشاركة',
             onPressed: () {
               Share.share(
-                '${hadith.textArabic}\n\n[ ${hadith.bookTitle} - ${hadith.chapterTitle} ]',
+                '${hadith.textArabic}\n\n[ ${hadith.bookTitle} - ${hadith.chapterTitle} ]\n\nحمل تطبيق "زاد":\nhttps://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link',
               );
             },
           ),

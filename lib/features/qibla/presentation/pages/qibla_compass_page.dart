@@ -466,8 +466,8 @@ class _QiblaCompassPageState extends State<QiblaCompassPage>
           Expanded(
             child: Text(
               kIsWeb
-                  ? 'اتجاه القبلة من جهة الشمال هو السهم الذهبي'
-                  : 'وجه الجهاز نحو السهم الذهبي',
+                  ? 'اتجاه القبلة من جهة الشمال هو السهم المضيء'
+                  : 'وجه الجهاز نحو السهم المضيء',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

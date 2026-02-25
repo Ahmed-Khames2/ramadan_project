@@ -27,6 +27,7 @@ class _KhatmahDashboardPageState extends State<KhatmahDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: DecorativeBackground(
         child: SafeArea(
           child: BlocBuilder<KhatamBloc, KhatamState>(
