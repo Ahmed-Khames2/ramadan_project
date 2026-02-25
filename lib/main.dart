@@ -37,7 +37,6 @@ import 'package:ramadan_project/features/prayer_times/data/repositories/prayer_r
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:ramadan_project/features/splash/presentation/pages/splash_page.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
@@ -52,26 +51,27 @@ import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar
 import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
 import 'package:ramadan_project/features/adhkar_virtues/presentation/bloc/adhkar_virtue_cubit.dart';
 import 'package:ramadan_project/features/adhkar_virtues/domain/repositories/adhkar_virtue_repository.dart';
-import 'package:isar/isar.dart';
-import 'package:ramadan_project/features/hadith_library/data/models/hadith_model.dart';
-import 'package:ramadan_project/features/hadith_library/data/datasources/hadith_isar_importer.dart';
-import 'package:ramadan_project/features/hadith_library/data/repositories/hadith_library_repository_impl.dart';
 import 'package:ramadan_project/features/hadith_library/domain/repositories/hadith_library_repository.dart';
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_books_cubit.dart';
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_chapters_cubit.dart';
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_list_cubit.dart';
 import 'package:ramadan_project/features/hadith_library/presentation/cubits/hadith_search_cubit.dart';
 
+// Native-only imports (not available on web)
+import 'main_native.dart' if (dart.library.html) 'main_web.dart' as platform;
+
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // Initialize just_audio_background for lock screen controls
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-    androidNotificationChannelName: 'القرآن الكريم',
-    androidNotificationOngoing: true,
-  );
+  // JustAudioBackground is not supported on web
+  if (!kIsWeb) {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+      androidNotificationChannelName: 'القرآن الكريم',
+      androidNotificationOngoing: true,
+    );
+  }
 
   // Basic global error handling for user feedback
   FlutterError.onError = (details) {
@@ -82,29 +82,13 @@ Future<void> main() async {
   };
 
   // Initialize essential services
-  await Future.wait([
-    initializeDateFormatting('ar', null),
-    Hive.initFlutter(),
-    // if (!kIsWeb) _clearAudioCache(), // Removed to keep audio cache for offline use
-  ]);
+  await Future.wait([initializeDateFormatting('ar', null), Hive.initFlutter()]);
 
   final prefs = await SharedPreferences.getInstance();
 
-  // Initialize Isar
-  final dir = await getApplicationSupportDirectory();
-  if (!await dir.exists()) {
-    await dir.create(recursive: true);
-  }
-
-  final isar = await Isar.open([
-    HadithModelSchema,
-    HadithBookModelSchema,
-    HadithChapterModelSchema,
-  ], directory: dir.path);
-
-  // Initialize Hadith Importer (Non-blocking)
-  final hadithImporter = HadithIsarImporter(isar: isar, prefs: prefs);
-  hadithImporter.init(); // Start import in background
+  // Initialize the Hadith Library repository (platform-conditional)
+  final HadithLibraryRepository hadithLibraryRepository = await platform
+      .createHadithLibraryRepository(prefs);
 
   // Register Hive Adapters
   _registerHiveAdapters();
@@ -149,7 +133,6 @@ Future<void> main() async {
     localDataSource: AdhkarVirtueLocalDataSourceImpl(),
   );
 
-  final hadithLibraryRepository = HadithLibraryRepositoryImpl(isar: isar);
   // Initialization complete - remove splash screen
   FlutterNativeSplash.remove();
 

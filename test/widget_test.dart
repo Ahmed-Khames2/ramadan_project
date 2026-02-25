@@ -22,8 +22,8 @@ import 'package:ramadan_project/features/favorites/data/repositories/favorites_r
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/worship_local_datasource.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/repositories/worship_repository_impl.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
-import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
-import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
+// import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
+// import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
 import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar_virtue_repository_impl.dart';
 import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
 import 'package:ramadan_project/features/hadith_library/domain/entities/hadith.dart';
@@ -95,9 +95,9 @@ void main() {
       customTasksDataSource: customTasksDataSource,
     );
 
-    final hadithRepository = HadithRepositoryImpl(
-      localDataSource: HadithLocalDataSourceImpl(),
-    );
+    // final hadithRepository = HadithRepositoryImpl(
+    //   localDataSource: HadithLocalDataSourceImpl(),
+    // );
 
     final adhkarVirtueRepository = AdhkarVirtueRepositoryImpl(
       localDataSource: AdhkarVirtueLocalDataSourceImpl(),
@@ -115,7 +115,7 @@ void main() {
         khatmahRepository: khatmahRepository,
         favoritesRepository: favoritesRepository,
         worshipRepository: worshipRepository,
-        hadithRepository: hadithRepository,
+        hadithRepository: Null,
         adhkarVirtueRepository: adhkarVirtueRepository,
         hadithLibraryRepository: hadithLibraryRepository,
         prefs: prefs,
