@@ -88,7 +88,7 @@ class ContactUsPage extends StatelessWidget {
             const SizedBox(height: 12),
             _buildDevOption(
               context,
-              name: 'م/ أحمد عبدالعزيز',
+              name: 'م/ أحمد الليبي',
               channel: channel,
               whatsapp: 'https://wa.me/201278576046', // Placeholder
               linkedin:
@@ -295,7 +295,7 @@ class ContactUsPage extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Text(
-            'م/ أحمد خميس & م/ أحمد عبدالعزيز',
+            'م/ أحمد خميس & م/ أحمد الليبي',
             style: TextStyle(fontSize: 12, color: AppTheme.textGrey),
           ),
         ],

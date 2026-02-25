@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icons.share_rounded,
                       () {
                         Share.share(
-                          'حمل تطبيق "زاد": رفيقك للقرآن والأذكار ومواقيت الصلاة.\n\nرابط تحميل التطبيق:\nhttps://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link',
+                          'حمل تطبيق "زاد": رفيقك للقرآن والأذكار ومواقيت الصلاة.\n\nرابط تحميل التطبيق:\nhttps://drive.google.com/drive/folders/1Q8ls_btCEJjk3ZpgoEl9njQ7OeHeSWjh?usp=sharing',
                         );
                       },
                     ),
@@ -118,7 +118,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icons.update_rounded,
                       () async {
                         final url = Uri.parse(
-                          'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link',
+                          'https://drive.google.com/drive/folders/1Q8ls_btCEJjk3ZpgoEl9njQ7OeHeSWjh?usp=sharing',
                         );
                         if (await canLaunchUrl(url)) {
                           await launchUrl(
