@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../theme/app_theme.dart';
 
 class MainScaffold extends StatelessWidget {
@@ -31,9 +32,14 @@ class MainScaffold extends StatelessWidget {
       drawer: drawer,
       body: body,
       bottomNavigationBar: onTabSelected != null
-          ? _ModernFloatingNavBar(
-              currentIndex: currentIndex,
-              onTap: onTabSelected!,
+          ? BottomAppBar(
+              color: Colors.transparent,
+              elevation: 0,
+              padding: EdgeInsets.zero,
+              child: _ModernFloatingNavBar(
+                currentIndex: currentIndex,
+                onTap: onTabSelected!,
+              ),
             )
           : null,
     );
@@ -51,68 +57,76 @@ class _ModernFloatingNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       height: 70,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: Theme.of(context).brightness == Brightness.dark
-              ? [const Color(0xFF0A2B1D), const Color(0xFF051C13)]
-              : [
-                  AppTheme.primaryEmerald,
-                  AppTheme.primaryEmerald.withOpacity(0.9),
-                ],
-        ),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(35),
-        border: Theme.of(context).brightness == Brightness.dark
-            ? Border.all(
-                color: AppTheme.primaryEmerald.withOpacity(0.2),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        const Color(0xFF0A2B1D).withOpacity(0.8),
+                        const Color(0xFF051C13).withOpacity(0.9),
+                      ]
+                    : [
+                        AppTheme.primaryEmerald.withOpacity(0.85),
+                        AppTheme.primaryEmerald.withOpacity(0.75),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(35),
+              border: Border.all(
+                color: Colors.white.withOpacity(isDark ? 0.1 : 0.2),
                 width: 1,
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color:
-                (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black
-                        : AppTheme.primaryEmerald)
-                    .withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-            spreadRadius: -2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDark ? Colors.black : AppTheme.primaryEmerald)
+                      .withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -2,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _NavBarItem(
+                  icon: Icons.home_rounded,
+                  label: 'الرئيسية',
+                  isSelected: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
+                _NavBarItem(
+                  icon: Icons.menu_book_rounded,
+                  label: 'المصحف',
+                  isSelected: currentIndex == 1,
+                  onTap: () => onTap(1),
+                ),
+                _NavBarItem(
+                  icon: Icons.history_edu_rounded,
+                  label: 'الختمة',
+                  isSelected: currentIndex == 2,
+                  onTap: () => onTap(2),
+                ),
+                _NavBarItem(
+                  icon: Icons.settings_rounded,
+                  label: 'الإعدادات',
+                  isSelected: currentIndex == 3,
+                  onTap: () => onTap(3),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _NavBarItem(
-            icon: Icons.home_rounded,
-            label: 'الرئيسية',
-            isSelected: currentIndex == 0,
-            onTap: () => onTap(0),
-          ),
-          _NavBarItem(
-            icon: Icons.menu_book_rounded,
-            label: 'المصحف',
-            isSelected: currentIndex == 1,
-            onTap: () => onTap(1),
-          ),
-          _NavBarItem(
-            icon: Icons.auto_graph_rounded,
-            label: 'الختمة',
-            isSelected: currentIndex == 2,
-            onTap: () => onTap(2),
-          ),
-          _NavBarItem(
-            icon: Icons.settings_rounded,
-            label: 'الإعدادات',
-            isSelected: currentIndex == 3,
-            onTap: () => onTap(3),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -138,7 +152,7 @@ class _NavBarItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(35),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.white.withOpacity(0.15)
@@ -147,15 +161,16 @@ class _NavBarItem extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               color: isSelected
                   ? Colors.white
                   : Colors.white.withValues(alpha: 0.6),
-              size: 24,
+              size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(

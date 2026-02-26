@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:quran/quran.dart' as quran;
 import 'package:ramadan_project/features/audio/domain/entities/reciter.dart';
 import 'package:ramadan_project/features/audio/domain/repositories/audio_repository.dart';
 import 'package:rxdart/rxdart.dart';
@@ -12,6 +15,7 @@ import 'package:rxdart/rxdart.dart';
 class AudioRepositoryImpl implements AudioRepository {
   final AudioPlayer _audioPlayer;
   final Dio _dio;
+  List<int>? _activePlaylistAyahs;
 
   // ignore: close_sinks
   final _currentAyahController = BehaviorSubject<int?>();
@@ -32,14 +36,10 @@ class AudioRepositoryImpl implements AudioRepository {
     });
 
     _audioPlayer.currentIndexStream.listen((index) {
-      // For playlist support (playRange)
-      if (_audioPlayer.audioSource is ConcatenatingAudioSource) {
-        final playlist = _audioPlayer.audioSource as ConcatenatingAudioSource;
-        if (index != null && index < playlist.length) {
-          // We need a way to map index back to ayahNumber
-          // If we store the current range, we can map it here.
-          // For now, playRange handles its own mapping if it's specialized.
-        }
+      if (index != null &&
+          _activePlaylistAyahs != null &&
+          index < _activePlaylistAyahs!.length) {
+        _currentAyahController.add(_activePlaylistAyahs![index]);
       }
     });
   }
@@ -66,20 +66,28 @@ class AudioRepositoryImpl implements AudioRepository {
       // 1. Stop previous playback and reset session to ensure a clean state,
       // especially on Web where buffers might persist.
       await _audioPlayer.stop();
+      _activePlaylistAyahs = null;
 
       if (kIsWeb) {
         final url = _getAudioUrl(ayahNumber, reciter);
 
+        final mediaItem = _buildMediaItem(ayahNumber, reciter);
+
         // 2. Explicitly set initialPosition to Duration.zero
-        await _audioPlayer.setUrl(url, initialPosition: Duration.zero);
+        await _audioPlayer.setAudioSource(
+          AudioSource.uri(Uri.parse(url), tag: mediaItem),
+          initialPosition: Duration.zero,
+        );
       } else {
         final localPath = await _getLocalFilePath(ayahNumber, reciter);
         final file = File(localPath);
 
+        final mediaItem = _buildMediaItem(ayahNumber, reciter);
+
         if (await file.exists()) {
           // 2. Explicitly set initialPosition to Duration.zero
-          await _audioPlayer.setFilePath(
-            localPath,
+          await _audioPlayer.setAudioSource(
+            AudioSource.uri(Uri.file(localPath), tag: mediaItem),
             initialPosition: Duration.zero,
           );
         } else {
@@ -100,6 +108,7 @@ class AudioRepositoryImpl implements AudioRepository {
           final source = LockCachingAudioSource(
             Uri.parse(url),
             cacheFile: File(localPath),
+            tag: mediaItem,
           );
           // 2. Explicitly set initialPosition to Duration.zero
           await _audioPlayer.setAudioSource(
@@ -122,56 +131,56 @@ class AudioRepositoryImpl implements AudioRepository {
   @override
   Future<void> playRange(List<int> ayahNumbers, Reciter reciter) async {
     try {
-      // 1. Stop previous playback to clear internal state
       await _audioPlayer.stop();
+      _activePlaylistAyahs = null; // Clear immediately to prevent stale updates
 
+      final localDir = await _getLocalDirectory(reciter);
       final List<AudioSource> sources = [];
-      for (final ayah in ayahNumbers) {
-        if (kIsWeb) {
-          sources.add(
-            AudioSource.uri(Uri.parse(_getAudioUrl(ayah, reciter)), tag: ayah),
-          );
+
+      // Check existence and build sources in parallel for speed
+      final existsResults = await Future.wait(
+        ayahNumbers.map((ayah) async {
+          final path = '${localDir.path}/$ayah.mp3';
+          return await File(path).exists();
+        }),
+      );
+
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final isOffline = connectivityResult.contains(ConnectivityResult.none);
+
+      for (int i = 0; i < ayahNumbers.length; i++) {
+        final ayah = ayahNumbers[i];
+        final exists = existsResults[i];
+        final path = '${localDir.path}/$ayah.mp3';
+
+        final mediaItem = _buildMediaItem(ayah, reciter);
+
+        if (exists) {
+          sources.add(AudioSource.file(path, tag: mediaItem));
         } else {
-          final localPath = await _getLocalFilePath(ayah, reciter);
-          final file = File(localPath);
-
-          if (await file.exists()) {
-            sources.add(AudioSource.file(localPath, tag: ayah));
-          } else {
-            // Check connectivity for ranges too
-            final connectivityResult = await Connectivity().checkConnectivity();
-            if (connectivityResult.contains(ConnectivityResult.none)) {
-              throw Exception(
-                "لا يوجد اتصال بالإنترنت لبعض الآيات في القائمة.",
-              );
-            }
-
-            final url = _getAudioUrl(ayah, reciter);
-            sources.add(
-              LockCachingAudioSource(
-                Uri.parse(url),
-                cacheFile: File(localPath),
-                tag: ayah,
-              ),
-            );
+          if (isOffline) {
+            throw Exception("لا يوجد اتصال بالإنترنت لبعض الآيات في القائمة.");
           }
+          final url = _getAudioUrl(ayah, reciter);
+          sources.add(
+            LockCachingAudioSource(
+              Uri.parse(url),
+              cacheFile: File(path),
+              tag: mediaItem,
+            ),
+          );
         }
       }
 
       final playlist = ConcatenatingAudioSource(children: sources);
-      // 2. Set initialPosition to start at the beginning of the FIRST ayah in the range
+
+      // Crucial: Only set the active ayahs list right before setting the source
+      _activePlaylistAyahs = ayahNumbers;
+
       await _audioPlayer.setAudioSource(
         playlist,
         initialPosition: Duration.zero,
       );
-
-      // Handle current ayah updates for playlists
-      // (Mapping index to actual ayah global number)
-      final subscription = _audioPlayer.currentIndexStream.listen((index) {
-        if (index != null && index < ayahNumbers.length) {
-          _currentAyahController.add(ayahNumbers[index]);
-        }
-      });
 
       _audioPlayer.play();
     } catch (e) {
@@ -278,14 +287,44 @@ class AudioRepositoryImpl implements AudioRepository {
     return 'https://cdn.islamic.network/quran/audio/128/${reciter.id}/$ayahNumber.mp3';
   }
 
+  /// Builds a MediaItem for the audio player notification.
+  /// Converts the global ayah number to a Surah name using the quran package.
+  MediaItem _buildMediaItem(int ayahNumber, Reciter reciter) {
+    // Convert global ayah number to surah/ayah
+    int surahNumber = 1;
+    int ayahInSurah = ayahNumber;
+    int count = 0;
+    for (int s = 1; s <= 114; s++) {
+      final verseCount = quran.getVerseCount(s);
+      if (count + verseCount >= ayahNumber) {
+        surahNumber = s;
+        ayahInSurah = ayahNumber - count;
+        break;
+      }
+      count += verseCount;
+    }
+    final surahName = quran.getSurahNameArabic(surahNumber);
+    return MediaItem(
+      id: ayahNumber.toString(),
+      album: reciter.arabicName,
+      title: 'سورة $surahName - الآية $ayahInSurah',
+      artist: reciter.arabicName,
+    );
+  }
+
   Future<String> _getLocalFilePath(int ayahNumber, Reciter reciter) async {
     if (kIsWeb) return '';
+    final dir = await _getLocalDirectory(reciter);
+    return '${dir.path}/$ayahNumber.mp3';
+  }
+
+  Future<Directory> _getLocalDirectory(Reciter reciter) async {
     final dir = await getApplicationDocumentsDirectory();
     final audioDir = Directory('${dir.path}/audio/${reciter.id}');
     if (!await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }
-    return '${audioDir.path}/$ayahNumber.mp3';
+    return audioDir;
   }
 
   @override
@@ -296,9 +335,6 @@ class AudioRepositoryImpl implements AudioRepository {
   @override
   Future<bool> seekToNext() async {
     if (_audioPlayer.hasNext) {
-      // For playlist traversal, we seek to next and IMMEDIATELY reset to 0
-      // just_audio does this automatically for track completion, but manual skip
-      // on Web sometimes needs an explicit nudge or initialPosition reset.
       await _audioPlayer.seekToNext();
       await _audioPlayer.seek(Duration.zero);
       return true;

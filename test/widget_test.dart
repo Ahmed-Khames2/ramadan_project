@@ -22,6 +22,12 @@ import 'package:ramadan_project/features/favorites/data/repositories/favorites_r
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/worship_local_datasource.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/repositories/worship_repository_impl.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/models/worship_task_model.dart';
+// import 'package:ramadan_project/features/hadith/data/repositories/hadith_repository_impl.dart';
+// import 'package:ramadan_project/features/hadith/data/sources/hadith_local_data_source.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/repositories/adhkar_virtue_repository_impl.dart';
+import 'package:ramadan_project/features/adhkar_virtues/data/sources/adhkar_virtue_local_data_source.dart';
+import 'package:ramadan_project/features/hadith_library/domain/entities/hadith.dart';
+import 'package:ramadan_project/features/hadith_library/domain/repositories/hadith_library_repository.dart';
 
 import 'package:ramadan_project/features/ramadan_worship/data/models/day_progress_model.dart';
 import 'package:ramadan_project/features/ramadan_worship/data/datasources/custom_tasks_datasource.dart';
@@ -89,6 +95,16 @@ void main() {
       customTasksDataSource: customTasksDataSource,
     );
 
+    // final hadithRepository = HadithRepositoryImpl(
+    //   localDataSource: HadithLocalDataSourceImpl(),
+    // );
+
+    final adhkarVirtueRepository = AdhkarVirtueRepositoryImpl(
+      localDataSource: AdhkarVirtueLocalDataSourceImpl(),
+    );
+
+    final hadithLibraryRepository = _MockHadithLibraryRepository();
+
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
@@ -99,6 +115,9 @@ void main() {
         khatmahRepository: khatmahRepository,
         favoritesRepository: favoritesRepository,
         worshipRepository: worshipRepository,
+        hadithRepository: Null,
+        adhkarVirtueRepository: adhkarVirtueRepository,
+        hadithLibraryRepository: hadithLibraryRepository,
         prefs: prefs,
       ),
     );
@@ -109,4 +128,34 @@ void main() {
     // Verify that the app loads without crashing
     expect(find.byType(MaterialApp), findsOneWidget);
   });
+}
+
+class _MockHadithLibraryRepository implements HadithLibraryRepository {
+  @override
+  Future<List<HadithBook>> getBooks() async => [];
+  @override
+  Future<List<HadithChapter>> getChapters(String bookKey) async => [];
+  @override
+  Future<List<Hadith>> getHadithsByChapter({
+    required String bookKey,
+    required int chapterId,
+    int page = 0,
+    int pageSize = 20,
+  }) async => [];
+  @override
+  Future<List<Hadith>> searchHadiths(String query, {int limit = 50}) async =>
+      [];
+  @override
+  Future<List<Hadith>> searchHadithsInChapter({
+    required String query,
+    required String bookKey,
+    required int chapterId,
+  }) async => [];
+  @override
+  Future<int> getHadithCountByChapter({
+    required String bookKey,
+    required int chapterId,
+  }) async => 0;
+  @override
+  Future<Hadith?> getHadithById(int id) async => null;
 }

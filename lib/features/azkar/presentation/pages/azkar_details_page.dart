@@ -8,6 +8,7 @@ import 'dart:async';
 
 import 'package:ramadan_project/features/azkar/data/models/azkar_model.dart';
 import 'package:ramadan_project/features/azkar/presentation/bloc/azkar_bloc.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class AzkarDetailsPage extends StatefulWidget {
   final AzkarItem azkarItem;
@@ -170,7 +171,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'التقدم: ${((_currentIndex + 1) / total * 100).toInt()}%',
+                'التقدم: ${((_currentIndex + 1) / total * 100).toInt().toArabic()}%',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.textGrey,
@@ -178,7 +179,7 @@ class _AzkarDetailsPageState extends State<AzkarDetailsPage> {
                 ),
               ),
               Text(
-                '${_currentIndex + 1} / $total',
+                '${(_currentIndex + 1).toArabic()} / ${total.toArabic()}',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.textGrey,

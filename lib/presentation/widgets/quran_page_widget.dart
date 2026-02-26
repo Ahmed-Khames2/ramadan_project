@@ -129,7 +129,7 @@ class QuranPageWidget extends StatelessWidget {
                         ? theme.colorScheme.onSurface
                         : const Color(0xFF1A1A1A),
                   ),
-                  textAlign: TextAlign.justify,
+                  textAlign: TextAlign.right,
                 ),
               ),
 

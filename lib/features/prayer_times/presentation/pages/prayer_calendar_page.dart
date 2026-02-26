@@ -7,6 +7,7 @@ import 'package:ramadan_project/features/prayer_times/presentation/bloc/calendar
 import 'package:table_calendar/table_calendar.dart';
 import 'package:ramadan_project/core/utils/hijri_utils.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../data/repositories/calendar_repository_impl.dart';
 
@@ -92,7 +93,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${hijriDate.longMonthName} ${hijriDate.hYear}هـ',
+                    '${hijriDate.longMonthName} ${hijriDate.hYear.toArabic()}هـ',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -108,7 +109,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${state.focusedDay.year}م',
+                    '${state.focusedDay.year.toArabic()}م',
                     style: TextStyle(fontSize: 14, color: AppTheme.accentGold),
                   ),
                 ],
@@ -270,7 +271,7 @@ class _CalendarPageState extends State<CalendarPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '${day.day}',
+            day.day.toArabic(),
             style: TextStyle(
               fontSize: 15,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -281,7 +282,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
           ),
           Text(
-            '${hijriDate.hDay}',
+            hijriDate.hDay.toArabic(),
             style: TextStyle(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w500 : FontWeight.bold,

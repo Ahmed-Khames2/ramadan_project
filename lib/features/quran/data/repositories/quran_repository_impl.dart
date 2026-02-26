@@ -31,6 +31,12 @@ class QuranRepositoryImpl implements QuranRepository {
   static bool _isSearchCacheInitialized = false;
   static Future<void>? _initializationFuture;
 
+  // Optimized Lookup Tables
+  static final Map<int, int> _surahVerseOffsets =
+      {}; // Surah -> Starting Global Ayah ID
+  static final Map<int, int> _ayahIdToPageMap =
+      {}; // Global Ayah ID -> Page Number
+
   QuranRepositoryImpl({required this.localDataSource});
 
   @override
@@ -42,6 +48,8 @@ class QuranRepositoryImpl implements QuranRepository {
       final result = await compute(_buildPageMappings, null);
       _pageMap.addAll(result.pageMap);
       _juzStartPages.addAll(result.juzStartPages);
+      _surahVerseOffsets.addAll(result.surahVerseOffsets);
+      _ayahIdToPageMap.addAll(result.ayahIdToPageMap);
     }
 
     // Start search cache initialization in background
@@ -87,8 +95,13 @@ class QuranRepositoryImpl implements QuranRepository {
   static _PageMappingResult _buildPageMappings(_) {
     final Map<int, List<_AyahRef>> pageMap = {};
     final Map<int, int> juzStartPages = {};
+    final Map<int, int> surahVerseOffsets = {};
+    final Map<int, int> ayahIdToPageMap = {};
+
+    int currentGlobalId = 1;
 
     for (int surah = 1; surah <= 114; surah++) {
+      surahVerseOffsets[surah] = currentGlobalId;
       int ayahCount = quran.getVerseCount(surah);
       for (int ayah = 1; ayah <= ayahCount; ayah++) {
         int page = quran.getPageNumber(surah, ayah);
@@ -102,9 +115,17 @@ class QuranRepositoryImpl implements QuranRepository {
         if (!juzStartPages.containsKey(juz)) {
           juzStartPages[juz] = page;
         }
+
+        ayahIdToPageMap[currentGlobalId] = page;
+        currentGlobalId++;
       }
     }
-    return _PageMappingResult(pageMap, juzStartPages);
+    return _PageMappingResult(
+      pageMap,
+      juzStartPages,
+      surahVerseOffsets,
+      ayahIdToPageMap,
+    );
   }
 
   @override
@@ -158,11 +179,23 @@ class QuranRepositoryImpl implements QuranRepository {
     // Force strict global ordering
     pageAyahs.sort((a, b) => a.globalAyahNumber.compareTo(b.globalAyahNumber));
 
+    // Determine all unique surahs on this page
+    final List<int> uniqueSurahs = [];
+    for (final ref in refs) {
+      if (!uniqueSurahs.contains(ref.surah)) {
+        uniqueSurahs.add(ref.surah);
+      }
+    }
+
+    final String multiSurahName = uniqueSurahs
+        .map((s) => quran.getSurahNameArabic(s))
+        .join(' - ');
+
     final firstRef = refs.first;
     return QuranPage(
       pageNumber: pageNumber,
       ayahs: pageAyahs,
-      surahName: quran.getSurahNameArabic(firstRef.surah),
+      surahName: multiSurahName,
       juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
     );
   }
@@ -301,11 +334,23 @@ class QuranRepositoryImpl implements QuranRepository {
         );
       }
 
+      // Determine all unique surahs on this page
+      final List<int> uniqueSurahs = [];
+      for (final ref in refs) {
+        if (!uniqueSurahs.contains(ref.surah)) {
+          uniqueSurahs.add(ref.surah);
+        }
+      }
+
+      final String multiSurahName = uniqueSurahs
+          .map((s) => quran.getSurahNameArabic(s))
+          .join(' - ');
+
       final firstRef = refs.first;
       return QuranPage(
         pageNumber: pageNumber,
         ayahs: pageAyahs,
-        surahName: quran.getSurahNameArabic(firstRef.surah),
+        surahName: multiSurahName,
         juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
       );
     } catch (e) {
@@ -317,13 +362,26 @@ class QuranRepositoryImpl implements QuranRepository {
   QuranPage? getPagePlaceholder(int pageNumber) {
     if (!_pageMap.containsKey(pageNumber)) return null;
     final refs = _pageMap[pageNumber]!;
+
+    // Identify all unique surahs for the placeholder
+    final List<int> uniqueSurahs = [];
+    for (final ref in refs) {
+      if (!uniqueSurahs.contains(ref.surah)) {
+        uniqueSurahs.add(ref.surah);
+      }
+    }
+
+    final String multiSurahName = uniqueSurahs
+        .map((s) => quran.getSurahNameArabic(s))
+        .join(' - ');
+
     final firstRef = refs.first;
 
     // Return page with metadata but empty contents for skeleton loading
     return QuranPage(
       pageNumber: pageNumber,
       ayahs: [],
-      surahName: quran.getSurahNameArabic(firstRef.surah),
+      surahName: multiSurahName,
       juzNumber: quran.getJuzNumber(firstRef.surah, firstRef.ayah),
     );
   }
@@ -379,11 +437,20 @@ class QuranRepositoryImpl implements QuranRepository {
   }
 
   int _getGlobalAyahNumber(int surah, int ayah) {
+    if (_surahVerseOffsets.containsKey(surah)) {
+      return _surahVerseOffsets[surah]! + ayah - 1;
+    }
+    // Fallback if not initialized (should not happen after init())
     int global = 0;
     for (int i = 1; i < surah; i++) {
       global += quran.getVerseCount(i);
     }
     return global + ayah;
+  }
+
+  @override
+  int getPageFromGlobalId(int globalId) {
+    return _ayahIdToPageMap[globalId] ?? 1;
   }
 
   Future<void> _initializeSearchCache() async {
@@ -486,5 +553,12 @@ class _SearchCacheResult {
 class _PageMappingResult {
   final Map<int, List<_AyahRef>> pageMap;
   final Map<int, int> juzStartPages;
-  _PageMappingResult(this.pageMap, this.juzStartPages);
+  final Map<int, int> surahVerseOffsets;
+  final Map<int, int> ayahIdToPageMap;
+  _PageMappingResult(
+    this.pageMap,
+    this.juzStartPages,
+    this.surahVerseOffsets,
+    this.ayahIdToPageMap,
+  );
 }

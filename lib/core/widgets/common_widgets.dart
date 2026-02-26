@@ -194,11 +194,13 @@ class RevelationBadge extends StatelessWidget {
 class DecorativeBackground extends StatelessWidget {
   final Widget child;
   final bool showTexture;
+  final Color? color;
 
   const DecorativeBackground({
     super.key,
     required this.child,
     this.showTexture = true,
+    this.color,
   });
 
   @override
@@ -206,7 +208,7 @@ class DecorativeBackground extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: color ?? Theme.of(context).scaffoldBackgroundColor,
       child: Stack(
         children: [
           if (showTexture)

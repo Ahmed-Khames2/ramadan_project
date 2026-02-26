@@ -11,7 +11,9 @@ import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dash
 import 'package:ramadan_project/features/azkar/presentation/pages/tasbih_page.dart';
 import 'package:ramadan_project/features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import 'package:ramadan_project/features/qibla/presentation/pages/qibla_compass_page.dart';
-import 'package:ramadan_project/features/ramadan_worship/presentation/pages/ramadan_worship_tracker_page.dart';
+import 'package:ramadan_project/features/40_hadith/presentation/pages/hadith_list_page.dart';
+import 'package:ramadan_project/features/adhkar_virtues/presentation/pages/adhkar_virtue_list_page.dart';
+import 'package:ramadan_project/features/hadith_library/presentation/pages/hadith_books_page.dart';
 
 class AllWorshipsSection extends StatelessWidget {
   const AllWorshipsSection({super.key});
@@ -82,7 +84,8 @@ class AllWorshipsSection extends StatelessWidget {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const EnhancedSurahIndexPage(),
+                      builder: (context) =>
+                          const EnhancedSurahIndexPage(showBackButton: true),
                     ),
                   );
                   if (context.mounted) {
@@ -102,18 +105,6 @@ class AllWorshipsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              // _buildFeatureCard(
-              //   context,
-              //   title: 'متابعة العبادات',
-              //   icon: FontAwesomeIcons.personPraying,
-              //   color: AppTheme.primaryEmerald,
-              //   onTap: () => Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //       builder: (context) => const RamadanWorshipTrackerPage(),
-              //     ),
-              //   ),
-              // ),
               _buildFeatureCard(
                 context,
                 title: 'ختمة القرآن',
@@ -156,6 +147,42 @@ class AllWorshipsSection extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const QiblaCompassPage(),
+                  ),
+                ),
+              ),
+              _buildFeatureCard(
+                context,
+                title: 'الأربعين النووية',
+                icon: FontAwesomeIcons.bookOpenReader,
+                color: AppTheme.primaryEmerald,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HadithListPage(),
+                  ),
+                ),
+              ),
+              _buildFeatureCard(
+                context,
+                title: 'أفضال الأذكار',
+                icon: FontAwesomeIcons.lightbulb,
+                color: AppTheme.accentGold,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdhkarVirtueListPage(),
+                  ),
+                ),
+              ),
+              _buildFeatureCard(
+                context,
+                title: 'مكتبة الأحاديث',
+                icon: FontAwesomeIcons.bookOpen,
+                color: AppTheme.primaryEmerald,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HadithBooksPage(),
                   ),
                 ),
               ),

@@ -1,9 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../../core/widgets/main_scaffold.dart';
 import 'package:ramadan_project/features/home/presentation/pages/home_page.dart';
-import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 import 'package:ramadan_project/features/khatmah/presentation/pages/khatmah_dashboard_page.dart';
+// import 'package:ramadan_project/features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import 'package:ramadan_project/features/settings/presentation/pages/settings_page.dart';
+import 'package:ramadan_project/features/quran/presentation/pages/enhanced_surah_index_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -14,19 +15,16 @@ class MainNavigationPage extends StatefulWidget {
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
-  final GlobalKey<EnhancedSurahIndexPageState> _quranKey =
-      GlobalKey<EnhancedSurahIndexPageState>();
-
   late final List<Widget> _pages = [
     const HomeDashboardPage(),
-    EnhancedSurahIndexPage(key: _quranKey),
+    const EnhancedSurahIndexPage(),
     const KhatmahDashboardPage(),
     const SettingsPage(),
   ];
 
   final List<String> _titles = [
     'الرئيسية',
-    'المصحف الشريف',
+    'فهرس القرآن',
     'متابعة الختمة',
     'الإعدادات',
   ];
@@ -40,9 +38,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           return;
         }
         if (_currentIndex != 0) {
-          if (_currentIndex == 1) {
-            _quranKey.currentState?.clearSearch();
-          }
           setState(() {
             _currentIndex = 0;
           });
@@ -53,9 +48,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         title: _titles[_currentIndex],
         currentIndex: _currentIndex,
         onTabSelected: (index) {
-          if (_currentIndex == 1 && index != 1) {
-            _quranKey.currentState?.clearSearch();
-          }
           setState(() {
             _currentIndex = index;
           });

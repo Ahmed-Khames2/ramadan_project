@@ -1,63 +1,75 @@
 import 'dart:math' show pi, cos, sin;
 import 'package:flutter/material.dart';
 
-import 'package:ramadan_project/core/theme/app_theme.dart';
-
 class QiblaArrowPainter extends CustomPainter {
+  final Color activeColor;
+  final Color inactiveColor;
+
+  QiblaArrowPainter({required this.activeColor, required this.inactiveColor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()..style = PaintingStyle.fill;
+    final radius = size.width / 2;
 
-    // Shadow
-    final shadowPath = Path();
-    shadowPath.moveTo(center.dx, center.dy - 70);
-    shadowPath.lineTo(center.dx - 22, center.dy + 45);
-    shadowPath.lineTo(center.dx, center.dy + 28);
-    shadowPath.lineTo(center.dx + 22, center.dy + 45);
-    shadowPath.close();
+    const int petals = 12;
+    final double innerR = radius * 0.45;
+    final double outerR = radius * 0.85;
 
-    paint.color = Colors.black.withOpacity(0.15);
-    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawPath(shadowPath, paint);
+    for (int i = 0; i < petals; i++) {
+      final double angle = i * (2 * pi / petals) - pi / 2;
+      final bool isActive = i == 0; // Top petal is the indicator
 
-    // Main arrow
-    final arrowPath = Path();
-    arrowPath.moveTo(center.dx, center.dy - 75);
-    arrowPath.lineTo(center.dx - 20, center.dy + 40);
-    arrowPath.lineTo(center.dx, center.dy + 23);
-    arrowPath.lineTo(center.dx + 20, center.dy + 40);
-    arrowPath.close();
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = isActive ? activeColor.withOpacity(0.9) : inactiveColor;
 
-    paint.shader = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        const Color(0xFFFFD700),
-        AppTheme.accentGold,
-        const Color(0xFFB8860B),
-      ],
-    ).createShader(Rect.fromCircle(center: center, radius: 75));
-    paint.maskFilter = null;
-    canvas.drawPath(arrowPath, paint);
+      if (isActive) {
+        // Active petal glow using theme color
+        final glowPaint = Paint()
+          ..color = activeColor.withOpacity(0.4)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
 
-    // Outline
-    paint.shader = null;
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 2.5;
-    paint.color = const Color(0xFFB8860B);
-    canvas.drawPath(arrowPath, paint);
+        canvas.drawCircle(
+          Offset(
+            center.dx + outerR * cos(angle),
+            center.dy + outerR * sin(angle),
+          ),
+          25,
+          glowPaint,
+        );
+      }
 
-    // Highlight
-    final highlightPath = Path();
-    highlightPath.moveTo(center.dx, center.dy - 75);
-    highlightPath.lineTo(center.dx - 7, center.dy - 25);
-    highlightPath.lineTo(center.dx, center.dy + 23);
-    highlightPath.close();
+      final petalPath = Path();
+      // Control points for the same lotus petal shape
+      final double cpAngle1 = angle - (pi / (petals * 1.5));
+      final double cpAngle2 = angle + (pi / (petals * 1.5));
 
-    paint.style = PaintingStyle.fill;
-    paint.color = Colors.white.withOpacity(0.35);
-    canvas.drawPath(highlightPath, paint);
+      final double xStart = center.dx + innerR * cos(angle);
+      final double yStart = center.dy + innerR * sin(angle);
+      final double xEnd = center.dx + outerR * cos(angle);
+      final double yEnd = center.dy + outerR * sin(angle);
+      final double cp1x = center.dx + (outerR * 0.7) * cos(cpAngle1);
+      final double cp1y = center.dy + (outerR * 0.7) * sin(cpAngle1);
+      final double cp2x = center.dx + (outerR * 0.7) * cos(cpAngle2);
+      final double cp2y = center.dy + (outerR * 0.7) * sin(cpAngle2);
+
+      petalPath.moveTo(xStart, yStart);
+      petalPath.quadraticBezierTo(cp1x, cp1y, xEnd, yEnd);
+      petalPath.quadraticBezierTo(cp2x, cp2y, xStart, yStart);
+      petalPath.close();
+
+      canvas.drawPath(petalPath, paint);
+
+      // Outline for non-active petals
+      if (!isActive) {
+        final outlinePaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5
+          ..color = inactiveColor.withOpacity(0.5);
+        canvas.drawPath(petalPath, outlinePaint);
+      }
+    }
   }
 
   @override

@@ -2,11 +2,13 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_project/features/quran/domain/entities/quran_page.dart';
+import 'package:ramadan_project/features/quran/domain/entities/ayah.dart';
 import 'package:ramadan_project/features/quran/domain/repositories/quran_repository.dart';
 import 'package:ramadan_project/features/quran/data/repositories/quran_repository_impl.dart';
 import 'mushaf/mushaf_verse_body.dart';
 import 'mushaf/mushaf_page_frame.dart';
 import 'package:ramadan_project/core/theme/app_theme.dart';
+import 'package:ramadan_project/features/quran/presentation/bloc/quran_settings_cubit.dart';
 
 class ContinuousMushafPageWidget extends StatefulWidget {
   final int pageNumber;
@@ -15,6 +17,11 @@ class ContinuousMushafPageWidget extends StatefulWidget {
   final int? initialAyah;
   final VoidCallback? onShowControls;
   final VoidCallback? onHideControls;
+  final VoidCallback? onSearchTap;
+  final VoidCallback? onMenuTap;
+  final Function(Ayah)? onAyahTap;
+  final bool isBookmarked;
+  final VoidCallback? onBookmarkTap;
 
   const ContinuousMushafPageWidget({
     super.key,
@@ -24,7 +31,21 @@ class ContinuousMushafPageWidget extends StatefulWidget {
     this.initialAyah,
     this.onShowControls,
     this.onHideControls,
+    this.onSearchTap,
+    this.onMenuTap,
+    this.backgroundColor,
+    this.onAyahTap,
+    this.isBookmarked = false,
+    this.onBookmarkTap,
+    required this.readingMode,
+    this.selectedAyahId,
   });
+
+  final int? selectedAyahId;
+
+  final MushafReadingMode readingMode;
+
+  final Color? backgroundColor;
 
   @override
   State<ContinuousMushafPageWidget> createState() =>
@@ -36,21 +57,11 @@ class _ContinuousMushafPageWidgetState
   late Future<QuranPage> _pageData;
   QuranPage? _cachedPage;
   final ScrollController _scrollController = ScrollController();
-  bool _showScrollHint = true;
 
   @override
   void initState() {
     super.initState();
     _loadData();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (_scrollController.offset > 50 && _showScrollHint) {
-      setState(() {
-        _showScrollHint = false;
-      });
-    }
   }
 
   @override
@@ -101,6 +112,11 @@ class _ContinuousMushafPageWidgetState
             if (placeholder != null) {
               return MushafPageFrame(
                 page: placeholder,
+                backgroundColor: widget.backgroundColor,
+                onSearchTap: widget.onSearchTap,
+                onMenuTap: widget.onMenuTap,
+                showHeader: false, // Fixed header is in the parent stack
+                readingMode: widget.readingMode,
                 child: const Center(child: CircularProgressIndicator()),
               );
             }
@@ -135,13 +151,36 @@ class _ContinuousMushafPageWidgetState
     final isDefaultScale = (widget.fontScale - 1.0).abs() < 0.01;
     final contentScale = isDefaultScale ? 1.0 : widget.fontScale;
 
+    final isDarkBackground =
+        widget.backgroundColor != null &&
+        ThemeData.estimateBrightnessForColor(widget.backgroundColor!) ==
+            Brightness.dark;
+
     return MushafPageFrame(
       page: page,
+      backgroundColor: widget.backgroundColor,
+      onSearchTap: widget.onSearchTap,
+      onMenuTap: widget.onMenuTap,
+      isBookmarked: widget.isBookmarked,
+      onBookmarkTap: widget.onBookmarkTap,
+      showHeader: false, // Fixed header is in the parent stack
+      readingMode: widget.readingMode,
       child: Theme(
         data: Theme.of(context).copyWith(
+          brightness: isDarkBackground ? Brightness.dark : Brightness.light,
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            onSurface: isDarkBackground ? Colors.white : Colors.black87,
+          ),
+          textTheme: Theme.of(context).textTheme.copyWith(
+            bodyLarge: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: isDarkBackground ? Colors.white : Colors.black87,
+            ),
+          ),
           scrollbarTheme: ScrollbarThemeData(
             thumbColor: WidgetStateProperty.all(
-              AppTheme.accentGold.withOpacity(0.6),
+              widget.readingMode == MushafReadingMode.navy
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : AppTheme.accentGold.withOpacity(0.6),
             ),
             thickness: WidgetStateProperty.all(6),
             radius: const Radius.circular(10),
@@ -168,92 +207,32 @@ class _ContinuousMushafPageWidgetState
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
+                    padding: const EdgeInsets.only(
+                      left: 8,
+                      right: 8,
+                      top: 70, // Padding to avoid fixed header overlap
+                      bottom: 8,
                     ),
                     child: MushafVerseBody(
                       page: page,
                       scale: contentScale,
+                      textColor: isDarkBackground
+                          ? Colors.white
+                          : Colors.black87,
                       initialSurah: widget.initialSurah,
                       initialAyah: widget.initialAyah,
                       onShowControls: widget.onShowControls,
+                      onAyahTap: widget.onAyahTap,
+                      readingMode: widget.readingMode,
+                      selectedAyahId: widget.selectedAyahId,
                     ),
                   ),
                 ),
-                if (_showScrollHint)
-                  Positioned(
-                    bottom: 20,
-                    left: 0,
-                    right: 0,
-                    child: _ScrollHint(),
-                  ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ScrollHint extends StatefulWidget {
-  @override
-  State<_ScrollHint> createState() => _ScrollHintState();
-}
-
-class _ScrollHintState extends State<_ScrollHint>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(
-      begin: 0,
-      end: 15,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _animation.value),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "اسحب للأسفل",
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 12,
-                  color: AppTheme.accentGold.withOpacity(0.8),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: AppTheme.accentGold.withOpacity(0.8),
-                size: 30,
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

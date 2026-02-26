@@ -5,6 +5,7 @@ import 'package:ramadan_project/core/widgets/common_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_project/presentation/blocs/theme_mode_cubit.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'contact_us_page.dart';
 import 'dedication_page.dart';
 
@@ -39,9 +40,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: DecorativeBackground(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: DecorativeBackground(
+        child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [
@@ -105,8 +107,25 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icons.share_rounded,
                       () {
                         Share.share(
-                          'حمل تطبيق "زاد": رفيقك للقرآن والأذكار ومواقيت الصلاة.',
+                          'حمل تطبيق "زاد": رفيقك للقرآن والأذكار ومواقيت الصلاة.\n\nرابط تحميل التطبيق:\nhttps://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link',
                         );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    _buildActionTile(
+                      'مراجعة أحدث نسخة',
+                      'تحقق من توفر تحديثات جديدة للتطبيق',
+                      Icons.update_rounded,
+                      () async {
+                        final url = Uri.parse(
+                          'https://drive.google.com/drive/folders/1OoGk397Kb6sUy5S-qDw8A4EVGK6K0Lhc?usp=drive_link',
+                        );
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
                       },
                     ),
                     const Divider(height: 1, indent: 16, endIndent: 16),
@@ -178,7 +197,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context) {
-    return BlocBuilder<ThemeModeCubit, ThemeMode>(
+    return BlocBuilder<ThemeModeCubit, AppThemeMode>(
       builder: (context, currentMode) {
         return IslamicCard(
           padding: const EdgeInsets.all(8),
@@ -188,22 +207,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 context,
                 'فاتح',
                 Icons.wb_sunny_rounded,
-                ThemeMode.light,
-                currentMode == ThemeMode.light,
+                AppThemeMode.light,
+                currentMode == AppThemeMode.light,
               ),
               _buildThemeOption(
                 context,
                 'داكن',
                 Icons.nightlight_round,
-                ThemeMode.dark,
-                currentMode == ThemeMode.dark,
+                AppThemeMode.dark,
+                currentMode == AppThemeMode.dark,
               ),
               _buildThemeOption(
                 context,
                 'تلقائي',
                 Icons.brightness_auto_rounded,
-                ThemeMode.system,
-                currentMode == ThemeMode.system,
+                AppThemeMode.system,
+                currentMode == AppThemeMode.system,
               ),
             ],
           ),
@@ -216,7 +235,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     String label,
     IconData icon,
-    ThemeMode mode,
+    AppThemeMode mode,
     bool isSelected,
   ) {
     final color = isSelected ? AppTheme.primaryEmerald : AppTheme.textGrey;

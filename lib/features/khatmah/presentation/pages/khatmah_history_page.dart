@@ -6,6 +6,7 @@ import 'package:ramadan_project/core/theme/app_theme.dart';
 import 'package:ramadan_project/features/khatmah/presentation/bloc/khatam_bloc.dart';
 
 import 'package:ramadan_project/core/widgets/common_widgets.dart';
+import 'package:ramadan_project/core/utils/string_extensions.dart';
 
 class KhatmahHistoryPage extends StatelessWidget {
   const KhatmahHistoryPage({super.key});
@@ -183,7 +184,7 @@ class KhatmahHistoryPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'تمت في ${dateFormat.format(entry.completionDate)}',
+                        'تمت في ${dateFormat.format(entry.completionDate).toArabicNumbers()}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(
@@ -192,7 +193,7 @@ class KhatmahHistoryPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'الإنجاز: خلال ${entry.totalDays} يوماً',
+                        'الإنجاز: خلال ${entry.totalDays.toArabic()} يوماً',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
